@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#09090b" />
+  <meta name="description" content="FRAME — Swipe deinen Film- und Seriengeschmack." />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+  <title>FRAME — Swipe your taste</title>
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="app-shell">
+    <header class="topbar">
+      <button class="brand" id="brandButton" aria-label="FRAME">
+        <span class="brand-mark">F</span>
+        <span class="brand-copy">
+          <strong>FRAME</strong>
+          <small>SWIPE YOUR TASTE</small>
+        </span>
+      </button>
+      <button class="profile-chip" id="profileShortcut" aria-label="Geschmacksprofil öffnen">
+        <span class="profile-ring"><span id="tastePercent">12</span>%</span>
+      </button>
+    </header>
+
+    <main>
+      <section class="view active" id="discoverView" data-view="discover">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">DEIN FEED</p>
+            <h1>Was fühlt sich<br><em>richtig</em> an?</h1>
+          </div>
+          <div class="mystery-code" id="mysteryCode" title="Ein Sitzplatz?">ROW 237</div>
+        </div>
+
+        <div class="filter-row" role="tablist" aria-label="Feed Filter">
+          <button class="filter active" data-filter="all">Alles</button>
+          <button class="filter" data-filter="movie">Filme</button>
+          <button class="filter" data-filter="series">Serien</button>
+          <button class="filter" data-filter="person">People</button>
+        </div>
+
+        <div class="deck-wrap">
+          <div class="deck" id="cardDeck" aria-live="polite"></div>
+          <div class="empty-state" id="emptyState" hidden>
+            <span class="empty-frame">24</span>
+            <h2>Der Abspann läuft.</h2>
+            <p>Du hast diesen Feed durchgespielt. Misch ihn neu oder sieh dir an, was FRAME über dich gelernt hat.</p>
+            <button class="primary-btn" id="reshuffleButton">Feed neu mischen</button>
+          </div>
+        </div>
+
+        <div class="actions" aria-label="Swipe Aktionen">
+          <button class="action action-like" id="likeButton" aria-label="Super — nach links">
+            <span class="action-icon">←</span>
+            <span>SUPER</span>
+          </button>
+          <button class="action action-save" id="saveButton" aria-label="Merken — nach oben">
+            <span class="action-icon">↑</span>
+            <span>MERKEN</span>
+          </button>
+          <button class="action action-dislike" id="dislikeButton" aria-label="Mist — nach rechts">
+            <span class="action-icon">→</span>
+            <span>MIST</span>
+          </button>
+        </div>
+        <p class="gesture-hint">Links = super · hoch = merken · rechts = Mist</p>
+      </section>
+
+      <section class="view" id="watchlistView" data-view="watchlist">
+        <div class="section-head compact">
+          <div>
+            <p class="eyebrow">FÜR SPÄTER</p>
+            <h1>Deine <em>Watchlist</em></h1>
+          </div>
+          <span class="count-pill" id="watchlistCount">0</span>
+        </div>
+        <div class="list-grid" id="watchlistGrid"></div>
+      </section>
+
+      <section class="view" id="recommendView" data-view="recommend">
+        <div class="section-head compact">
+          <div>
+            <p class="eyebrow">VON FRAME GELERNT</p>
+            <h1>Für <em>dich</em></h1>
+          </div>
+          <span class="match-orb">AI<span>sh</span></span>
+        </div>
+        <div class="recommend-hero" id="recommendHero"></div>
+        <div class="why-panel">
+          <p class="eyebrow">WARUM DAS PASST</p>
+          <div id="reasonChips" class="reason-chips"></div>
+        </div>
+        <div class="recommend-list" id="recommendList"></div>
+      </section>
+
+      <section class="view" id="tasteView" data-view="taste">
+        <div class="section-head compact">
+          <div>
+            <p class="eyebrow">DEIN PROFIL</p>
+            <h1>Movie <em>DNA</em></h1>
+          </div>
+          <span class="film-counter"><b id="swipeCount">0</b><small>SWIPES</small></span>
+        </div>
+
+        <article class="dna-card">
+          <div class="dna-topline">
+            <span>FRAME INDEX</span>
+            <span id="frameIndex">000</span>
+          </div>
+          <div class="dna-score">
+            <strong id="dnaScore">12</strong><span>%</span>
+          </div>
+          <p>Je mehr du swipest, desto schärfer wird dein persönlicher Film-Fingerabdruck.</p>
+          <div class="progress-track"><span id="dnaProgress"></span></div>
+        </article>
+
+        <div class="taste-section">
+          <div class="taste-title"><span>Starke Signale</span><small>LIVE</small></div>
+          <div class="tag-cloud" id="positiveTags"></div>
+        </div>
+
+        <div class="taste-section">
+          <div class="taste-title"><span>Eher nicht dein Film</span><small>CUT</small></div>
+          <div class="tag-cloud muted" id="negativeTags"></div>
+        </div>
+
+        <div class="stats-grid">
+          <article><strong id="likedStat">0</strong><span>Super</span></article>
+          <article><strong id="savedStat">0</strong><span>Gemerkt</span></article>
+          <article><strong id="dislikedStat">0</strong><span>Mist</span></article>
+        </div>
+
+        <button class="ghost-btn" id="resetButton">Geschmack zurücksetzen</button>
+        <p class="tiny-credit" id="tinyCredit">FRAME / CUT 11.22 / 24 FPS</p>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Hauptnavigation">
+      <button class="nav-item active" data-target="discover"><span>◉</span><small>Swipe</small></button>
+      <button class="nav-item" data-target="watchlist"><span>⌑</span><small>Watchlist</small></button>
+      <button class="nav-item" data-target="recommend"><span>✦</span><small>Für dich</small></button>
+      <button class="nav-item" data-target="taste"><span>◎</span><small>DNA</small></button>
+    </nav>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+  <script src="/app.js" defer></script>
+</body>
+</html>
