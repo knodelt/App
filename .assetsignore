@@ -1,0 +1,16 @@
+# Only ship the actual web app as Cloudflare Static Assets.
+# The repository root is the asset directory, so keep tooling/private repo metadata out.
+**/.git
+**/.git/**
+**/.github
+**/.github/**
+**/.wrangler
+**/.wrangler/**
+node_modules
+node_modules/**
+README.md
+wrangler.jsonc
+package.json
+package-lock.json
+.gitignore
+.assetsignore
