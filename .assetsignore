@@ -10,6 +10,7 @@ node_modules
 node_modules/**
 README.md
 wrangler.jsonc
+worker.js
 package.json
 package-lock.json
 .gitignore
