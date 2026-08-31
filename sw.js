@@ -1,4 +1,4 @@
-const CACHE = 'frame-v01';
+const CACHE = 'frame-v02';
 const ASSETS = ['/', '/index.html', '/styles.css', '/app.js', '/manifest.webmanifest', '/icon.svg'];
 
 self.addEventListener('install', event => {
