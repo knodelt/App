@@ -1,0 +1,199 @@
+/* FRAME viewport shell — keep the app inside one mobile screen. */
+html, body {
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden !important;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
+}
+
+body {
+  position: fixed;
+  inset: 0;
+}
+
+.app-shell {
+  width: min(100%, 520px);
+  height: 100dvh;
+  min-height: 0;
+  max-height: 100dvh;
+  margin: 0 auto;
+  padding: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+}
+
+.topbar {
+  height: clamp(54px, 8dvh, 72px);
+  min-height: 0;
+  padding: max(7px, env(safe-area-inset-top)) 18px 5px;
+}
+
+.app-shell > main {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.view {
+  height: 100%;
+  min-height: 0;
+  padding: 4px 16px 8px;
+  overflow: hidden;
+}
+
+.view.active {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Swipe screen stays completely on one viewport. */
+#discoverView .section-head {
+  flex: 0 0 auto;
+  margin: 1px 2px clamp(7px, 1.2dvh, 12px);
+}
+
+#discoverView .eyebrow {
+  margin-bottom: 4px;
+}
+
+#discoverView h1 {
+  font-size: clamp(28px, min(8vw, 5.2dvh), 42px);
+  line-height: .92;
+}
+
+#discoverView .filter-row {
+  flex: 0 0 auto;
+  padding: 0 2px clamp(7px, 1.1dvh, 11px);
+  gap: 7px;
+}
+
+#discoverView .filter {
+  padding: clamp(6px, .8dvh, 8px) 13px;
+}
+
+#discoverView .deck-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  position: relative;
+}
+
+#discoverView .deck,
+#discoverView .empty-state {
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+}
+
+#discoverView .swipe-card {
+  border-radius: clamp(22px, 3.2dvh, 28px);
+}
+
+#discoverView .card-copy {
+  left: clamp(17px, 2.5dvh, 22px);
+  right: clamp(17px, 2.5dvh, 22px);
+  bottom: clamp(14px, 2dvh, 19px);
+}
+
+#discoverView .card-title {
+  font-size: clamp(27px, min(8.4vw, 4.4dvh), 34px);
+}
+
+#discoverView .card-sub {
+  margin-top: clamp(5px, .8dvh, 9px);
+}
+
+#discoverView .card-blurb {
+  margin-top: clamp(5px, .8dvh, 9px);
+  font-size: clamp(10px, 1.45dvh, 11.5px);
+  line-height: 1.34;
+  -webkit-line-clamp: 2;
+}
+
+#discoverView .signal-row {
+  margin-top: clamp(6px, 1dvh, 11px);
+}
+
+#discoverView .actions {
+  flex: 0 0 auto;
+  margin-top: clamp(6px, .9dvh, 10px);
+  gap: 8px;
+}
+
+#discoverView .action {
+  min-height: clamp(46px, 6.3dvh, 58px);
+  border-radius: 16px;
+}
+
+#discoverView .gesture-hint {
+  flex: 0 0 auto;
+  margin: clamp(4px, .65dvh, 7px) 0 0;
+  font-size: 8px;
+  line-height: 1.2;
+}
+
+#discoverView .media-credit {
+  flex: 0 0 auto;
+  margin: clamp(3px, .45dvh, 5px) 0 0 !important;
+  line-height: 1.1;
+}
+
+.bottom-nav {
+  position: relative;
+  inset: auto;
+  left: auto;
+  transform: none;
+  width: 100%;
+  min-height: calc(55px + env(safe-area-inset-bottom));
+  padding: 6px 10px calc(6px + env(safe-area-inset-bottom));
+}
+
+.nav-item {
+  padding: 2px 4px;
+  gap: 1px;
+}
+
+.nav-item span { font-size: 17px; }
+.nav-item small { font-size: 7.5px; }
+
+/* Secondary screens live inside the app shell; page itself never scrolls. */
+#watchlistView,
+#recommendView,
+#tasteView {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 16px;
+}
+
+/* Very short browser viewports (Safari UI open, landscape-ish heights). */
+@media (max-height: 760px) {
+  .topbar { height: 50px; padding-top: max(5px, env(safe-area-inset-top)); }
+  .brand-mark { width: 31px; font-size: 17px; }
+  .profile-ring { width: 39px; }
+  #discoverView .section-head { margin-bottom: 6px; }
+  #discoverView h1 { font-size: 27px; }
+  #discoverView .filter-row { padding-bottom: 6px; }
+  #discoverView .filter { padding: 5px 11px; font-size: 10px; }
+  #discoverView .card-meta { margin-bottom: 4px; font-size: 10px; }
+  #discoverView .card-sub { font-size: 11px; }
+  #discoverView .card-blurb { -webkit-line-clamp: 1; }
+  #discoverView .signal-row { margin-top: 5px; }
+  #discoverView .signal-row span { padding: 4px 7px; font-size: 8px; }
+  #discoverView .gesture-hint { display: none; }
+  #discoverView .media-credit { font-size: 6px; }
+  .bottom-nav { min-height: calc(50px + env(safe-area-inset-bottom)); padding-top: 4px; }
+}
+
+@media (max-height: 660px) {
+  #discoverView .section-head { display: none; }
+  #discoverView .filter-row { padding-top: 2px; }
+  #discoverView .card-blurb { display: none; }
+  #discoverView .signal-row span:nth-child(n+3) { display: none; }
+  #discoverView .action { min-height: 42px; }
+  #discoverView .media-credit { display: none; }
+}
