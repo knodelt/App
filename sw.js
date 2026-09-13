@@ -1,5 +1,5 @@
-const CACHE = 'frame-v03';
-const ASSETS = ['/', '/index.html', '/styles.css', '/app.js', '/tmdb-feed.js', '/manifest.webmanifest', '/icon.svg'];
+const CACHE = 'frame-v04';
+const ASSETS = ['/', '/index.html', '/about.html', '/styles.css', '/app.js', '/tmdb-feed.js', '/manifest.webmanifest', '/icon.svg'];
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)));
