@@ -60,6 +60,17 @@ function cleanOverview(text, fallback) {
   return value || fallback;
 }
 
+function formatDateDE(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  const [year, month, day] = raw.split('-');
+  return year && month && day ? `${day}.${month}.${year}` : raw;
+}
+
+function uniqueNames(list = [], limit = 3) {
+  return [...new Set(list.filter(Boolean))].slice(0, limit);
+}
+
 function movieToCard(item) {
   const genres = genreNames(item.genre_ids, MOVIE_GENRES);
   return {
@@ -186,10 +197,93 @@ async function handleFeed(request, env) {
   }
 }
 
+async function handleDetails(request, env) {
+  if (!env.TMDB_API_TOKEN) {
+    return json({ ok:false, code:'TMDB_NOT_CONFIGURED', message:'TMDB_API_TOKEN fehlt.' }, 503);
+  }
+
+  const url = new URL(request.url);
+  const type = url.searchParams.get('type');
+  const id = Number.parseInt(url.searchParams.get('id') || '', 10);
+  if (!['movie','series','person'].includes(type) || !Number.isFinite(id) || id < 1) {
+    return json({ ok:false, code:'BAD_DETAILS_REQUEST', message:'Ungültige Detailanfrage.' }, 400);
+  }
+
+  try {
+    if (type === 'movie') {
+      const data = await tmdb(`/movie/${id}`, env, { language:'de-DE', append_to_response:'credits' });
+      const directors = uniqueNames((data.credits?.crew || []).filter(x => x.job === 'Director').map(x => x.name), 2);
+      const cast = uniqueNames((data.credits?.cast || []).slice(0, 5).map(x => x.name), 4);
+      const genres = uniqueNames((data.genres || []).map(x => x.name), 3);
+      return json({
+        ok:true,
+        details:{
+          description: cleanOverview(data.overview, 'Noch keine ausführliche Beschreibung verfügbar.'),
+          primaryMeta: data.runtime ? `${data.runtime} min` : vote(data.vote_average),
+          facts:[
+            directors.length ? { label:'Regie', value:directors.join(', ') } : null,
+            cast.length ? { label:'Cast', value:cast.join(', ') } : null,
+            genres.length ? { label:'Genres', value:genres.join(' · ') } : null
+          ].filter(Boolean)
+        }
+      }, 200, { 'cache-control':'public, max-age=3600' });
+    }
+
+    if (type === 'series') {
+      const data = await tmdb(`/tv/${id}`, env, { language:'de-DE', append_to_response:'credits' });
+      const creators = uniqueNames((data.created_by || []).map(x => x.name), 2);
+      const cast = uniqueNames((data.credits?.cast || []).slice(0, 5).map(x => x.name), 4);
+      const genres = uniqueNames((data.genres || []).map(x => x.name), 3);
+      const seasonText = data.number_of_seasons ? `${data.number_of_seasons} Staffel${data.number_of_seasons === 1 ? '' : 'n'}` : vote(data.vote_average);
+      return json({
+        ok:true,
+        details:{
+          description: cleanOverview(data.overview, 'Noch keine ausführliche Beschreibung verfügbar.'),
+          primaryMeta: seasonText,
+          facts:[
+            creators.length ? { label:'Creator', value:creators.join(', ') } : null,
+            cast.length ? { label:'Cast', value:cast.join(', ') } : null,
+            genres.length ? { label:'Genres', value:genres.join(' · ') } : null
+          ].filter(Boolean)
+        }
+      }, 200, { 'cache-control':'public, max-age=3600' });
+    }
+
+    let data = await tmdb(`/person/${id}`, env, { language:'de-DE', append_to_response:'combined_credits' });
+    if (!String(data.biography || '').trim()) {
+      const fallback = await tmdb(`/person/${id}`, env, { language:'en-US', append_to_response:'combined_credits' });
+      data = { ...data, biography:fallback.biography || data.biography, combined_credits:data.combined_credits || fallback.combined_credits };
+    }
+
+    const allCredits = [
+      ...(data.combined_credits?.cast || []),
+      ...(data.combined_credits?.crew || [])
+    ].sort((a,b) => Number(b.popularity || 0) - Number(a.popularity || 0));
+    const knownFor = uniqueNames(allCredits.map(x => x.title || x.name), 4);
+    const facts = [];
+    if (data.birthday) facts.push({ label:'Geboren', value:formatDateDE(data.birthday) });
+    if (data.place_of_birth) facts.push({ label:'Geburtsort', value:data.place_of_birth });
+    if (knownFor.length) facts.push({ label:'Bekannt aus', value:knownFor.join(', ') });
+
+    return json({
+      ok:true,
+      details:{
+        description: cleanOverview(data.biography, knownFor.length ? `Bekannt aus ${knownFor.join(', ')}.` : 'Person aus Film und Fernsehen.'),
+        primaryMeta: data.known_for_department === 'Directing' ? 'Regie' : data.known_for_department === 'Acting' ? 'Schauspiel' : (data.known_for_department || 'Film & Serie'),
+        facts
+      }
+    }, 200, { 'cache-control':'public, max-age=3600' });
+  } catch (error) {
+    console.error(error);
+    return json({ ok:false, code:'TMDB_DETAILS_ERROR', message:'Details konnten gerade nicht geladen werden.' }, 502);
+  }
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === '/api/feed') return handleFeed(request, env);
+    if (url.pathname === '/api/details') return handleDetails(request, env);
     return env.ASSETS.fetch(request);
   }
 };
