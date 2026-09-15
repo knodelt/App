@@ -90,3 +90,12 @@
     });
   }
 })();
+
+(() => {
+  if (document.querySelector('script[data-frame-streaming]')) return;
+  const script = document.createElement('script');
+  script.src = '/streaming-availability.js';
+  script.defer = true;
+  script.dataset.frameStreaming = '1';
+  document.head.appendChild(script);
+})();
