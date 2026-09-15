@@ -220,9 +220,10 @@
     activeRequest?.abort();
     activeRequest = new AbortController();
     try {
-      const response = await fetch(`/api/details?type=${encodeURIComponent(item.type)}&id=${encodeURIComponent(item.tmdbId)}`, {
+      const response = await fetch(`/api/details?v=2&type=${encodeURIComponent(item.type)}&id=${encodeURIComponent(item.tmdbId)}`, {
         headers: { accept: 'application/json' },
-        signal: activeRequest.signal
+        signal: activeRequest.signal,
+        cache: 'no-store'
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok || !payload?.details) throw new Error(payload?.message || `Details ${response.status}`);
