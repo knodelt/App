@@ -92,6 +92,27 @@
 })();
 
 (() => {
+  const seedIds = {
+    dune2: 693134,
+    severance: 95396,
+    menu: 593643,
+    succession: 76331,
+    oppenheimer: 872585,
+    bear: 136315,
+    hereditary: 493922,
+    'white-lotus': 111803,
+    parasite: 496243,
+    dark: 70523
+  };
+  try {
+    catalog.forEach(item => {
+      if (!item.tmdbId && seedIds[item.id]) {
+        item.tmdbId = seedIds[item.id];
+        item.source = item.source || 'tmdb';
+      }
+    });
+  } catch {}
+
   if (document.querySelector('script[data-frame-streaming]')) return;
   const script = document.createElement('script');
   script.src = '/streaming-availability.js';
