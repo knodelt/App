@@ -279,11 +279,60 @@ async function handleDetails(request, env) {
   }
 }
 
+const RECOMMENDATION_LOOKUPS = [
+  { key:'Prisoners', query:'Prisoners', year:'2013', mediaType:'movie' },
+  { key:'Enemy', query:'Enemy', year:'2013', mediaType:'movie' },
+  { key:'Blade Runner 2049', query:'Blade Runner 2049', year:'2017', mediaType:'movie' },
+  { key:'The Prestige', query:'The Prestige', year:'2006', mediaType:'movie' },
+  { key:'Sharp Objects', query:'Sharp Objects', year:'2018', mediaType:'tv' }
+];
+
+function releaseYear(item, mediaType) {
+  const date = mediaType === 'tv' ? item.first_air_date : item.release_date;
+  return String(date || '').slice(0, 4);
+}
+
+async function lookupArtwork(entry, env) {
+  const path = entry.mediaType === 'tv' ? '/search/tv' : '/search/movie';
+  const data = await tmdb(path, env, {
+    query: entry.query,
+    language: 'de-DE',
+    include_adult: false,
+    page: 1
+  });
+  const results = data.results || [];
+  const exactYear = results.find(item => releaseYear(item, entry.mediaType) === entry.year);
+  const withImage = results.find(item => item.poster_path || item.backdrop_path);
+  const match = exactYear || withImage || results[0];
+  return {
+    title: entry.key,
+    mediaType: entry.mediaType,
+    tmdbId: match?.id || null,
+    poster: match?.poster_path || null,
+    backdrop: match?.backdrop_path || null
+  };
+}
+
+async function handleRecommendationArt(env) {
+  if (!env.TMDB_API_TOKEN) {
+    return json({ ok:false, code:'TMDB_NOT_CONFIGURED', message:'TMDB_API_TOKEN fehlt.' }, 503);
+  }
+
+  try {
+    const items = await Promise.all(RECOMMENDATION_LOOKUPS.map(entry => lookupArtwork(entry, env)));
+    return json({ ok:true, source:'tmdb', items }, 200, { 'cache-control':'public, max-age=21600' });
+  } catch (error) {
+    console.error(error);
+    return json({ ok:false, code:'TMDB_RECOMMENDATION_ART_ERROR', message:'Empfehlungsbilder konnten gerade nicht geladen werden.' }, 502);
+  }
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === '/api/feed') return handleFeed(request, env);
     if (url.pathname === '/api/details') return handleDetails(request, env);
+    if (url.pathname === '/api/recommendation-art') return handleRecommendationArt(env);
     return env.ASSETS.fetch(request);
   }
 };
