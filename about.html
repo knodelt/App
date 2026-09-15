@@ -27,8 +27,7 @@
     .notice{padding:14px 15px;border-radius:15px;background:rgba(1,180,228,.07);border:1px solid rgba(1,180,228,.18);color:#d9e8ea!important}
     .source-link{display:inline-flex;margin-top:9px;color:var(--gold);text-decoration:none;font-size:10px;font-weight:700;letter-spacing:.06em}.source-link::after{content:' ↗'}
     .status{display:flex;gap:8px;align-items:center;margin-top:14px;color:#8d8a84;font-size:9px}.dot{width:7px;height:7px;border-radius:50%;background:#90cea1;box-shadow:0 0 18px rgba(144,206,161,.38)}
-    .future{opacity:.72}.legal{font-size:9px!important;color:#66635e!important}
-    .brandline{text-align:center;margin:32px 0 0;color:#363532;font-size:7px;letter-spacing:.23em}
+    .legal{font-size:9px!important;color:#66635e!important}.brandline{text-align:center;margin:32px 0 0;color:#363532;font-size:7px;letter-spacing:.23em}
   </style>
 </head>
 <body>
@@ -56,16 +55,26 @@
       <div class="status"><span class="dot"></span><span>TMDB ist die primäre externe Datenquelle von FRAME.</span></div>
     </section>
 
-    <section class="card future">
-      <p class="eyebrow">SPÄTER MÖGLICH</p>
-      <h2>Streaming-Verfügbarkeit</h2>
-      <p>Falls FRAME künftig Streaminganbieter über TMDB anzeigt, stammen diese Verfügbarkeitsdaten aus der Partnerschaft zwischen TMDB und <strong>JustWatch</strong>. In diesem Fall wird die erforderliche JustWatch-Attribution hier ergänzt.</p>
+    <section class="card">
+      <p class="eyebrow">STREAMING-VERFÜGBARKEIT</p>
+      <h2>JustWatch</h2>
+      <p>Die in FRAME angezeigten Streaming-, Leih- und Kaufanbieter für Deutschland werden über die Watch-Provider-Daten von TMDB bezogen. Diese Daten stammen aus der Partnerschaft von TMDB mit <strong>JustWatch</strong>.</p>
+      <p class="legal">Verfügbarkeiten können sich jederzeit ändern. FRAME zeigt die zuletzt von der Datenquelle gemeldeten Informationen.</p>
+      <a class="source-link" href="https://www.justwatch.com/de" target="_blank" rel="noopener noreferrer">JustWatch besuchen</a>
+      <div class="status"><span class="dot"></span><span>JustWatch ist die Quelle für Streaming-Verfügbarkeiten.</span></div>
+    </section>
+
+    <section class="card">
+      <p class="eyebrow">OPTIONALE PREISDATEN</p>
+      <h2>Watchmode</h2>
+      <p>Wenn in FRAME konkrete Miet- oder Kaufpreise angezeigt werden, können diese über die <strong>Watchmode API</strong> ergänzt werden. Ohne Watchmode zeigt FRAME Anbieter und Verfügbarkeitsart, aber keine erfundenen Preise.</p>
+      <a class="source-link" href="https://api.watchmode.com" target="_blank" rel="noopener noreferrer">Watchmode besuchen</a>
     </section>
 
     <section class="card">
       <p class="eyebrow">FRAME</p>
       <h2>Unabhängiges Projekt</h2>
-      <p>FRAME steht in keiner geschäftlichen Verbindung zu TMDB, Filmstudios, Streamingdiensten oder den dargestellten Filmschaffenden. Marken, Titel und Bildrechte verbleiben bei den jeweiligen Rechteinhabern.</p>
+      <p>FRAME steht in keiner geschäftlichen Verbindung zu TMDB, JustWatch, Watchmode, Filmstudios, Streamingdiensten oder den dargestellten Filmschaffenden. Marken, Titel und Bildrechte verbleiben bei den jeweiligen Rechteinhabern.</p>
       <p class="legal">Der aktuelle Prototyp befindet sich in Entwicklung und ist nicht als kommerzielles Angebot gedacht.</p>
     </section>
 
