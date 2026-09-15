@@ -11,6 +11,8 @@ node_modules/**
 README.md
 wrangler.jsonc
 worker.js
+main-worker.js
+availability.js
 package.json
 package-lock.json
 .gitignore
