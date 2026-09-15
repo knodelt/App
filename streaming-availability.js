@@ -31,22 +31,36 @@
       .mini-card .streaming-chip { width:max-content; max-width:100%; }
       .mini-card .streaming-chip b { max-width:92px; }
 
-      .hero-streaming-strip {
-        margin:10px 2px 0;
-        padding:10px 12px 9px;
-        border:1px solid rgba(255,255,255,.08);
-        border-radius:15px;
-        background:#101014;
-        min-height:48px;
+      #recommendHero .rec-copy {
+        left:20px;
+        right:20px;
+        bottom:18px;
+        display:flex;
+        flex-direction:column;
+        align-items:flex-start;
       }
-      .hero-streaming-strip .streaming-block { margin:0; }
-      .hero-streaming-strip .streaming-offers {
+      #recommendHero .rec-copy .streaming-block {
+        width:100%;
+        margin-top:9px;
+      }
+      #recommendHero .rec-copy .streaming-label,
+      #recommendHero .rec-copy .streaming-credit {
+        display:none;
+      }
+      #recommendHero .rec-copy .streaming-offers {
+        width:100%;
         flex-wrap:nowrap;
         overflow:hidden;
       }
-      .hero-streaming-strip .streaming-chip { flex:0 1 auto; }
-      .hero-streaming-strip .streaming-chip:nth-child(n+4) { display:none; }
-      .hero-streaming-strip .streaming-credit { margin-top:6px; }
+      #recommendHero .rec-copy .streaming-chip {
+        flex:0 1 auto;
+        padding:5px 8px;
+        background:rgba(7,7,10,.52);
+        backdrop-filter:blur(9px);
+        -webkit-backdrop-filter:blur(9px);
+      }
+      #recommendHero .rec-copy .streaming-chip b { max-width:118px; }
+      #recommendHero .rec-copy .streaming-chip:nth-child(n+3) { display:none; }
 
       .rec-row { min-height:92px; }
       .rec-row-copy .streaming-block { margin-top:6px; }
@@ -57,7 +71,7 @@
 
       @media (max-width:380px) {
         .mini-card .streaming-chip b { max-width:74px; }
-        .hero-streaming-strip .streaming-chip:nth-child(n+3) { display:none; }
+        #recommendHero .rec-copy .streaming-chip b { max-width:92px; }
       }
     `;
     document.head.appendChild(style);
@@ -188,34 +202,21 @@
     return recommendationMapLoading;
   }
 
-  function ensureHeroStrip() {
-    const hero = document.querySelector('#recommendHero');
-    if (!hero) return null;
-    let strip = document.querySelector('#recommendHeroStreaming');
-    if (!strip) {
-      strip = document.createElement('div');
-      strip.id = 'recommendHeroStreaming';
-      strip.className = 'hero-streaming-strip';
-      hero.insertAdjacentElement('afterend', strip);
-    }
-    return strip;
-  }
-
   async function decorateRecommendations() {
     await loadRecommendationIds();
 
-    document.querySelectorAll('#recommendHero .streaming-block').forEach(node => node.remove());
+    document.querySelector('#recommendHeroStreaming')?.remove();
 
     const heroTitle = document.querySelector('#recommendHero .rec-copy h2')?.textContent?.trim();
     const hero = recommendationIds.get(heroTitle);
-    const heroStrip = ensureHeroStrip();
-    if (hero && heroStrip) {
+    const heroCopy = document.querySelector('#recommendHero .rec-copy');
+    if (hero && heroCopy) {
       const key = cacheKey(hero);
-      const block = ensureBlock(heroStrip, key);
+      const block = ensureBlock(heroCopy, key);
       if (block.dataset.loaded !== '1') {
         block.dataset.loaded = '1';
         getAvailability(hero).then(data => {
-          if (data && block.isConnected) renderBlock(block, data, 3);
+          if (data && block.isConnected) renderBlock(block, data, 2);
         });
       }
     }
