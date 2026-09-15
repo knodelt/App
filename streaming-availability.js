@@ -16,7 +16,7 @@
       }
       .streaming-offers { display:flex; flex-wrap:wrap; gap:5px; min-width:0; }
       .streaming-chip {
-        display:inline-flex; align-items:center; gap:4px; min-width:0; max-width:100%;
+        display:inline-flex; align-items:center; gap:5px; min-width:0; max-width:100%;
         border:1px solid rgba(255,255,255,.11); border-radius:999px;
         background:rgba(255,255,255,.045); padding:5px 7px;
         color:#d8d2c9; font-size:8px; line-height:1; white-space:nowrap;
@@ -31,13 +31,14 @@
       .mini-card .streaming-chip { width:max-content; max-width:100%; }
       .mini-card .streaming-chip b { max-width:92px; }
 
-      #recommendHero .streaming-block {
-        position:absolute; z-index:4; left:20px; right:20px; bottom:78px;
-        margin:0;
+      #recommendHero .rec-copy { bottom:16px; }
+      #recommendHero .rec-copy .streaming-block { margin-top:10px; }
+      #recommendHero .rec-copy .streaming-offers { max-height:48px; overflow:hidden; }
+      #recommendHero .rec-copy .streaming-chip {
+        background:rgba(7,7,10,.52);
+        backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
       }
-      #recommendHero .streaming-offers { max-height:56px; overflow:hidden; }
-      #recommendHero .streaming-chip { background:rgba(7,7,10,.48); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
-      #recommendHero .streaming-credit { color:rgba(245,240,232,.42); }
+      #recommendHero .rec-copy .streaming-credit { color:rgba(245,240,232,.40); }
 
       .rec-row { min-height:92px; }
       .rec-row-copy .streaming-block { margin-top:6px; }
@@ -48,7 +49,7 @@
 
       @media (max-width:380px) {
         .mini-card .streaming-chip b { max-width:74px; }
-        #recommendHero .streaming-chip:nth-child(n+3) { display:none; }
+        #recommendHero .rec-copy .streaming-chip:nth-child(n+3) { display:none; }
       }
     `;
     document.head.appendChild(style);
@@ -87,16 +88,8 @@
     return promise;
   }
 
-  function formatPrice(value) {
-    if (!Number.isFinite(Number(value))) return null;
-    return new Intl.NumberFormat('de-DE', { style:'currency', currency:'EUR' }).format(Number(value));
-  }
-
   function offerText(offer) {
-    const price = formatPrice(offer.price);
-    if (price) return `${offer.label} ${price}`;
-    if (offer.type === 'rent' || offer.type === 'buy') return `${offer.label} · Preis n. v.`;
-    return offer.label;
+    return offer?.label || 'Verfügbar';
   }
 
   function ensureBlock(host, key) {
@@ -135,8 +128,7 @@
       });
     }
 
-    if (data?.source === 'watchmode') credit.textContent = 'Verfügbarkeit & Preise · Watchmode';
-    else credit.textContent = 'Verfügbarkeit · JustWatch via TMDB';
+    credit.textContent = 'Verfügbarkeit · JustWatch via TMDB';
   }
 
   function watchlistItems() {
@@ -193,14 +185,14 @@
 
     const heroTitle = document.querySelector('#recommendHero .rec-copy h2')?.textContent?.trim();
     const hero = recommendationIds.get(heroTitle);
-    const heroHost = document.querySelector('#recommendHero');
-    if (hero && heroHost) {
+    const heroCopy = document.querySelector('#recommendHero .rec-copy');
+    if (hero && heroCopy) {
       const key = cacheKey(hero);
-      const block = ensureBlock(heroHost, key);
+      const block = ensureBlock(heroCopy, key);
       if (block.dataset.loaded !== '1') {
         block.dataset.loaded = '1';
         getAvailability(hero).then(data => {
-          if (data && block.isConnected) renderBlock(block, data, 3);
+          if (data && block.isConnected) renderBlock(block, data, 2);
         });
       }
     }
