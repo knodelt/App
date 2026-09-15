@@ -249,27 +249,36 @@ async function handleDetails(request, env) {
       }, 200, { 'cache-control':'public, max-age=3600' });
     }
 
-    let data = await tmdb(`/person/${id}`, env, { language:'de-DE', append_to_response:'combined_credits' });
-    if (!String(data.biography || '').trim()) {
-      const fallback = await tmdb(`/person/${id}`, env, { language:'en-US', append_to_response:'combined_credits' });
-      data = { ...data, biography:fallback.biography || data.biography, combined_credits:data.combined_credits || fallback.combined_credits };
-    }
-
+    const data = await tmdb(`/person/${id}`, env, { language:'de-DE', append_to_response:'combined_credits' });
     const allCredits = [
       ...(data.combined_credits?.cast || []),
       ...(data.combined_credits?.crew || [])
-    ].sort((a,b) => Number(b.popularity || 0) - Number(a.popularity || 0));
+    ]
+      .filter(item => item.title || item.name)
+      .sort((a,b) => Number(b.popularity || 0) - Number(a.popularity || 0));
+
     const knownFor = uniqueNames(allCredits.map(x => x.title || x.name), 4);
-    const facts = [];
-    if (data.birthday) facts.push({ label:'Geboren', value:formatDateDE(data.birthday) });
-    if (data.place_of_birth) facts.push({ label:'Geburtsort', value:data.place_of_birth });
-    if (knownFor.length) facts.push({ label:'Bekannt aus', value:knownFor.join(', ') });
+    const department = data.known_for_department === 'Directing'
+      ? 'Regie'
+      : data.known_for_department === 'Acting'
+        ? 'Schauspiel'
+        : (data.known_for_department || 'Film & Serie');
+
+    const germanFallback = knownFor.length
+      ? `${data.name || 'Diese Person'} ist im Bereich ${department.toLowerCase()} tätig und unter anderem aus ${knownFor.join(', ')} bekannt.`
+      : `${data.name || 'Diese Person'} ist aus Film und Fernsehen bekannt.`;
+
+    const facts = [
+      knownFor.length ? { label:'Bekannt aus', value:knownFor.join(', ') } : null,
+      data.birthday ? { label:'Geboren', value:formatDateDE(data.birthday) } : null,
+      data.place_of_birth ? { label:'Geburtsort', value:data.place_of_birth } : null
+    ].filter(Boolean);
 
     return json({
       ok:true,
       details:{
-        description: cleanOverview(data.biography, knownFor.length ? `Bekannt aus ${knownFor.join(', ')}.` : 'Person aus Film und Fernsehen.'),
-        primaryMeta: data.known_for_department === 'Directing' ? 'Regie' : data.known_for_department === 'Acting' ? 'Schauspiel' : (data.known_for_department || 'Film & Serie'),
+        description: cleanOverview(data.biography, germanFallback),
+        primaryMeta: department,
         facts
       }
     }, 200, { 'cache-control':'public, max-age=3600' });
