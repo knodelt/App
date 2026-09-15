@@ -1,4 +1,4 @@
-const CACHE = 'frame-v13';
+const CACHE = 'frame-v14';
 const ASSETS = ['/', '/index.html', '/about.html', '/styles.css', '/app-layout.css', '/viewport-lock.js', '/app.js', '/tmdb-feed.js', '/card-details.js', '/watchlist-controls.js', '/recommendation-images.js', '/streaming-availability.js', '/manifest.webmanifest', '/icon.svg'];
 
 self.addEventListener('install', event => {
