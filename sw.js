@@ -1,5 +1,5 @@
-const CACHE = 'frame-v19';
-const ASSETS = ['/', '/index.html', '/about.html', '/styles.css', '/app-layout.css', '/viewport-lock.js', '/app.js', '/tmdb-feed.js', '/card-details.js', '/watchlist-controls.js', '/personalized-recommendations.js', '/streaming-availability.js', '/swipe-guidance.js', '/manifest.webmanifest', '/icon.svg'];
+const CACHE = 'frame-v20';
+const ASSETS = ['/', '/index.html', '/about.html', '/styles.css', '/app-layout.css', '/cinematic-theme.css', '/viewport-lock.js', '/app.js', '/tmdb-feed.js', '/card-details.js', '/watchlist-controls.js', '/personalized-recommendations.js', '/streaming-availability.js', '/swipe-guidance.js', '/manifest.webmanifest', '/icon.svg'];
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)));
