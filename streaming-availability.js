@@ -1,8 +1,6 @@
 (() => {
   const availabilityCache = new Map();
-  const recommendationIds = new Map();
   const inFlight = new Map();
-  let recommendationMapLoading = null;
 
   function injectStyles() {
     if (document.querySelector('#frameStreamingStyles')) return;
@@ -32,32 +30,16 @@
       .mini-card .streaming-chip b { max-width:92px; }
 
       #recommendHero .rec-copy {
-        left:20px;
-        right:20px;
-        bottom:18px;
-        display:flex;
-        flex-direction:column;
-        align-items:flex-start;
+        left:20px; right:20px; bottom:18px;
+        display:flex; flex-direction:column; align-items:flex-start;
       }
-      #recommendHero .rec-copy .streaming-block {
-        width:100%;
-        margin-top:9px;
-      }
+      #recommendHero .rec-copy .streaming-block { width:100%; margin-top:9px; }
       #recommendHero .rec-copy .streaming-label,
-      #recommendHero .rec-copy .streaming-credit {
-        display:none;
-      }
-      #recommendHero .rec-copy .streaming-offers {
-        width:100%;
-        flex-wrap:nowrap;
-        overflow:hidden;
-      }
+      #recommendHero .rec-copy .streaming-credit { display:none; }
+      #recommendHero .rec-copy .streaming-offers { width:100%; flex-wrap:nowrap; overflow:hidden; }
       #recommendHero .rec-copy .streaming-chip {
-        flex:0 1 auto;
-        padding:5px 8px;
-        background:rgba(7,7,10,.52);
-        backdrop-filter:blur(9px);
-        -webkit-backdrop-filter:blur(9px);
+        flex:0 1 auto; padding:5px 8px; background:rgba(7,7,10,.52);
+        backdrop-filter:blur(9px); -webkit-backdrop-filter:blur(9px);
       }
       #recommendHero .rec-copy .streaming-chip b { max-width:118px; }
       #recommendHero .rec-copy .streaming-chip:nth-child(n+3) { display:none; }
@@ -75,6 +57,13 @@
       }
     `;
     document.head.appendChild(style);
+  }
+
+  function itemFromDataset(node) {
+    const tmdbId = Number(node?.dataset?.tmdbId);
+    const type = node?.dataset?.mediaType;
+    if (!Number.isFinite(tmdbId) || tmdbId < 1 || !['movie','series'].includes(type)) return null;
+    return { tmdbId, type };
   }
 
   function cacheKey(item) {
@@ -110,9 +99,7 @@
     return promise;
   }
 
-  function offerText(offer) {
-    return offer?.label || 'Verfügbar';
-  }
+  function offerText(offer) { return offer?.label || 'Verfügbar'; }
 
   function ensureBlock(host, key) {
     let block = host.querySelector(`:scope > .streaming-block[data-stream-key="${CSS.escape(key)}"]`);
@@ -149,89 +136,58 @@
         offersHost.appendChild(chip);
       });
     }
-
     credit.textContent = 'Verfügbarkeit · JustWatch via TMDB';
   }
 
   function watchlistItems() {
-    try {
-      return state.saved.map(id => catalog.find(item => item.id === id)).filter(Boolean);
-    } catch {
-      return [];
-    }
+    try { return state.saved.map(id => catalog.find(item => item.id === id)).filter(Boolean); }
+    catch { return []; }
   }
 
   function decorateWatchlist() {
     const cards = [...document.querySelectorAll('#watchlistGrid .mini-card')];
     const items = watchlistItems();
-    cards.forEach((card, index) => {
+    cards.forEach((card,index) => {
       const item = items[index];
       if (!item || !['movie','series'].includes(item.type) || !item.tmdbId) return;
       const copy = card.querySelector('.mini-copy');
       if (!copy) return;
       const key = cacheKey(item);
-      const block = ensureBlock(copy, key);
+      const block = ensureBlock(copy,key);
       if (block.dataset.loaded === '1') return;
       block.dataset.loaded = '1';
       getAvailability(item).then(data => {
-        if (data && block.isConnected) renderBlock(block, data, 2);
+        if (data && block.isConnected) renderBlock(block,data,2);
         else if (block.isConnected) block.querySelector('.streaming-empty').textContent = 'Verfügbarkeit gerade nicht erreichbar.';
       });
     });
   }
 
-  async function loadRecommendationIds() {
-    if (recommendationMapLoading) return recommendationMapLoading;
-    recommendationMapLoading = (async () => {
-      try {
-        const response = await fetch('/api/recommendation-art', { headers:{ accept:'application/json' } });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok || !Array.isArray(data.items)) throw new Error(data.message || `Recommendation IDs ${response.status}`);
-        data.items.forEach(item => {
-          if (!item?.title || !item?.tmdbId) return;
-          recommendationIds.set(item.title, {
-            title:item.title,
-            tmdbId:item.tmdbId,
-            type:item.mediaType === 'tv' ? 'series' : 'movie'
-          });
-        });
-      } catch (error) {
-        console.warn('[FRAME STREAMING RECOMMENDATIONS]', error.message);
-      }
-    })();
-    return recommendationMapLoading;
-  }
-
-  async function decorateRecommendations() {
-    await loadRecommendationIds();
-
-    document.querySelector('#recommendHeroStreaming')?.remove();
-
-    const heroTitle = document.querySelector('#recommendHero .rec-copy h2')?.textContent?.trim();
-    const hero = recommendationIds.get(heroTitle);
-    const heroCopy = document.querySelector('#recommendHero .rec-copy');
+  function decorateRecommendations() {
+    const heroHost = document.querySelector('#recommendHero');
+    const heroCopy = heroHost?.querySelector('.rec-copy');
+    const hero = itemFromDataset(heroHost);
     if (hero && heroCopy) {
       const key = cacheKey(hero);
-      const block = ensureBlock(heroCopy, key);
+      const block = ensureBlock(heroCopy,key);
       if (block.dataset.loaded !== '1') {
         block.dataset.loaded = '1';
         getAvailability(hero).then(data => {
-          if (data && block.isConnected) renderBlock(block, data, 2);
+          if (data && block.isConnected) renderBlock(block,data,2);
         });
       }
     }
 
     document.querySelectorAll('#recommendList .rec-row').forEach(row => {
-      const title = row.querySelector('.rec-row-copy strong')?.textContent?.trim();
-      const item = recommendationIds.get(title);
+      const item = itemFromDataset(row);
       const copy = row.querySelector('.rec-row-copy');
       if (!item || !copy) return;
       const key = cacheKey(item);
-      const block = ensureBlock(copy, key);
+      const block = ensureBlock(copy,key);
       if (block.dataset.loaded === '1') return;
       block.dataset.loaded = '1';
       getAvailability(item).then(data => {
-        if (data && block.isConnected) renderBlock(block, data, 1);
+        if (data && block.isConnected) renderBlock(block,data,1);
       });
     });
   }
@@ -241,8 +197,10 @@
   decorateRecommendations();
 
   const watchGrid = document.querySelector('#watchlistGrid');
-  if (watchGrid) new MutationObserver(() => queueMicrotask(decorateWatchlist)).observe(watchGrid, { childList:true, subtree:true });
+  if (watchGrid) new MutationObserver(() => queueMicrotask(decorateWatchlist)).observe(watchGrid,{childList:true,subtree:true});
 
   const recommendView = document.querySelector('#recommendView');
-  if (recommendView) new MutationObserver(() => queueMicrotask(decorateRecommendations)).observe(recommendView, { childList:true, subtree:true });
+  if (recommendView) new MutationObserver(() => queueMicrotask(decorateRecommendations)).observe(recommendView,{childList:true,subtree:true});
+
+  document.addEventListener('frame:recommendations-rendered', () => queueMicrotask(decorateRecommendations));
 })();
