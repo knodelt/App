@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-  <meta name="theme-color" content="#050506" />
+  <meta name="theme-color" content="#020203" />
   <meta name="description" content="FRAME — Swipe deinen Film- und Seriengeschmack." />
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icon.svg" type="image/svg+xml" />
@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="/styles.css" />
   <link rel="stylesheet" href="/app-layout.css" />
   <link rel="stylesheet" href="/cinematic-theme.css" />
-  <title>FRAME — Swipe your taste</title>
+  <title>FRAME — Cinema Discovery</title>
 </head>
 <body>
   <div class="grain" aria-hidden="true"></div>
@@ -23,7 +23,7 @@
         <span class="brand-mark">F</span>
         <span class="brand-copy">
           <strong>FRAME</strong>
-          <small>SWIPE YOUR TASTE</small>
+          <small>CINEMA DISCOVERY / 24 FPS</small>
         </span>
       </button>
       <button class="profile-chip" id="profileShortcut" aria-label="Geschmacksprofil öffnen">
@@ -35,10 +35,10 @@
       <section class="view active" id="discoverView" data-view="discover">
         <div class="section-head">
           <div>
-            <p class="eyebrow">DEIN FEED</p>
+            <p class="eyebrow">NOW SCREENING</p>
             <h1>Was fühlt sich<br><em>richtig</em> an?</h1>
           </div>
-          <div class="mystery-code" id="mysteryCode" title="Ein Sitzplatz?">ROW 237</div>
+          <div class="mystery-code" id="mysteryCode" title="Ein Sitzplatz?">CUT 237</div>
         </div>
 
         <div class="filter-row" role="tablist" aria-label="Feed Filter">
@@ -78,7 +78,7 @@
       <section class="view" id="watchlistView" data-view="watchlist">
         <div class="section-head compact">
           <div>
-            <p class="eyebrow">FÜR SPÄTER</p>
+            <p class="eyebrow">SAVED REEL</p>
             <h1>Deine <em>Watchlist</em></h1>
           </div>
           <span class="count-pill" id="watchlistCount">0</span>
@@ -89,7 +89,7 @@
       <section class="view" id="recommendView" data-view="recommend">
         <div class="section-head compact">
           <div>
-            <p class="eyebrow">VON FRAME GELERNT</p>
+            <p class="eyebrow">PERSONAL SCREENING</p>
             <h1>Für <em>dich</em></h1>
           </div>
           <span class="match-orb">LIVE</span>
@@ -105,7 +105,7 @@
       <section class="view" id="tasteView" data-view="taste">
         <div class="section-head compact">
           <div>
-            <p class="eyebrow">DEIN PROFIL</p>
+            <p class="eyebrow">TASTE NEGATIVE</p>
             <h1>Movie <em>DNA</em></h1>
           </div>
           <span class="film-counter"><b id="swipeCount">0</b><small>SWIPES</small></span>
