@@ -1,0 +1,374 @@
+/* FRAME Cinematic Theme — poster-first, dark theater, subtle film language */
+:root {
+  --bg: #050506;
+  --panel: #0b0b0d;
+  --panel-2: #111114;
+  --ink: #f2eee7;
+  --muted: #8d8982;
+  --line: rgba(255,255,255,.11);
+  --gold: #caa66a;
+  --cream: #f0ebe2;
+  --good: #b9d86e;
+  --bad: #d96f67;
+  --cinema-red: #9d2f2a;
+  --projector: #d3aa64;
+  --shadow: 0 24px 64px rgba(0,0,0,.60);
+}
+
+html, body {
+  background:#050506;
+}
+
+body {
+  background:
+    radial-gradient(ellipse at 50% -12%, rgba(160,46,36,.15) 0%, rgba(75,28,25,.05) 26%, transparent 52%),
+    linear-gradient(180deg,#080809 0%,#040405 100%);
+}
+
+body::before {
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+  background:
+    linear-gradient(90deg, rgba(0,0,0,.38), transparent 17%, transparent 83%, rgba(0,0,0,.38)),
+    radial-gradient(ellipse at center, transparent 54%, rgba(0,0,0,.42) 100%);
+}
+
+.grain {
+  opacity:.085;
+  mix-blend-mode:screen;
+}
+
+/* Brand = a tiny frame, not a generic round app logo. */
+.topbar {
+  border-bottom:1px solid rgba(255,255,255,.035);
+  background:linear-gradient(180deg,rgba(10,10,11,.96),rgba(6,6,7,.70));
+}
+
+.brand { gap:11px; }
+.brand-mark {
+  width:39px;
+  aspect-ratio:1.28;
+  border-radius:7px;
+  border:1px solid rgba(202,166,106,.58);
+  color:var(--projector);
+  background:#09090a;
+  box-shadow:
+    inset 0 0 0 2px rgba(0,0,0,.75),
+    inset 0 0 0 3px rgba(202,166,106,.08),
+    0 0 24px rgba(157,47,42,.08);
+  font-size:18px;
+  position:relative;
+}
+.brand-mark::before,
+.brand-mark::after {
+  content:"";
+  position:absolute;
+  top:4px;
+  bottom:4px;
+  width:2px;
+  border-top:3px dotted rgba(202,166,106,.38);
+  border-bottom:3px dotted rgba(202,166,106,.38);
+}
+.brand-mark::before { left:3px; }
+.brand-mark::after { right:3px; }
+.brand-copy strong {
+  font-size:13px;
+  letter-spacing:.23em;
+}
+.brand-copy small {
+  color:#68645e;
+  letter-spacing:.30em;
+}
+
+.profile-ring {
+  border-radius:8px;
+  border:1px solid rgba(202,166,106,.24);
+  background:#09090b;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.025);
+}
+.profile-ring::after {
+  border-radius:7px;
+  border:0;
+  border-bottom:2px solid var(--cinema-red);
+  transform:none;
+}
+
+/* Editorial cinema headings. */
+.eyebrow {
+  color:#a9a39a;
+  font-size:8px;
+  letter-spacing:.28em;
+}
+.eyebrow::before {
+  content:"";
+  display:inline-block;
+  width:13px;
+  height:1px;
+  vertical-align:middle;
+  margin:0 8px 2px 0;
+  background:var(--cinema-red);
+}
+
+h1 {
+  color:#f4f0e9;
+  text-shadow:0 2px 20px rgba(0,0,0,.35);
+}
+h1 em { color:#c9c1b5; }
+.mystery-code { color:#383634; }
+
+/* Filters = compact screening tabs. */
+.filter-row { gap:6px; }
+.filter {
+  border-radius:7px;
+  background:#09090b;
+  border-color:rgba(255,255,255,.09);
+  color:#77736e;
+  letter-spacing:.03em;
+}
+.filter.active {
+  background:#eee9df;
+  color:#080809;
+  border-color:#eee9df;
+  box-shadow:0 5px 18px rgba(0,0,0,.20);
+}
+
+/* Main swipe card = framed movie still / poster. */
+.swipe-card {
+  border-radius:18px !important;
+  border:1px solid rgba(238,233,223,.13);
+  background:#09090b;
+  box-shadow:
+    0 30px 74px rgba(0,0,0,.64),
+    0 0 0 1px rgba(0,0,0,.62);
+}
+.swipe-card::before {
+  content:"";
+  position:absolute;
+  z-index:6;
+  pointer-events:none;
+  inset:0;
+  border-radius:inherit;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.025), inset 0 -80px 100px rgba(0,0,0,.10);
+}
+.swipe-card:nth-last-child(2) { transform:translateY(7px) scale(.985); filter:brightness(.62); }
+.swipe-card:nth-last-child(3) { transform:translateY(13px) scale(.968); filter:brightness(.40); }
+
+.card-art::before {
+  background:
+    linear-gradient(180deg,rgba(0,0,0,.04) 0%,transparent 38%,rgba(0,0,0,.14) 52%,rgba(2,2,3,.90) 88%,rgba(2,2,3,.98) 100%) !important;
+}
+.card-art::after {
+  border-radius:inherit;
+  border:0;
+  background:
+    linear-gradient(90deg,rgba(0,0,0,.12),transparent 12%,transparent 88%,rgba(0,0,0,.12));
+}
+
+.card-top { top:15px; left:15px; right:15px; }
+.type-badge,
+.match-badge {
+  border-radius:6px;
+  padding:6px 8px;
+  border:1px solid rgba(255,255,255,.13);
+  background:rgba(7,7,8,.62);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  font-size:8px;
+  letter-spacing:.16em;
+}
+.type-badge { color:#c9c2b6; }
+.match-badge {
+  color:#ded6c9;
+  border-color:rgba(202,166,106,.24);
+}
+
+.card-copy { left:19px !important; right:19px !important; }
+.card-meta {
+  color:#b1aaa0;
+  font-size:10px;
+  letter-spacing:.03em;
+}
+.card-meta i { background:var(--cinema-red); }
+.card-title {
+  font-size:clamp(29px,min(9vw,4.6dvh),38px) !important;
+  line-height:.94;
+  color:#f7f2ea;
+  text-shadow:0 3px 22px rgba(0,0,0,.85);
+}
+.card-sub {
+  color:#d0c9be !important;
+  font-size:11px;
+  letter-spacing:.02em;
+}
+.card-blurb { color:#c7c0b6 !important; }
+.signal-row span {
+  border-radius:5px !important;
+  padding:5px 7px !important;
+  background:rgba(4,4,5,.54) !important;
+  border-color:rgba(255,255,255,.09) !important;
+  color:#aaa49b !important;
+}
+
+.swipe-stamp {
+  border-radius:5px;
+  background:rgba(4,4,5,.70);
+  backdrop-filter:blur(6px);
+}
+.swipe-stamp.like { color:#b8d869; }
+.swipe-stamp.save { color:#d3aa64; }
+.swipe-stamp.dislike { color:#e2766d; }
+
+/* Action bar = editing console / three deliberate choices. */
+.actions {
+  gap:7px !important;
+}
+.action {
+  border-radius:8px !important;
+  min-height:54px;
+  background:linear-gradient(180deg,#0c0c0e,#080809);
+  border-color:rgba(255,255,255,.085);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.025);
+}
+.action span:last-child { font-size:8px; letter-spacing:.20em; }
+.action-icon { font-size:17px; }
+.action-like { border-left:2px solid rgba(185,216,110,.58); }
+.action-save { border-bottom:2px solid rgba(211,170,100,.48); }
+.action-dislike { border-right:2px solid rgba(217,111,103,.58); }
+.gesture-hint { color:#484541; letter-spacing:.08em; }
+.media-credit { color:#302f2d !important; }
+
+/* Bottom nav = understated screening-room console. */
+.bottom-nav {
+  background:rgba(5,5,6,.95) !important;
+  border-top:1px solid rgba(255,255,255,.075) !important;
+  box-shadow:0 -16px 32px rgba(0,0,0,.28);
+}
+.nav-item { color:#514f4c; }
+.nav-item span { font-size:16px !important; }
+.nav-item small { letter-spacing:.08em; text-transform:uppercase; }
+.nav-item.active { color:#d8d1c6; }
+.nav-item.active span { color:var(--projector); text-shadow:0 0 18px rgba(202,166,106,.18); }
+
+/* Watchlist: poster shelf, less card chrome. */
+.list-grid { gap:10px; }
+.mini-card {
+  border-radius:10px;
+  background:#09090b;
+  border-color:rgba(255,255,255,.075);
+  box-shadow:0 16px 36px rgba(0,0,0,.25);
+}
+.mini-art { aspect-ratio:2/3; }
+.mini-copy { padding:10px 10px 12px; border-top:1px solid rgba(255,255,255,.045); }
+.mini-copy strong { font-size:15px; color:#eee9e1; }
+.mini-copy small { color:#716e69; letter-spacing:.05em; text-transform:uppercase; }
+.count-pill {
+  border-radius:7px;
+  background:#ebe5da;
+  box-shadow:inset 0 0 0 2px #070708;
+}
+
+/* Recommendation screen = feature presentation + poster credits. */
+.recommend-hero {
+  min-height:300px;
+  border-radius:14px;
+  border-color:rgba(255,255,255,.10);
+  box-shadow:0 26px 62px rgba(0,0,0,.45);
+}
+.recommend-hero::before {
+  content:"FEATURE PRESENTATION";
+  position:absolute;
+  z-index:3;
+  top:13px;
+  left:14px;
+  padding:5px 7px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(5,5,6,.48);
+  backdrop-filter:blur(10px);
+  border-radius:5px;
+  color:#bbb4a9;
+  font-size:6px;
+  letter-spacing:.22em;
+}
+.rec-art::after {
+  background:linear-gradient(180deg,rgba(0,0,0,.02) 28%,rgba(0,0,0,.22) 55%,rgba(0,0,0,.96) 100%) !important;
+}
+.rec-score {
+  border-radius:5px;
+  background:#c3da72;
+  padding:6px 8px;
+  letter-spacing:.07em;
+}
+.rec-copy h2 { color:#f4efe8; font-size:34px; }
+.rec-copy p { color:#9a958d; text-transform:uppercase; letter-spacing:.08em; font-size:9px; }
+.why-panel { padding-top:17px; }
+.reason-chips span {
+  border-radius:6px;
+  background:#09090b;
+  color:#9d9890;
+  padding:6px 8px;
+  font-size:9px;
+}
+.recommend-list { gap:8px; }
+.rec-row {
+  min-height:106px !important;
+  border-radius:10px;
+  background:#09090b;
+  border-color:rgba(255,255,255,.075);
+  padding:9px;
+}
+.rec-thumb {
+  width:58px;
+  border-radius:5px !important;
+  box-shadow:0 8px 18px rgba(0,0,0,.30);
+}
+.rec-row-copy strong { color:#eee9e0; font-size:17px; }
+.rec-row-copy small { color:#77736d; text-transform:uppercase; letter-spacing:.05em; font-size:9px; }
+.rec-row-score { color:#c3da72; }
+
+/* Streaming chips should read like compact availability labels, not pills everywhere. */
+.streaming-chip {
+  border-radius:5px !important;
+  background:rgba(5,5,6,.62) !important;
+  border-color:rgba(255,255,255,.09) !important;
+}
+.streaming-label { color:#65615c !important; letter-spacing:.16em !important; }
+
+/* DNA = lab card / contact sheet. */
+.dna-card {
+  border-radius:14px;
+  border-color:rgba(202,166,106,.18);
+  background:
+    linear-gradient(180deg,rgba(157,47,42,.055),transparent 30%),
+    #09090b;
+  box-shadow:0 24px 55px rgba(0,0,0,.35);
+}
+.dna-card::after {
+  content:"24";
+  right:10px;
+  bottom:-26px;
+  font-size:118px;
+  color:rgba(202,166,106,.035);
+}
+.progress-track { background:#1b1a19; }
+.progress-track span { background:linear-gradient(90deg,var(--cinema-red),var(--projector)); }
+.tag-cloud span,
+.tag-cloud.muted span { border-radius:5px; }
+.stats-grid article { border-radius:9px; background:#09090b; }
+.ghost-btn { border-radius:8px; background:#080809; }
+
+/* Long-press detail should feel like an info card over the same film still. */
+.detail-body {
+  border-radius:12px !important;
+  background:linear-gradient(180deg,rgba(7,7,8,.46),rgba(5,5,6,.88)) !important;
+  border-color:rgba(255,255,255,.10) !important;
+}
+.detail-fact-row span { border-radius:5px !important; }
+.detail-close { border-radius:7px !important; }
+
+@media (max-height:760px) {
+  .brand-mark { width:35px; }
+  .recommend-hero { min-height:280px; }
+}
