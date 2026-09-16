@@ -13,6 +13,7 @@ wrangler.jsonc
 worker.js
 main-worker.js
 availability.js
+recommendations-api.js
 package.json
 package-lock.json
 .gitignore
