@@ -151,8 +151,30 @@
       }
       .recommend-loading b,
       .recommend-error b { display:block; color:var(--cream); font-family:"Playfair Display",serif; font-size:24px; margin-bottom:7px; }
-      #recommendHero .rec-art { background-size:cover !important; background-position:center 28% !important; }
+      #recommendHero .rec-art {
+        background-size:cover !important;
+        background-position:center 28% !important;
+        background-repeat:no-repeat !important;
+      }
       #recommendList .rec-row { position:relative; }
+      #recommendList .rec-thumb {
+        width:60px;
+        flex:0 0 60px;
+        aspect-ratio:2/3;
+        height:auto;
+        display:block;
+        object-fit:cover;
+        object-position:center top;
+        border-radius:10px;
+        background:#17171b;
+      }
+      #recommendList .rec-thumb-fallback {
+        width:60px;
+        flex:0 0 60px;
+        aspect-ratio:2/3;
+        border-radius:10px;
+        background:linear-gradient(145deg,#51483d,#18181b);
+      }
       .rec-reason-mini { display:block; color:#706c66; font-size:7px; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px; }
       .profile-signal-note { color:#5d5953; font-size:7px; letter-spacing:.08em; margin:6px 0 0 2px; }
     `;
@@ -200,10 +222,15 @@
       .map(reason => `<span>${escapeHtml(reason)}</span>`).join('');
 
     listHost.innerHTML = items.slice(1,7).map(item => {
-      const poster = imageUrl(item.poster || item.backdrop, 'w342');
+      const poster = imageUrl(item.poster, 'w342');
+      const fallback = imageUrl(item.backdrop, 'w342');
+      const image = poster || fallback;
       const reason = (item.reasons || [])[0] || 'Aus deinem Profil';
+      const thumb = image
+        ? `<img class="rec-thumb${poster ? '' : ' is-backdrop'}" src="${escapeHtml(image)}" alt="Poster von ${escapeHtml(item.title)}" loading="lazy" decoding="async">`
+        : '<div class="rec-thumb-fallback" aria-hidden="true"></div>';
       return `<article class="rec-row" data-tmdb-id="${item.tmdbId}" data-media-type="${item.type}">
-        <div class="rec-thumb" style="${poster ? `background-image:url('${poster}')` : 'background:linear-gradient(145deg,#51483d,#18181b)'}"></div>
+        ${thumb}
         <div class="rec-row-copy">
           <strong>${escapeHtml(item.title)}</strong>
           <small>${item.type === 'series' ? 'Serie' : 'Film'} · ${escapeHtml(item.year || '—')}</small>
