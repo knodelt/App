@@ -1,0 +1,349 @@
+/* FRAME TYPOGRAPHY REBOOT
+   Display: Cormorant Garamond
+   Interface: Inter Tight
+   Technical metadata: IBM Plex Mono
+*/
+:root {
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-ui: "Inter Tight", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+html, body, button, input, textarea, select {
+  font-family: var(--font-ui) !important;
+}
+
+/* FILM TITLE / POSTER LANGUAGE */
+h1,
+.card-title,
+.mini-copy strong,
+.rec-copy h2,
+.rec-row-copy strong,
+.detail-title,
+.empty-list b,
+.empty-state h2,
+.dna-score,
+.brand-mark {
+  font-family: var(--font-display) !important;
+  font-variant-numeric: lining-nums;
+}
+
+.card-title {
+  font-weight: 600 !important;
+  font-size: clamp(35px, min(10.7vw, 5.6dvh), 48px) !important;
+  line-height: .84 !important;
+  letter-spacing: -.045em !important;
+}
+
+#watchlistView h1,
+#recommendView h1,
+#tasteView h1 {
+  font-family: var(--font-display) !important;
+  font-size: 39px !important;
+  line-height: .82 !important;
+  letter-spacing: -.045em !important;
+  font-weight: 600 !important;
+}
+
+#watchlistView h1 em,
+#recommendView h1 em,
+#tasteView h1 em {
+  font-family: inherit !important;
+  font-style: italic;
+  font-weight: 500 !important;
+}
+
+.mini-copy strong {
+  font-size: 18px !important;
+  line-height: .88 !important;
+  letter-spacing: -.025em !important;
+  font-weight: 600 !important;
+}
+
+#recommendView .rec-copy h2 {
+  font-size: clamp(37px, 10.5vw, 48px) !important;
+  line-height: .83 !important;
+  letter-spacing: -.045em !important;
+  font-weight: 600 !important;
+}
+
+#recommendView .rec-row-copy strong {
+  font-size: 20px !important;
+  line-height: .92 !important;
+  letter-spacing: -.025em !important;
+  font-weight: 600 !important;
+}
+
+.detail-title {
+  font-size: clamp(34px, 10vw, 46px) !important;
+  line-height: .84 !important;
+  letter-spacing: -.04em !important;
+  font-weight: 600 !important;
+}
+
+.dna-score strong {
+  font-family: var(--font-display) !important;
+  font-size: 66px !important;
+  font-weight: 600 !important;
+  letter-spacing: -.05em !important;
+}
+.dna-score span {
+  font-family: var(--font-mono) !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+}
+
+/* BRAND / UI */
+.brand-copy strong {
+  font-family: var(--font-ui) !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  letter-spacing: .32em !important;
+}
+.brand-copy small {
+  font-family: var(--font-mono) !important;
+  font-size: 5.5px !important;
+  font-weight: 500 !important;
+  letter-spacing: .18em !important;
+}
+.brand-mark {
+  font-size: 20px !important;
+  font-weight: 600 !important;
+  font-style: italic;
+}
+
+.card-blurb,
+.detail-description,
+.dna-card > p,
+.empty-state p,
+.empty-list,
+.rec-row-copy,
+.mini-copy {
+  font-family: var(--font-ui) !important;
+}
+
+.card-blurb {
+  font-size: 11px !important;
+  line-height: 1.38 !important;
+  font-weight: 400 !important;
+  letter-spacing: .005em !important;
+}
+
+.detail-description {
+  font-size: 13px !important;
+  line-height: 1.44 !important;
+  letter-spacing: 0 !important;
+}
+
+/* TECHNICAL / PROJECTOR LANGUAGE */
+.topbar::after,
+.eyebrow,
+.mystery-code,
+.filter,
+.type-badge,
+.match-badge,
+.card-meta,
+.signal-row span,
+.swipe-stamp,
+.action span:last-child,
+.gesture-hint,
+.media-credit,
+.nav-item small,
+.profile-ring,
+.count-pill,
+.match-orb,
+.film-counter,
+.rec-score,
+.rec-row-score,
+.rec-reason-mini,
+.reason-chips span,
+.streaming-label,
+.streaming-chip,
+.streaming-credit,
+.streaming-empty,
+.dna-topline,
+.taste-title small,
+.tag-cloud span,
+.stats-grid span,
+.ghost-btn,
+.tiny-credit,
+.detail-kicker,
+.detail-fact-row span,
+.detail-note b,
+.detail-status,
+.detail-footer,
+.profile-signal-note {
+  font-family: var(--font-mono) !important;
+}
+
+.topbar::after {
+  font-size: 5px !important;
+  font-weight: 500 !important;
+  letter-spacing: .16em !important;
+}
+
+.eyebrow {
+  font-size: 6px !important;
+  font-weight: 600 !important;
+  letter-spacing: .22em !important;
+}
+
+.mystery-code {
+  font-size: 6px !important;
+  letter-spacing: .16em !important;
+}
+
+.filter {
+  font-size: 7px !important;
+  font-weight: 500 !important;
+  letter-spacing: .08em !important;
+}
+
+.type-badge,
+.match-badge {
+  font-size: 6.5px !important;
+  font-weight: 500 !important;
+  letter-spacing: .10em !important;
+}
+
+.card-meta {
+  font-size: 8px !important;
+  font-weight: 500 !important;
+  letter-spacing: .06em !important;
+}
+
+.card-sub {
+  font-family: var(--font-ui) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: .025em !important;
+  text-transform: none !important;
+}
+
+.signal-row span {
+  font-size: 6px !important;
+  font-weight: 500 !important;
+  letter-spacing: .035em !important;
+}
+
+.action span:last-child {
+  font-size: 6px !important;
+  font-weight: 600 !important;
+  letter-spacing: .16em !important;
+}
+
+.gesture-hint {
+  font-size: 6px !important;
+  letter-spacing: .055em !important;
+}
+
+.nav-item small {
+  font-size: 6px !important;
+  font-weight: 500 !important;
+  letter-spacing: .10em !important;
+}
+
+.profile-ring {
+  font-size: 6px !important;
+  letter-spacing: .04em !important;
+}
+.profile-ring span {
+  font-family: var(--font-mono) !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+}
+
+.count-pill,
+.match-orb,
+.film-counter {
+  font-size: 8px !important;
+  font-weight: 600 !important;
+  letter-spacing: .08em !important;
+}
+
+#watchlistView .mini-copy small,
+#recommendView .rec-copy p,
+#recommendView .rec-row-copy small {
+  font-family: var(--font-mono) !important;
+  font-size: 7px !important;
+  font-weight: 500 !important;
+  letter-spacing: .07em !important;
+  text-transform: uppercase;
+}
+
+.rec-score,
+.rec-row-score {
+  font-weight: 600 !important;
+  letter-spacing: .03em !important;
+}
+
+.reason-chips span,
+.streaming-chip {
+  font-size: 6.5px !important;
+  letter-spacing: .025em !important;
+}
+
+.dna-topline,
+.detail-kicker,
+.detail-status,
+.detail-footer,
+.tiny-credit {
+  font-size: 6px !important;
+  font-weight: 500 !important;
+  letter-spacing: .16em !important;
+}
+
+.detail-fact-row span {
+  font-size: 7px !important;
+  letter-spacing: .035em !important;
+}
+.detail-note b {
+  font-size: 6px !important;
+  letter-spacing: .12em !important;
+}
+.detail-note span {
+  font-family: var(--font-ui) !important;
+  font-size: 10.5px !important;
+}
+
+/* Make the poster title feel deliberately cinematic, not like a web heading. */
+#discoverView .card-copy {
+  padding-left: 12px !important;
+}
+#discoverView .card-title::after {
+  content: "";
+  display: block;
+  width: 34px;
+  height: 1px;
+  margin-top: 9px;
+  background: rgba(176,54,47,.72);
+}
+
+/* Recommendation list reads like a credits/program sheet. */
+#recommendView .rec-row-copy {
+  padding-top: 1px;
+}
+#recommendView .rec-reason-mini {
+  margin-top: 5px !important;
+  font-size: 5.5px !important;
+  letter-spacing: .06em !important;
+}
+
+/* Watchlist poster labels are now closer to festival catalogue typography. */
+#watchlistView .mini-copy {
+  padding-bottom: 10px !important;
+}
+
+@media (max-height: 720px) {
+  .card-title {
+    font-size: clamp(31px, 9.3vw, 40px) !important;
+  }
+  #watchlistView h1,
+  #recommendView h1,
+  #tasteView h1 {
+    font-size: 35px !important;
+  }
+  #recommendView .rec-copy h2 {
+    font-size: 38px !important;
+  }
+}
