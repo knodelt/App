@@ -46,7 +46,7 @@
     loading = true;
 
     try {
-      const response = await fetch(`/api/feed?page=${page}`, { headers: { accept: 'application/json' } });
+      const response = await fetch(`/api/feed?page=${page}&market=de-v2`, { headers: { accept: 'application/json' }, cache: 'no-store' });
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
