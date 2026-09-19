@@ -135,7 +135,7 @@ function renderDeck() {
       <div class="card-art">
         <span class="art-symbol">${item.symbol}</span><span class="art-lines"></span>
       </div>
-      <div class="card-top"><span class="type-badge">${typeLabel(item.type)}</span><span class="match-badge">FRAME ${getPreviewMatch(item)}%</span></div>
+      <div class="card-top"><span class="type-badge">${typeLabel(item.type)}</span></div>
       <span class="swipe-stamp like">SUPER</span><span class="swipe-stamp save">MERKEN</span><span class="swipe-stamp dislike">MIST</span>
       <div class="card-copy">
         <div class="card-meta"><span>${item.year}</span><i></i><span>${item.meta}</span></div>
