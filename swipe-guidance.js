@@ -19,7 +19,54 @@
       .swipe-card.guided-x .swipe-stamp.save { opacity:0 !important; }
       .swipe-card.guided-y .swipe-stamp.like,
       .swipe-card.guided-y .swipe-stamp.dislike { opacity:0 !important; }
+
+      /* Direction feedback belongs in the center of the artwork, not at the edge. */
+      .swipe-card .swipe-stamp {
+        top:50% !important;
+        left:50% !important;
+        right:auto !important;
+        z-index:20 !important;
+        min-width:150px;
+        padding:14px 20px !important;
+        transform:translate(-50%,-50%) scale(.94) rotate(0deg) !important;
+        text-align:center;
+        border-width:2px !important;
+        border-radius:16px !important;
+        background:rgba(6,6,9,.42) !important;
+        -webkit-backdrop-filter:blur(12px) saturate(1.15);
+        backdrop-filter:blur(12px) saturate(1.15);
+        box-shadow:0 18px 48px rgba(0,0,0,.42);
+        font-family:Manrope,system-ui,sans-serif !important;
+        font-size:26px !important;
+        line-height:1 !important;
+        font-weight:800 !important;
+        letter-spacing:.08em !important;
+        pointer-events:none;
+      }
+      .swipe-card .swipe-stamp.like {
+        color:#a7e96f !important;
+        border-color:rgba(167,233,111,.92) !important;
+        transform:translate(-50%,-50%) scale(.94) rotate(-4deg) !important;
+      }
+      .swipe-card .swipe-stamp.dislike {
+        color:#ff6f87 !important;
+        border-color:rgba(255,111,135,.92) !important;
+        transform:translate(-50%,-50%) scale(.94) rotate(4deg) !important;
+      }
+      .swipe-card .swipe-stamp.save {
+        color:#ffd06a !important;
+        border-color:rgba(255,208,106,.88) !important;
+        font-size:22px !important;
+      }
       .gesture-hint strong { color:#8d887f; font-weight:600; }
+
+      @media (max-width:380px) {
+        .swipe-card .swipe-stamp {
+          min-width:132px;
+          padding:12px 16px !important;
+          font-size:23px !important;
+        }
+      }
     `;
     document.head.appendChild(style);
   }
@@ -92,8 +139,9 @@
       drag.dy = 0;
       const rotate = rawDx * .045;
       drag.card.style.transform = `translate3d(${rawDx}px, 0, 0) rotate(${rotate}deg)`;
-      like.style.opacity = rawDx < 0 ? Math.min(1, absX / 82) : 0;
-      dislike.style.opacity = rawDx > 0 ? Math.min(1, absX / 82) : 0;
+      const xStrength = Math.min(1, Math.max(0, (absX - 4) / 30));
+      like.style.opacity = rawDx < 0 ? (0.24 + xStrength * 0.76) : 0;
+      dislike.style.opacity = rawDx > 0 ? (0.24 + xStrength * 0.76) : 0;
       save.style.opacity = 0;
       return;
     }
@@ -115,8 +163,9 @@
     drag.dx = previewX;
     drag.dy = resistedY;
     drag.card.style.transform = `translate3d(${previewX}px, ${resistedY}px, 0) rotate(${previewX * .025}deg)`;
-    like.style.opacity = rawDx < -8 ? Math.min(.45, absX / 160) : 0;
-    dislike.style.opacity = rawDx > 8 ? Math.min(.45, absX / 160) : 0;
+    const previewStrength = Math.min(.72, Math.max(0, (absX - 4) / 28));
+    like.style.opacity = rawDx < -5 ? (0.18 + previewStrength) : 0;
+    dislike.style.opacity = rawDx > 5 ? (0.18 + previewStrength) : 0;
     save.style.opacity = 0;
   };
 
