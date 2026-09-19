@@ -13,6 +13,42 @@ const TV_GENRES = {
 
 const FALLBACK_ART = 'linear-gradient(145deg,#5d4b3d 0%,#262126 52%,#0b0b0e 100%)';
 
+const LOCAL_MARKET_LANGUAGES = new Set(['ja', 'zh', 'ko']);
+
+function isGermanyRelevantMedia(item, type = 'movie') {
+  const voteCount = Number(item?.vote_count || 0);
+  const popularity = Number(item?.popularity || 0);
+  const originalLanguage = String(item?.original_language || '').toLowerCase();
+  const hasLocalizedOverview = Boolean(String(item?.overview || '').trim());
+
+  const baseVoteFloor = type === 'series' ? 80 : 120;
+  const basePopularityFloor = type === 'series' ? 15 : 18;
+
+  // Avoid globally obscure entries that happen to spike in one local market.
+  if (voteCount < baseVoteFloor && popularity < basePopularityFloor) return false;
+
+  // If TMDB has no German-facing synopsis, require noticeably stronger global reach.
+  if (!hasLocalizedOverview && voteCount < 350 && popularity < 30) return false;
+
+  // Japanese / Chinese / Korean local-market hits need clear international reach.
+  // This keeps globally known titles while removing local-only catalogue noise.
+  if (LOCAL_MARKET_LANGUAGES.has(originalLanguage)) {
+    const internationallyVisible = voteCount >= 600 || popularity >= 40;
+    const stronglyLocalizedOrMajor = hasLocalizedOverview || voteCount >= 1400 || popularity >= 65;
+    if (!internationallyVisible || !stronglyLocalizedOrMajor) return false;
+  }
+
+  return true;
+}
+
+function isGermanyRelevantPerson(item) {
+  const knownFor = Array.isArray(item?.known_for) ? item.known_for : [];
+  return knownFor.some(work => {
+    const type = work?.media_type === 'tv' ? 'series' : work?.media_type === 'movie' ? 'movie' : null;
+    return type && isGermanyRelevantMedia(work, type);
+  });
+}
+
 function json(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
     status,
@@ -166,6 +202,8 @@ async function handleFeed(request, env) {
         region: 'DE',
         page,
         sort_by: 'popularity.desc',
+        watch_region: 'DE',
+        with_watch_monetization_types: 'flatrate|free|ads|rent|buy',
         'vote_count.gte': 80
       }),
       tmdb('/discover/tv', env, {
@@ -173,14 +211,25 @@ async function handleFeed(request, env) {
         language,
         page,
         sort_by: 'popularity.desc',
+        watch_region: 'DE',
+        with_watch_monetization_types: 'flatrate|free|ads|rent|buy',
         'vote_count.gte': 40
       }),
       tmdb('/person/popular', env, { language, page })
     ]);
 
-    const movieCards = (movies.results || []).filter(x => x.poster_path).slice(0, 18).map(movieToCard);
-    const seriesCards = (series.results || []).filter(x => x.poster_path).slice(0, 12).map(seriesToCard);
-    const peopleCards = (people.results || []).filter(x => x.profile_path).slice(0, 8).map(personToCard);
+    const movieCards = (movies.results || [])
+      .filter(x => x.poster_path && isGermanyRelevantMedia(x, 'movie'))
+      .slice(0, 18)
+      .map(movieToCard);
+    const seriesCards = (series.results || [])
+      .filter(x => x.poster_path && isGermanyRelevantMedia(x, 'series'))
+      .slice(0, 12)
+      .map(seriesToCard);
+    const peopleCards = (people.results || [])
+      .filter(x => x.profile_path && isGermanyRelevantPerson(x))
+      .slice(0, 8)
+      .map(personToCard);
     const items = weave([movieCards.slice(0, 9), seriesCards.slice(0, 6), peopleCards.slice(0, 4)])
       .concat(weave([movieCards.slice(9), seriesCards.slice(6), peopleCards.slice(4)]));
 
