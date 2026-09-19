@@ -22,7 +22,7 @@
 
       /* Direction feedback belongs in the center of the artwork, not at the edge. */
       .swipe-card .swipe-stamp {
-        top:50% !important;
+        top:26% !important;
         left:50% !important;
         right:auto !important;
         z-index:20 !important;
@@ -62,6 +62,7 @@
 
       @media (max-width:380px) {
         .swipe-card .swipe-stamp {
+          top:24% !important;
           min-width:132px;
           padding:12px 16px !important;
           font-size:23px !important;
