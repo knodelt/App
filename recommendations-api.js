@@ -25,6 +25,29 @@ function json(data, status = 200) {
 
 function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
 
+const LOCAL_MARKET_LANGUAGES = new Set(['ja', 'zh', 'ko']);
+
+function isGermanyRelevantCandidate(item, type = 'movie') {
+  const voteCount = Number(item?.vote_count || 0);
+  const popularity = Number(item?.popularity || 0);
+  const originalLanguage = String(item?.original_language || '').toLowerCase();
+  const hasLocalizedOverview = Boolean(String(item?.overview || '').trim());
+
+  const baseVoteFloor = type === 'series' ? 70 : 100;
+  const basePopularityFloor = type === 'series' ? 14 : 16;
+  if (voteCount < baseVoteFloor && popularity < basePopularityFloor) return false;
+
+  if (!hasLocalizedOverview && voteCount < 350 && popularity < 30) return false;
+
+  if (LOCAL_MARKET_LANGUAGES.has(originalLanguage)) {
+    const internationallyVisible = voteCount >= 600 || popularity >= 40;
+    const stronglyLocalizedOrMajor = hasLocalizedOverview || voteCount >= 1400 || popularity >= 65;
+    if (!internationallyVisible || !stronglyLocalizedOrMajor) return false;
+  }
+
+  return true;
+}
+
 async function tmdb(path, env, params = {}) {
   const url = new URL(`https://api.themoviedb.org/3${path}`);
   Object.entries(params).forEach(([key,value]) => {
@@ -113,6 +136,7 @@ export async function handlePersonalizedRecommendations(request, env) {
     const id = Number(item.id);
     if (!Number.isFinite(id) || id < 1 || excluded[type].has(id) || item.adult === true) return;
     if (!item.poster_path && !item.backdrop_path) return;
+    if (!isGermanyRelevantCandidate(item, type)) return;
     const title = mediaTitle(item, type);
     if (!title) return;
     const key = `${type}:${id}`;
@@ -159,6 +183,8 @@ export async function handlePersonalizedRecommendations(request, env) {
   tasks.push(
     tmdb('/discover/movie', env, {
       language:'de-DE', region:'DE', include_adult:false, sort_by:'popularity.desc', page:1,
+      watch_region:'DE',
+      with_watch_monetization_types:'flatrate|free|ads|rent|buy',
       'vote_count.gte':100,
       with_genres:topMovieGenres.join('|'),
       without_genres:badMovieGenres.join(',')
@@ -167,6 +193,8 @@ export async function handlePersonalizedRecommendations(request, env) {
   tasks.push(
     tmdb('/discover/tv', env, {
       language:'de-DE', sort_by:'popularity.desc', page:1,
+      watch_region:'DE',
+      with_watch_monetization_types:'flatrate|free|ads|rent|buy',
       'vote_count.gte':60,
       with_genres:topTvGenres.join('|'),
       without_genres:badTvGenres.join(',')
