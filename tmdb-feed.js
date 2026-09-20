@@ -1,7 +1,19 @@
 (() => {
   const START_PAGE_MAX = 5;
-  const fallbackIds = new Set(catalog.map(item => item.id));
+  const fallbackItems = catalog.map(item => item);
 
+  const MOOD_TAGS = {
+    drama:['Drama'],
+    horror:['Horror','Mystery'],
+    tension:['Thriller','Mystery','Crime'],
+    action:['Action','Abenteuer'],
+    laugh:['Komödie','Comedy','Satire'],
+    mindfuck:['Mystery','Sci-Fi','Mindbend'],
+    feelgood:['Komödie','Comedy','Familie','Food','Character'],
+    romance:['Romance','Drama']
+  };
+
+  let currentMood = window.getFrameMood?.() || 'any';
   let page = randomStartPage();
   let loading = false;
   let exhausted = false;
@@ -39,14 +51,21 @@
     return copy;
   }
 
+  function matchesMood(item, mood = currentMood) {
+    if (!mood || mood === 'any') return true;
+    if (item?.type === 'person') return false;
+    const tags = MOOD_TAGS[mood] || [];
+    return tags.some(tag => (item?.tags || []).some(itemTag => String(itemTag).toLowerCase() === tag.toLowerCase()));
+  }
+
   function shuffleCatalog() {
     const shuffled = shuffle(catalog);
     catalog.splice(0, catalog.length, ...shuffled);
   }
 
   function keepFallbackOnly() {
-    const fallback = catalog.filter(item => fallbackIds.has(item.id));
-    catalog.splice(0, catalog.length, ...shuffle(fallback));
+    const fallback = fallbackItems.filter(item => matchesMood(item));
+    catalog.splice(0, catalog.length, ...shuffle(fallback.length ? fallback : fallbackItems));
     knownIds.clear();
     catalog.forEach(item => knownIds.add(item.id));
   }
@@ -95,7 +114,7 @@
     const requestPage = page;
 
     try {
-      const response = await fetch(`/api/feed?page=${requestPage}&market=de-v3&seed=${feedNonce}`, {
+      const response = await fetch(`/api/feed?page=${requestPage}&market=de-v4&seed=${feedNonce}&mood=${encodeURIComponent(currentMood)}`, {
         headers: { accept: 'application/json' },
         cache: 'no-store'
       });
@@ -133,11 +152,12 @@
     if (remainingCards() < 10) queueMicrotask(() => loadMore({ silent: true }));
   };
 
-  window.frameRandomizeFeed = function frameRandomizeFeed({ fresh = true } = {}) {
+  window.frameRandomizeFeed = function frameRandomizeFeed({ fresh = true, mood } = {}) {
     generation += 1;
     loading = false;
     exhausted = false;
     configured = null;
+    currentMood = mood || window.getFrameMood?.() || 'any';
     page = randomStartPage();
     feedNonce = makeNonce();
     preferFreshItems = true;
@@ -155,10 +175,13 @@
     }));
   });
 
-  setLiveCredit(false);
+  document.addEventListener('frame:mood-changed', event => {
+    currentMood = event.detail?.mood || window.getFrameMood?.() || 'any';
+  });
 
-  // Every real app/page start begins with a different order before TMDB even responds.
-  shuffleCatalog();
+  setLiveCredit(false);
+  if (currentMood !== 'any') keepFallbackOnly();
+  else shuffleCatalog();
   baseRenderDeck();
   loadMore({ silent: true });
 })();
