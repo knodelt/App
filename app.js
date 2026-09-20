@@ -387,12 +387,10 @@ $('#saveButton').addEventListener('click',()=>animateSwipe('save'));
 $('#dislikeButton').addEventListener('click',()=>animateSwipe('dislike'));
 $('#undoSwipeButton')?.addEventListener('click', undoLastSwipe);
 $('#reshuffleButton').addEventListener('click',()=>{
-  state.swipes={};
-  state.saved=[];
   saveLastSwipe(null);
-  persist();
-  renderDeck();
-  showToast('Neuer Schnitt. Neuer Feed.');
+  if (typeof window.frameRandomizeFeed === 'function') window.frameRandomizeFeed({ fresh:true });
+  else renderDeck();
+  showToast('Neuer Mix. Dein Geschmack bleibt erhalten.');
 });
 $('#resetButton').addEventListener('click',()=>{
   state={...defaultState, swipes:{}, saved:[]};
