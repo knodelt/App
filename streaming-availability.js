@@ -24,6 +24,48 @@
       .streaming-credit { margin:5px 0 0; color:#4e4b46; font-size:6px; letter-spacing:.06em; }
       .streaming-empty { color:#65615b; font-size:8px; }
 
+      .swipe-card .card-copy .streaming-block {
+        margin-top:9px;
+        width:100%;
+      }
+      .swipe-card .card-copy .streaming-label {
+        display:block;
+        margin:0 0 5px;
+        color:rgba(255,255,255,.62);
+        font-size:9px;
+        font-weight:700;
+        letter-spacing:.04em;
+        text-transform:none;
+      }
+      .swipe-card .card-copy .streaming-offers {
+        flex-wrap:nowrap;
+        overflow:hidden;
+        gap:6px;
+      }
+      .swipe-card .card-copy .streaming-chip {
+        flex:0 1 auto;
+        padding:5px 8px;
+        border-radius:999px;
+        background:rgba(10,10,13,.56);
+        border-color:rgba(255,255,255,.14);
+        -webkit-backdrop-filter:blur(10px);
+        backdrop-filter:blur(10px);
+        font-size:9px;
+      }
+      .swipe-card .card-copy .streaming-chip b {
+        max-width:112px;
+      }
+      .swipe-card .card-copy .streaming-chip:nth-child(n+3) {
+        display:none;
+      }
+      .swipe-card .card-copy .streaming-credit {
+        display:none;
+      }
+      .swipe-card .card-copy .streaming-empty {
+        font-size:9px;
+        color:rgba(255,255,255,.55);
+      }
+
       .mini-card .streaming-block { margin-top:8px; }
       .mini-card .streaming-offers { display:grid; gap:4px; }
       .mini-card .streaming-chip { width:max-content; max-width:100%; }
@@ -144,6 +186,32 @@
     catch { return []; }
   }
 
+  function decorateSwipeDeck() {
+    document.querySelectorAll('#cardDeck .swipe-card').forEach(card => {
+      const item = itemFromDataset(card);
+      const copy = card.querySelector('.card-copy');
+      if (!item || !copy) return;
+
+      const key = cacheKey(item);
+      const block = ensureBlock(copy, key);
+      const signalRow = copy.querySelector('.signal-row');
+      if (signalRow && block.nextElementSibling !== signalRow) {
+        copy.insertBefore(block, signalRow);
+      }
+
+      if (block.dataset.loaded === '1') return;
+      block.dataset.loaded = '1';
+      getAvailability(item).then(data => {
+        if (data && block.isConnected) {
+          renderBlock(block, data, 2);
+        } else if (block.isConnected) {
+          const empty = block.querySelector('.streaming-empty');
+          if (empty) empty.textContent = 'Streaming gerade nicht erreichbar.';
+        }
+      });
+    });
+  }
+
   function decorateWatchlist() {
     const cards = [...document.querySelectorAll('#watchlistGrid .mini-card')];
     const items = watchlistItems();
@@ -193,8 +261,12 @@
   }
 
   injectStyles();
+  decorateSwipeDeck();
   decorateWatchlist();
   decorateRecommendations();
+
+  const cardDeck = document.querySelector('#cardDeck');
+  if (cardDeck) new MutationObserver(() => queueMicrotask(decorateSwipeDeck)).observe(cardDeck,{childList:true,subtree:true});
 
   const watchGrid = document.querySelector('#watchlistGrid');
   if (watchGrid) new MutationObserver(() => queueMicrotask(decorateWatchlist)).observe(watchGrid,{childList:true,subtree:true});
