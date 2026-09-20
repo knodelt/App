@@ -1056,3 +1056,54 @@ h1 em {
   .mood-options { grid-template-columns:1fr; }
   .mood-option { min-height:58px; }
 }
+
+
+/* ---------- Undo last swipe ---------- */
+#discoverView .gesture-row {
+  display:flex;
+  align-items:center;
+  gap:9px;
+  margin-top:7px;
+  min-width:0;
+}
+#discoverView .gesture-row .gesture-hint {
+  margin:0 !important;
+  min-width:0;
+  flex:1 1 auto;
+}
+#discoverView .undo-swipe {
+  flex:0 0 auto;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  min-height:30px;
+  padding:5px 9px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:999px;
+  background:#151519;
+  color:#d9d5cf;
+  font-family:var(--font-ui);
+  font-size:10px;
+  line-height:1;
+  font-weight:800;
+  white-space:nowrap;
+  transition:opacity .15s ease, transform .15s ease, border-color .15s ease;
+}
+#discoverView .undo-swipe span {
+  font-size:16px;
+  line-height:1;
+}
+#discoverView .undo-swipe:active:not(:disabled) {
+  transform:scale(.96);
+}
+#discoverView .undo-swipe:not(:disabled) {
+  border-color:rgba(255,255,255,.20);
+  color:#fff;
+}
+#discoverView .undo-swipe:disabled {
+  opacity:.28;
+}
+@media (max-width:370px) {
+  #discoverView .undo-swipe b { display:none; }
+  #discoverView .undo-swipe { width:30px; justify-content:center; padding:0; }
+}
