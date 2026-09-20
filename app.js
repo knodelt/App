@@ -27,10 +27,12 @@ const recommendations = [
 ];
 
 const defaultState = { swipes:{}, saved:[], filter:'all', secret:0 };
+const LAST_SWIPE_KEY = 'frame-last-swipe-v1';
 let state = loadState();
 let activeItems = [];
 let drag = null;
 let toastTimer;
+let lastSwipe = loadLastSwipe();
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
@@ -110,6 +112,33 @@ function loadState() {
   catch { return structuredClone(defaultState); }
 }
 function persist() { localStorage.setItem('frame-state', JSON.stringify(state)); }
+
+function loadLastSwipe() {
+  try {
+    const value = JSON.parse(localStorage.getItem(LAST_SWIPE_KEY) || 'null');
+    return value && value.id ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveLastSwipe(value) {
+  lastSwipe = value || null;
+  try {
+    if (lastSwipe) localStorage.setItem(LAST_SWIPE_KEY, JSON.stringify(lastSwipe));
+    else localStorage.removeItem(LAST_SWIPE_KEY);
+  } catch {}
+  updateUndoButton();
+}
+
+function updateUndoButton() {
+  const button = document.querySelector('#undoSwipeButton');
+  if (!button) return;
+  const usable = Boolean(lastSwipe?.id && state.swipes?.[lastSwipe.id]);
+  button.disabled = !usable;
+  button.title = usable ? 'Letzten Swipe rückgängig machen' : 'Noch kein Swipe zum Rückgängigmachen';
+}
+
 function swipedIds() { return Object.keys(state.swipes); }
 function typeLabel(type) { return type === 'movie' ? 'FILM' : type === 'series' ? 'SERIE' : 'PERSON'; }
 
@@ -205,12 +234,68 @@ function animateSwipe(action, card = $('.top-card')) {
 }
 
 function recordSwipe(id, action) {
+  const item = catalog.find(entry => entry.id === id);
+  saveLastSwipe({
+    id,
+    action,
+    previousAction: state.swipes[id] || null,
+    wasSaved: state.saved.includes(id),
+    item: item ? {
+      id:item.id,
+      tmdbId:item.tmdbId || null,
+      source:item.source || null,
+      type:item.type,
+      title:item.title,
+      year:item.year,
+      meta:item.meta,
+      subtitle:item.subtitle,
+      blurb:item.blurb,
+      tags:Array.isArray(item.tags) ? [...item.tags] : [],
+      symbol:item.symbol,
+      poster:item.poster || null,
+      art:item.art
+    } : null,
+    at:Date.now()
+  });
+
   state.swipes[id] = action;
   if (action === 'save' && !state.saved.includes(id)) state.saved.push(id);
   persist();
+  updateUndoButton();
+
   const labels = {like:'Super. Geschmack gespeichert.', dislike:'Mist. Wird berücksichtigt.', save:'Auf die Watchlist gesetzt.'};
   showToast(labels[action]);
   renderDeck();
+}
+
+function undoLastSwipe() {
+  if (!lastSwipe?.id || !state.swipes?.[lastSwipe.id]) {
+    saveLastSwipe(null);
+    return;
+  }
+
+  const undo = lastSwipe;
+  if (undo.previousAction) state.swipes[undo.id] = undo.previousAction;
+  else delete state.swipes[undo.id];
+
+  if (undo.wasSaved) {
+    if (!state.saved.includes(undo.id)) state.saved.push(undo.id);
+  } else {
+    state.saved = state.saved.filter(id => id !== undo.id);
+  }
+
+  if (undo.item && !catalog.some(item => item.id === undo.item.id)) {
+    catalog.unshift(undo.item);
+  }
+
+  persist();
+  saveLastSwipe(null);
+  renderDeck();
+  showToast('Letzter Swipe rückgängig.');
+
+  document.dispatchEvent(new CustomEvent('frame:swipe-undone', {
+    detail:{ id:undo.id, action:undo.action }
+  }));
 }
 
 function getTasteWeights() {
@@ -300,9 +385,18 @@ $$('.filter').forEach(btn=>btn.addEventListener('click',()=>{
 $('#likeButton').addEventListener('click',()=>animateSwipe('like'));
 $('#saveButton').addEventListener('click',()=>animateSwipe('save'));
 $('#dislikeButton').addEventListener('click',()=>animateSwipe('dislike'));
-$('#reshuffleButton').addEventListener('click',()=>{ state.swipes={}; state.saved=[]; persist(); renderDeck(); showToast('Neuer Schnitt. Neuer Feed.'); });
+$('#undoSwipeButton')?.addEventListener('click', undoLastSwipe);
+$('#reshuffleButton').addEventListener('click',()=>{
+  state.swipes={};
+  state.saved=[];
+  saveLastSwipe(null);
+  persist();
+  renderDeck();
+  showToast('Neuer Schnitt. Neuer Feed.');
+});
 $('#resetButton').addEventListener('click',()=>{
   state={...defaultState, swipes:{}, saved:[]};
+  saveLastSwipe(null);
   persist();
   if (typeof window.frameRandomizeFeed === 'function') window.frameRandomizeFeed({ fresh:true });
   else renderDeck();
@@ -325,7 +419,8 @@ $('#tinyCredit').addEventListener('click',(e)=>{
   if ((state.secret||0) >= 2) { e.currentTarget.textContent='FRAME / 1.21 / SEE YOU IN THE NEXT CUT'; showToast('Zeitcode verschoben.'); }
 });
 
-$$('.filter').forEach(b=>b.classList.toggle('active', b.dataset.filter===state.filter));
+$('.filter').forEach(b=>b.classList.toggle('active', b.dataset.filter===state.filter));
+updateUndoButton();
 renderDeck();
 
 if ('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
