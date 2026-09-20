@@ -175,8 +175,82 @@
         border-radius:10px;
         background:linear-gradient(145deg,#51483d,#18181b);
       }
-      .rec-reason-mini { display:block; color:#706c66; font-size:7px; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px; }
-      .profile-signal-note { color:#5d5953; font-size:7px; letter-spacing:.08em; margin:6px 0 0 2px; }
+      .rec-reason-mini { display:block; color:#8f8a83; font-size:10px; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:220px; }
+      .rec-description-mini {
+        display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden;
+        margin-top:5px; color:#aaa59e; font-size:11px; line-height:1.35;
+      }
+      .rec-hero-description {
+        margin:8px 0 0 !important; max-width:94%; color:#d5d0c8 !important;
+        font-size:12px !important; line-height:1.4; text-transform:none !important; letter-spacing:0 !important;
+        display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden;
+      }
+      .rec-actions { display:flex; flex-wrap:wrap; gap:7px; margin-top:10px; }
+      .rec-action {
+        min-height:34px; padding:7px 11px; border-radius:999px;
+        border:1px solid rgba(255,255,255,.13); background:rgba(15,15,18,.72);
+        color:#f2eee8; font:700 11px/1 Manrope,system-ui,sans-serif;
+        -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+      }
+      .rec-action.remove { color:#ff8a98; border-color:rgba(255,111,135,.28); }
+      #recommendList .rec-row { cursor:pointer; }
+      #recommendList .rec-row-copy { min-width:0; }
+      #recommendList .rec-actions { margin-top:7px; }
+      #recommendList .rec-action { min-height:30px; padding:6px 9px; font-size:10px; }
+      .profile-signal-note { color:#77726c; font-size:9px; letter-spacing:.02em; margin:8px 0 0 2px; }
+
+      .rec-detail-modal {
+        position:fixed; inset:0; z-index:160; display:flex; align-items:flex-end; justify-content:center;
+        background:rgba(5,5,7,.72); opacity:0; pointer-events:none;
+        -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
+        transition:opacity .18s ease;
+      }
+      .rec-detail-modal.open { opacity:1; pointer-events:auto; }
+      .rec-detail-sheet {
+        width:min(100%,520px); max-height:86dvh; overflow:auto; overscroll-behavior:contain;
+        border-radius:28px 28px 0 0; border:1px solid rgba(255,255,255,.12); border-bottom:0;
+        background:#111114; box-shadow:0 -24px 70px rgba(0,0,0,.55);
+        transform:translateY(16px); transition:transform .2s ease;
+      }
+      .rec-detail-modal.open .rec-detail-sheet { transform:none; }
+      .rec-detail-art {
+        height:220px; position:relative; background:#1a1a1f center 25%/cover no-repeat;
+        border-radius:27px 27px 0 0; overflow:hidden;
+      }
+      .rec-detail-art::after {
+        content:""; position:absolute; inset:0;
+        background:linear-gradient(180deg,rgba(0,0,0,.02),rgba(0,0,0,.18) 52%,#111114 100%);
+      }
+      .rec-detail-close {
+        position:absolute; z-index:3; top:14px; right:14px; width:40px; height:40px; border:0;
+        border-radius:50%; background:rgba(10,10,12,.62); color:#fff; font-size:24px;
+        -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+      }
+      .rec-detail-content { padding:0 20px calc(24px + env(safe-area-inset-bottom)); margin-top:-22px; position:relative; z-index:2; }
+      .rec-detail-type { color:#ff6070; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; }
+      .rec-detail-title {
+        margin:5px 0 8px; color:#fff; font-family:Fraunces,Georgia,serif; font-size:38px; line-height:.94; letter-spacing:-.035em;
+      }
+      .rec-detail-primary { margin:0 0 14px; color:#a9a49e; font-size:12px; font-weight:700; }
+      .rec-detail-description { margin:0; color:#ddd8d1; font-size:14px; line-height:1.55; }
+      .rec-detail-facts { display:grid; gap:10px; margin-top:18px; }
+      .rec-detail-fact { display:grid; grid-template-columns:72px minmax(0,1fr); gap:10px; }
+      .rec-detail-fact b { color:#77726d; font-size:10px; text-transform:uppercase; letter-spacing:.04em; }
+      .rec-detail-fact span { color:#d4cfc8; font-size:12px; line-height:1.4; }
+      .rec-detail-streaming { margin-top:18px; }
+      .rec-detail-streaming > b { display:block; margin-bottom:8px; color:#77726d; font-size:10px; text-transform:uppercase; }
+      .rec-detail-provider-list { display:flex; flex-wrap:wrap; gap:7px; }
+      .rec-detail-provider {
+        padding:7px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.12);
+        background:#19191d; color:#eee9e2; font-size:11px; font-weight:700;
+      }
+      .rec-detail-bottom-actions { display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:20px; }
+      .rec-detail-bottom-actions button {
+        min-height:46px; border-radius:14px; border:1px solid rgba(255,255,255,.12);
+        background:#1a1a1f; color:#f4f0ea; font:800 12px/1 Manrope,system-ui,sans-serif;
+      }
+      .rec-detail-bottom-actions .remove { color:#ff8291; }
+      .rec-detail-loading { color:#8b8680; font-size:12px; margin-top:14px; }
     `;
     document.head.appendChild(style);
   }
@@ -215,6 +289,11 @@
         <span class="rec-score">${hero.match}% MATCH</span>
         <h2>${escapeHtml(hero.title)}</h2>
         <p>${hero.type === 'series' ? 'Serie' : 'Film'} · ${escapeHtml(hero.year || '—')}</p>
+        <p class="rec-hero-description">${escapeHtml(hero.description || '')}</p>
+        <div class="rec-actions">
+          <button class="rec-action details" type="button" data-rec-action="details" data-rec-key="${hero.type}:${hero.tmdbId}">Details</button>
+          <button class="rec-action remove" type="button" data-rec-action="remove" data-rec-key="${hero.type}:${hero.tmdbId}">Nicht für mich</button>
+        </div>
       </div>`;
 
     const reasons = (hero.reasons || []).slice(0,3);
@@ -235,6 +314,11 @@
           <strong>${escapeHtml(item.title)}</strong>
           <small>${item.type === 'series' ? 'Serie' : 'Film'} · ${escapeHtml(item.year || '—')}</small>
           <span class="rec-reason-mini">${escapeHtml(reason)}</span>
+          <span class="rec-description-mini">${escapeHtml(item.description || '')}</span>
+          <div class="rec-actions">
+            <button class="rec-action details" type="button" data-rec-action="details" data-rec-key="${item.type}:${item.tmdbId}">Details</button>
+            <button class="rec-action remove" type="button" data-rec-action="remove" data-rec-key="${item.type}:${item.tmdbId}">Entfernen</button>
+          </div>
         </div>
         <span class="rec-row-score">${item.match}%</span>
       </article>`;
@@ -256,6 +340,149 @@
     return String(value ?? '').replace(/[&<>'"]/g, char => ({
       '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;'
     }[char]));
+  }
+
+  function recommendationKey(item) {
+    return item ? `${item.type}:${item.tmdbId}` : '';
+  }
+
+  function findRecommendation(key) {
+    return cachedItems.find(item => recommendationKey(item) === key) || null;
+  }
+
+  function recommendationStateId(item) {
+    return item ? `tmdb-${item.type}-${item.tmdbId}` : '';
+  }
+
+  function rejectRecommendation(item) {
+    if (!item) return;
+    const id = recommendationStateId(item);
+    state.swipes[id] = 'dislike';
+    state.saved = (state.saved || []).filter(savedId => savedId !== id);
+    history[id] = {
+      id,
+      tmdbId:Number(item.tmdbId),
+      type:item.type,
+      title:item.title || '',
+      tags:Array.isArray(item.tags) ? item.tags.slice(0,10) : [],
+      action:'dislike',
+      updatedAt:Date.now()
+    };
+    persist();
+    saveHistory();
+    cachedItems = cachedItems.filter(entry => recommendationKey(entry) !== recommendationKey(item));
+    lastSignature = '';
+    updateProfileStrength();
+    try { renderTaste(); } catch {}
+    showToast('Entfernt. Dein Geschmack wurde angepasst.');
+    closeRecommendationDetails();
+    queueMicrotask(() => refreshRecommendations({force:true}));
+  }
+
+  let detailSerial = 0;
+
+  function ensureRecommendationDetailModal() {
+    let modal = document.querySelector('#recommendDetailModal');
+    if (modal) return modal;
+    modal = document.createElement('div');
+    modal.id = 'recommendDetailModal';
+    modal.className = 'rec-detail-modal';
+    modal.setAttribute('aria-hidden','true');
+    modal.innerHTML = `
+      <section class="rec-detail-sheet" role="dialog" aria-modal="true" aria-label="Film Details">
+        <div class="rec-detail-art">
+          <button class="rec-detail-close" type="button" aria-label="Details schließen">×</button>
+        </div>
+        <div class="rec-detail-content">
+          <span class="rec-detail-type"></span>
+          <h2 class="rec-detail-title"></h2>
+          <p class="rec-detail-primary"></p>
+          <p class="rec-detail-description"></p>
+          <div class="rec-detail-facts"></div>
+          <div class="rec-detail-streaming">
+            <b>Streaming · Deutschland</b>
+            <div class="rec-detail-provider-list"><span class="rec-detail-loading">Wird geladen …</span></div>
+          </div>
+          <div class="rec-detail-bottom-actions">
+            <button type="button" data-detail-action="close">Schließen</button>
+            <button class="remove" type="button" data-detail-action="remove">Nicht für mich</button>
+          </div>
+        </div>
+      </section>`;
+    document.body.appendChild(modal);
+
+    modal.addEventListener('click', event => {
+      if (event.target === modal || event.target.closest('.rec-detail-close') || event.target.closest('[data-detail-action="close"]')) {
+        closeRecommendationDetails();
+        return;
+      }
+      if (event.target.closest('[data-detail-action="remove"]')) {
+        const key = modal.dataset.recKey || '';
+        rejectRecommendation(findRecommendation(key));
+      }
+    });
+    return modal;
+  }
+
+  function closeRecommendationDetails() {
+    const modal = document.querySelector('#recommendDetailModal');
+    if (!modal) return;
+    detailSerial += 1;
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden','true');
+    modal.removeAttribute('data-rec-key');
+  }
+
+  async function openRecommendationDetails(item) {
+    if (!item) return;
+    const serial = ++detailSerial;
+    const modal = ensureRecommendationDetailModal();
+    modal.dataset.recKey = recommendationKey(item);
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden','false');
+
+    const art = modal.querySelector('.rec-detail-art');
+    const image = imageUrl(item.backdrop || item.poster, 'w780');
+    art.style.backgroundImage = image ? `url("${image}")` : 'linear-gradient(145deg,#2a2930,#111114)';
+
+    modal.querySelector('.rec-detail-type').textContent = item.type === 'series' ? 'Serie' : 'Film';
+    modal.querySelector('.rec-detail-title').textContent = item.title || '';
+    modal.querySelector('.rec-detail-primary').textContent = `${item.year || '—'} · ${item.match || '—'}% Match`;
+    modal.querySelector('.rec-detail-description').textContent = item.description || 'Noch keine Beschreibung verfügbar.';
+    modal.querySelector('.rec-detail-facts').innerHTML = '<p class="rec-detail-loading">Details werden geladen …</p>';
+    modal.querySelector('.rec-detail-provider-list').innerHTML = '<span class="rec-detail-loading">Wird geladen …</span>';
+
+    const detailsUrl = `/api/details?type=${encodeURIComponent(item.type)}&id=${encodeURIComponent(item.tmdbId)}`;
+    const availabilityUrl = `/api/availability?type=${encodeURIComponent(item.type)}&id=${encodeURIComponent(item.tmdbId)}`;
+
+    const [detailResult, availabilityResult] = await Promise.allSettled([
+      fetch(detailsUrl, {headers:{accept:'application/json'}, cache:'no-store'}).then(r => r.json().then(data => ({ok:r.ok,data}))),
+      fetch(availabilityUrl, {headers:{accept:'application/json'}, cache:'no-store'}).then(r => r.json().then(data => ({ok:r.ok,data})))
+    ]);
+    if (serial !== detailSerial || !modal.classList.contains('open')) return;
+
+    if (detailResult.status === 'fulfilled' && detailResult.value.ok && detailResult.value.data?.details) {
+      const details = detailResult.value.data.details;
+      if (details.description) modal.querySelector('.rec-detail-description').textContent = details.description;
+      modal.querySelector('.rec-detail-primary').textContent =
+        [item.year || '—', details.primaryMeta || '', `${item.match || '—'}% Match`].filter(Boolean).join(' · ');
+      const facts = Array.isArray(details.facts) ? details.facts : [];
+      modal.querySelector('.rec-detail-facts').innerHTML = facts.length
+        ? facts.map(fact => `<div class="rec-detail-fact"><b>${escapeHtml(fact.label)}</b><span>${escapeHtml(fact.value)}</span></div>`).join('')
+        : '<p class="rec-detail-loading">Keine weiteren Angaben vorhanden.</p>';
+    } else {
+      modal.querySelector('.rec-detail-facts').innerHTML = '<p class="rec-detail-loading">Weitere Details gerade nicht erreichbar.</p>';
+    }
+
+    const providerHost = modal.querySelector('.rec-detail-provider-list');
+    if (availabilityResult.status === 'fulfilled' && availabilityResult.value.ok) {
+      const offers = Array.isArray(availabilityResult.value.data?.offers) ? availabilityResult.value.data.offers.slice(0,5) : [];
+      providerHost.innerHTML = offers.length
+        ? offers.map(offer => `<span class="rec-detail-provider">${escapeHtml(offer.provider)} · ${escapeHtml(offer.label || 'Verfügbar')}</span>`).join('')
+        : '<span class="rec-detail-loading">Aktuell kein Anbieter in Deutschland gefunden.</span>';
+    } else {
+      providerHost.innerHTML = '<span class="rec-detail-loading">Streaming gerade nicht erreichbar.</span>';
+    }
   }
 
   async function refreshRecommendations({force=false} = {}) {
@@ -334,6 +561,25 @@
   document.querySelectorAll('.nav-item').forEach(button => {
     if (button.dataset.target === 'recommend') {
       button.addEventListener('click', () => queueMicrotask(() => refreshRecommendations()));
+    }
+  });
+
+  const recommendView = document.querySelector('#recommendView');
+  recommendView?.addEventListener('click', event => {
+    const actionButton = event.target.closest('[data-rec-action]');
+    if (actionButton) {
+      event.preventDefault();
+      event.stopPropagation();
+      const item = findRecommendation(actionButton.dataset.recKey || '');
+      if (actionButton.dataset.recAction === 'remove') rejectRecommendation(item);
+      if (actionButton.dataset.recAction === 'details') openRecommendationDetails(item);
+      return;
+    }
+
+    const row = event.target.closest('#recommendList .rec-row');
+    if (row) {
+      const key = `${row.dataset.mediaType}:${row.dataset.tmdbId}`;
+      openRecommendationDetails(findRecommendation(key));
     }
   });
 
