@@ -232,6 +232,7 @@ export async function handlePersonalizedRecommendations(request, env) {
       description:candidate.description || 'Noch keine deutsche Kurzbeschreibung verfügbar.',
       poster:candidate.poster,
       backdrop:candidate.backdrop,
+      tags:candidate.genreIds.map(id => GENRE_NAMES.get(id)).filter(Boolean).slice(0,4),
       match:score,
       reasons
     };
