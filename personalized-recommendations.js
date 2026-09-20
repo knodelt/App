@@ -595,6 +595,17 @@
     }
   });
 
+  document.addEventListener('frame:swipe-undone', () => {
+    syncHistory();
+    cachedItems = [];
+    lastSignature = '';
+    updateProfileStrength();
+    try { renderTaste(); } catch {}
+    if (document.querySelector('#recommendView')?.classList.contains('active')) {
+      queueMicrotask(() => refreshRecommendations({force:true}));
+    }
+  });
+
   window.addEventListener('storage', event => {
     if (event.key === 'frame-state' || event.key === HISTORY_KEY) {
       history = loadHistory();
