@@ -1,6 +1,7 @@
 (() => {
   const HOLD_MS = 520;
   const MOVE_TOLERANCE = 12;
+  const TAP_MOVE_TOLERANCE = 8;
   const boundCards = new WeakSet();
   let activeRequest = null;
 
@@ -12,6 +13,32 @@
       .swipe-card .card-art,
       .swipe-card .card-copy,
       .swipe-card .card-top { transition: opacity .2s ease, filter .28s ease, transform .28s ease; }
+
+      /* Short tap = clean artwork mode. Keep swipe feedback available. */
+      .swipe-card.image-only > .card-copy,
+      .swipe-card.image-only > .card-top {
+        opacity:0 !important;
+        pointer-events:none !important;
+      }
+      .swipe-card.image-only .card-art {
+        background-image:var(--poster, var(--art)), var(--art) !important;
+        background-size:cover !important;
+        background-position:center 20% !important;
+        filter:none !important;
+        transform:none !important;
+      }
+      .swipe-card.image-only.person-card .card-art {
+        background-position:center 15% !important;
+      }
+      .swipe-card.image-only .card-art::before,
+      .swipe-card.image-only .card-art::after {
+        opacity:0 !important;
+        background:none !important;
+      }
+      .swipe-card.image-only .art-symbol,
+      .swipe-card.image-only .art-lines {
+        opacity:0 !important;
+      }
 
       .card-detail {
         position:absolute; inset:0; z-index:25;
@@ -204,7 +231,7 @@
     if (!item || card.classList.contains('detail-open')) return;
 
     if (typeof drag !== 'undefined') drag = null;
-    card.classList.remove('dragging');
+    card.classList.remove('dragging', 'image-only');
     card.style.transform = '';
     card.querySelectorAll('.swipe-stamp').forEach(stamp => { stamp.style.opacity = 0; });
 
@@ -238,6 +265,18 @@
     }
   }
 
+  function toggleImageMode(card) {
+    if (!card || card.classList.contains('detail-open')) return;
+    const enabled = card.classList.toggle('image-only');
+    card.querySelectorAll('.swipe-stamp').forEach(stamp => { stamp.style.opacity = 0; });
+    try { navigator.vibrate?.(enabled ? 5 : 3); } catch {}
+
+    if (enabled && !sessionStorage.getItem('frame-image-mode-seen')) {
+      sessionStorage.setItem('frame-image-mode-seen', '1');
+      try { showToast('Bildmodus · nochmal tippen für Infos'); } catch {}
+    }
+  }
+
   function bindCard(card) {
     if (!card || boundCards.has(card)) return;
     boundCards.add(card);
@@ -246,6 +285,8 @@
     let startX = 0;
     let startY = 0;
     let moved = false;
+    let tapMoved = false;
+    let longPressed = false;
 
     const cancelTimer = () => {
       if (timer) clearTimeout(timer);
@@ -258,23 +299,40 @@
       startX = event.clientX;
       startY = event.clientY;
       moved = false;
+      tapMoved = false;
+      longPressed = false;
       cancelTimer();
       timer = setTimeout(() => {
         timer = null;
-        if (!moved) openDetails(card);
+        if (!moved) {
+          longPressed = true;
+          openDetails(card);
+        }
       }, HOLD_MS);
     }, { passive:true });
 
     card.addEventListener('pointermove', event => {
-      if (!timer) return;
       const distance = Math.hypot(event.clientX - startX, event.clientY - startY);
-      if (distance > MOVE_TOLERANCE) {
+      if (distance > TAP_MOVE_TOLERANCE) tapMoved = true;
+      if (timer && distance > MOVE_TOLERANCE) {
         moved = true;
         cancelTimer();
       }
     }, { passive:true });
 
-    ['pointerup','pointercancel','pointerleave'].forEach(type => card.addEventListener(type, cancelTimer, { passive:true }));
+    card.addEventListener('pointerup', event => {
+      const shouldToggle = !longPressed
+        && !tapMoved
+        && !card.classList.contains('detail-open')
+        && !event.target.closest('button,a');
+      cancelTimer();
+      if (shouldToggle) queueMicrotask(() => toggleImageMode(card));
+    }, { passive:true });
+
+    ['pointercancel','pointerleave'].forEach(type => card.addEventListener(type, () => {
+      tapMoved = true;
+      cancelTimer();
+    }, { passive:true }));
     card.addEventListener('contextmenu', event => event.preventDefault());
   }
 
@@ -284,7 +342,7 @@
 
   injectStyles();
   const hint = document.querySelector('.gesture-hint');
-  if (hint) hint.textContent = 'Links = super · hoch = merken · rechts = Mist · halten = Info';
+  if (hint) hint.textContent = 'Tippen = Bild · links = Super · hoch = Merken · rechts = Mist · halten = Infos';
 
   bindTopCard();
   const deck = document.querySelector('#cardDeck');
