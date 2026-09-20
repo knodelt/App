@@ -191,6 +191,144 @@ function weave(groups) {
   return result;
 }
 
+
+function tasteFeature(key, label, group) {
+  return { key, label, group };
+}
+
+function inferTasteTraits({ genreIds = [], overview = '', keywordNames = [] } = {}) {
+  const ids = new Set((genreIds || []).map(Number));
+  const text = `${overview} ${(keywordNames || []).join(' ')}`.toLowerCase();
+  const traits = [];
+
+  const add = (key,label) => {
+    if (!traits.some(item => item.key === key)) traits.push(tasteFeature(key,label,'trait'));
+  };
+
+  if ([27,53,80,9648].some(id => ids.has(id))) add('trait:dark','Düster');
+  if ([35,10751,10749].some(id => ids.has(id))) add('trait:light','Leicht');
+  if ([28,12,10759].some(id => ids.has(id))) add('trait:fast','Schnelles Tempo');
+  if ([18,10749,35].some(id => ids.has(id))) add('trait:character','Figurengetrieben');
+  if ([53,9648,28,80,10759].some(id => ids.has(id))) add('trait:plot','Plot-getrieben');
+  if ([14,878,16,10765].some(id => ids.has(id))) add('trait:fantastical','Fantastische Welten');
+  if ([18,36,99,80].some(id => ids.has(id))) add('trait:realistic','Realistisch');
+  if ([9648,878,10765].some(id => ids.has(id))) add('trait:mindfuck','Mindfuck');
+  if ([18,36,9648].some(id => ids.has(id)) && ![28,10759].some(id => ids.has(id))) add('trait:slow','Slow Burn');
+  if (/psycholog|mind|trauma|obsess|paranoi|identity|memory/.test(text)) add('trait:psychological','Psychologisch');
+  if (/twist|nonlinear|time travel|alternate reality|dream/.test(text)) add('trait:mindfuck','Mindfuck');
+
+  return traits;
+}
+
+function runtimeBucket(runtime) {
+  const minutes = Number(runtime || 0);
+  if (!minutes) return null;
+  if (minutes < 95) return tasteFeature('runtime:short','Kurz & kompakt','runtime');
+  if (minutes >= 140) return tasteFeature('runtime:long','Lang & episch','runtime');
+  return tasteFeature('runtime:medium','Mittlere Laufzeit','runtime');
+}
+
+function decadeFeature(dateValue) {
+  const year = Number(String(dateValue || '').slice(0,4));
+  if (!Number.isFinite(year) || year < 1900) return null;
+  const decade = Math.floor(year / 10) * 10;
+  return tasteFeature(`decade:${decade}s`, `${decade}er`, 'decade');
+}
+
+async function handleTasteFeatures(request, env) {
+  if (!env.TMDB_API_TOKEN) {
+    return json({ok:false, code:'TMDB_NOT_CONFIGURED', message:'TMDB_API_TOKEN fehlt.'},503);
+  }
+
+  const url = new URL(request.url);
+  const type = url.searchParams.get('type');
+  const id = Number.parseInt(url.searchParams.get('id') || '',10);
+  if (!['movie','series','person'].includes(type) || !Number.isFinite(id) || id < 1) {
+    return json({ok:false, code:'BAD_TASTE_FEATURE_REQUEST', message:'Ungültige Taste-DNA-Anfrage.'},400);
+  }
+
+  try {
+    if (type === 'person') {
+      const data = await tmdb(`/person/${id}`, env, {language:'de-DE', append_to_response:'combined_credits'});
+      const department = data.known_for_department === 'Directing' ? 'director' : 'actor';
+      const labelPrefix = department === 'director' ? 'Regie' : 'Schauspiel';
+      const feature = tasteFeature(`person:${department}:${id}`, `${labelPrefix}: ${data.name || 'Person'}`, department);
+
+      const genreCounts = new Map();
+      [...(data.combined_credits?.cast || []), ...(data.combined_credits?.crew || [])]
+        .slice(0,30)
+        .forEach(work => (work.genre_ids || []).forEach(genreId => genreCounts.set(genreId,(genreCounts.get(genreId)||0)+1)));
+      const genreFeatures = [...genreCounts.entries()]
+        .sort((a,b)=>b[1]-a[1])
+        .slice(0,3)
+        .map(([genreId]) => {
+          const name = MOVIE_GENRES[genreId] || TV_GENRES[genreId];
+          return name ? tasteFeature(`genre:${genreId}`,name,'genre') : null;
+        })
+        .filter(Boolean);
+
+      return json({ok:true, type, tmdbId:id, features:[feature,...genreFeatures]},200,{'cache-control':'public, max-age=86400'});
+    }
+
+    const path = type === 'series' ? `/tv/${id}` : `/movie/${id}`;
+    const data = await tmdb(path, env, {language:'de-DE', append_to_response:'credits,keywords'});
+
+    const features = [];
+    (data.genres || []).slice(0,5).forEach(genre => {
+      features.push(tasteFeature(`genre:${genre.id}`,genre.name,'genre'));
+    });
+
+    if (type === 'movie') {
+      (data.credits?.crew || [])
+        .filter(person => person.job === 'Director')
+        .slice(0,2)
+        .forEach(person => features.push(tasteFeature(`person:director:${person.id}`,`Regie: ${person.name}`,'director')));
+    } else {
+      (data.created_by || []).slice(0,2)
+        .forEach(person => features.push(tasteFeature(`person:creator:${person.id}`,`Creator: ${person.name}`,'creator')));
+    }
+
+    (data.credits?.cast || []).slice(0,3)
+      .forEach(person => features.push(tasteFeature(`person:actor:${person.id}`,`Cast: ${person.name}`,'actor')));
+
+    const keywordList = type === 'series'
+      ? (data.keywords?.results || [])
+      : (data.keywords?.keywords || []);
+    keywordList.slice(0,7).forEach(keyword => {
+      features.push(tasteFeature(`keyword:${keyword.id}`,keyword.name,'keyword'));
+    });
+
+    if (data.original_language) {
+      features.push(tasteFeature(`language:${data.original_language}`,String(data.original_language).toUpperCase(),'language'));
+    }
+
+    const runtime = type === 'movie'
+      ? data.runtime
+      : (Array.isArray(data.episode_run_time) ? data.episode_run_time[0] : null);
+    const runtimeFeature = runtimeBucket(runtime);
+    if (runtimeFeature) features.push(runtimeFeature);
+
+    const dateValue = type === 'series' ? data.first_air_date : data.release_date;
+    const decade = decadeFeature(dateValue);
+    if (decade) features.push(decade);
+
+    features.push(...inferTasteTraits({
+      genreIds:(data.genres || []).map(genre => genre.id),
+      overview:data.overview || '',
+      keywordNames:keywordList.map(keyword => keyword.name)
+    }));
+
+    const unique = features.filter((feature,index,array) =>
+      feature?.key && array.findIndex(other => other?.key === feature.key) === index
+    );
+
+    return json({ok:true, type, tmdbId:id, features:unique.slice(0,24)},200,{'cache-control':'public, max-age=86400'});
+  } catch (error) {
+    console.error(error);
+    return json({ok:false, code:'TMDB_TASTE_FEATURES_ERROR', message:'Taste-DNA-Merkmale konnten nicht geladen werden.'},502);
+  }
+}
+
 async function handleFeed(request, env) {
   if (!env.TMDB_API_TOKEN) {
     return json({
@@ -406,6 +544,7 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === '/api/feed') return handleFeed(request, env);
     if (url.pathname === '/api/details') return handleDetails(request, env);
+    if (url.pathname === '/api/taste-features') return handleTasteFeatures(request, env);
     if (url.pathname === '/api/recommendation-art') return handleRecommendationArt(env);
     return env.ASSETS.fetch(request);
   }
