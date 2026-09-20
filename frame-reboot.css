@@ -1085,9 +1085,10 @@ h1 em {
 
 #discoverView .action-undo span:last-child {
   font-family:var(--font-ui) !important;
-  font-size:11px !important;
+  font-size:9px !important;
   font-weight:800 !important;
-  letter-spacing:.04em !important;
+  letter-spacing:.025em !important;
+  white-space:nowrap;
 }
 
 #discoverView .action-undo:disabled {
