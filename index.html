@@ -46,6 +46,9 @@
           <button class="filter" data-filter="movie">Filme</button>
           <button class="filter" data-filter="series">Serien</button>
           <button class="filter" data-filter="person">People</button>
+          <button class="mood-trigger" id="moodTrigger" type="button" aria-haspopup="dialog">
+            <span id="moodTriggerText">Stimmung · Egal</span>
+          </button>
         </div>
 
         <div class="deck-wrap">
@@ -156,6 +159,7 @@
   <div class="toast" id="toast" role="status"></div>
   <script src="/viewport-lock.js" defer></script>
   <script src="/app.js" defer></script>
+  <script src="/mood-filter.js" defer></script>
   <script src="/tmdb-feed.js" defer></script>
   <script src="/card-details.js" defer></script>
   <script src="/watchlist-controls.js" defer></script>
