@@ -301,7 +301,14 @@ $('#likeButton').addEventListener('click',()=>animateSwipe('like'));
 $('#saveButton').addEventListener('click',()=>animateSwipe('save'));
 $('#dislikeButton').addEventListener('click',()=>animateSwipe('dislike'));
 $('#reshuffleButton').addEventListener('click',()=>{ state.swipes={}; state.saved=[]; persist(); renderDeck(); showToast('Neuer Schnitt. Neuer Feed.'); });
-$('#resetButton').addEventListener('click',()=>{ state={...defaultState, swipes:{}, saved:[]}; persist(); renderDeck(); switchView('discover'); showToast('FRAME auf Anfang gesetzt.'); });
+$('#resetButton').addEventListener('click',()=>{
+  state={...defaultState, swipes:{}, saved:[]};
+  persist();
+  if (typeof window.frameRandomizeFeed === 'function') window.frameRandomizeFeed({ fresh:true });
+  else renderDeck();
+  switchView('discover');
+  showToast('Neuer Start. Neuer zufälliger Feed.');
+});
 
 let brandTaps = 0;
 $('#brandButton').addEventListener('click',()=>{
