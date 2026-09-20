@@ -114,7 +114,11 @@
         action:state.swipes[entry.id]
       }));
 
-    return { signals, tagWeights };
+    return {
+      signals,
+      tagWeights,
+      mood: window.getFrameMood?.() || 'any'
+    };
   }
 
   function profileStrength() {
@@ -580,6 +584,14 @@
     if (row) {
       const key = `${row.dataset.mediaType}:${row.dataset.tmdbId}`;
       openRecommendationDetails(findRecommendation(key));
+    }
+  });
+
+  document.addEventListener('frame:mood-changed', () => {
+    cachedItems = [];
+    lastSignature = '';
+    if (document.querySelector('#recommendView')?.classList.contains('active')) {
+      queueMicrotask(() => refreshRecommendations({force:true}));
     }
   });
 
