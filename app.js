@@ -398,6 +398,7 @@ $('#resetButton').addEventListener('click',()=>{
   state={...defaultState, swipes:{}, saved:[]};
   saveLastSwipe(null);
   persist();
+  document.dispatchEvent(new CustomEvent('frame:taste-reset'));
   if (typeof window.frameRandomizeFeed === 'function') window.frameRandomizeFeed({ fresh:true });
   else renderDeck();
   switchView('discover');
