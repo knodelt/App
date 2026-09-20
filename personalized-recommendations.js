@@ -117,14 +117,17 @@
     return {
       signals,
       tagWeights,
+      tasteDNA: window.getFrameTasteDNA?.() || {version:2,featureWeights:[],pairWeights:[],answeredCount:0},
       mood: window.getFrameMood?.() || 'any'
     };
   }
 
   function profileStrength() {
     const actions = Object.keys(state.swipes || {}).length;
-    if (!actions) return 0;
-    return Math.min(99, Math.round(100 * (1 - Math.exp(-actions / 55))));
+    const answers = Number(window.getFrameTasteDNA?.().answeredCount || 0);
+    const effectiveSignals = actions + answers * 2.2;
+    if (!effectiveSignals) return 0;
+    return Math.min(99, Math.round(100 * (1 - Math.exp(-effectiveSignals / 55))));
   }
 
   function updateProfileStrength() {
@@ -335,7 +338,10 @@
       note.className = 'profile-signal-note';
       document.querySelector('.why-panel')?.appendChild(note);
     }
-    if (note) note.textContent = `${signalCount} persönliche TMDB-Signale · nur für diese Abfrage`;
+    if (note) {
+      const dna = window.getFrameTasteDNA?.() || {};
+      note.textContent = `${signalCount} Swipes · ${Number(dna.answeredCount || 0)} Fragen · Taste DNA aktiv`;
+    }
 
     document.dispatchEvent(new CustomEvent('frame:recommendations-rendered'));
   }
@@ -379,6 +385,7 @@
     updateProfileStrength();
     try { renderTaste(); } catch {}
     showToast('Entfernt. Dein Geschmack wurde angepasst.');
+    document.dispatchEvent(new CustomEvent('frame:recommendation-rejected', {detail:{item}}));
     closeRecommendationDetails();
     queueMicrotask(() => refreshRecommendations({force:true}));
   }
@@ -590,6 +597,15 @@
   document.addEventListener('frame:mood-changed', () => {
     cachedItems = [];
     lastSignature = '';
+    if (document.querySelector('#recommendView')?.classList.contains('active')) {
+      queueMicrotask(() => refreshRecommendations({force:true}));
+    }
+  });
+
+  document.addEventListener('frame:taste-dna-changed', () => {
+    cachedItems = [];
+    lastSignature = '';
+    updateProfileStrength();
     if (document.querySelector('#recommendView')?.classList.contains('active')) {
       queueMicrotask(() => refreshRecommendations({force:true}));
     }
