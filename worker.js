@@ -15,6 +15,17 @@ const FALLBACK_ART = 'linear-gradient(145deg,#5d4b3d 0%,#262126 52%,#0b0b0e 100%
 
 const LOCAL_MARKET_LANGUAGES = new Set(['ja', 'zh', 'ko']);
 
+const MOOD_FILTERS = {
+  drama:{ movie:'18', series:'18' },
+  horror:{ movie:'27', series:'9648' },
+  tension:{ movie:'53|9648|80', series:'9648|80' },
+  action:{ movie:'28|12', series:'10759' },
+  laugh:{ movie:'35', series:'35' },
+  mindfuck:{ movie:'878|9648', series:'10765|9648' },
+  feelgood:{ movie:'35|10751', series:'35|10751' },
+  romance:{ movie:'10749', series:'18|35' }
+};
+
 function isGermanyRelevantMedia(item, type = 'movie') {
   const voteCount = Number(item?.vote_count || 0);
   const popularity = Number(item?.popularity || 0);
@@ -192,6 +203,8 @@ async function handleFeed(request, env) {
   const url = new URL(request.url);
   const page = clampPage(url.searchParams.get('page'));
   const language = 'de-DE';
+  const mood = String(url.searchParams.get('mood') || 'any').toLowerCase();
+  const moodFilter = MOOD_FILTERS[mood] || null;
 
   try {
     const [movies, series, people] = await Promise.all([
@@ -204,7 +217,8 @@ async function handleFeed(request, env) {
         sort_by: 'popularity.desc',
         watch_region: 'DE',
         with_watch_monetization_types: 'flatrate|free|ads|rent|buy',
-        'vote_count.gte': 80
+        'vote_count.gte': 80,
+        ...(moodFilter?.movie ? { with_genres:moodFilter.movie } : {})
       }),
       tmdb('/discover/tv', env, {
         include_adult: false,
@@ -213,9 +227,10 @@ async function handleFeed(request, env) {
         sort_by: 'popularity.desc',
         watch_region: 'DE',
         with_watch_monetization_types: 'flatrate|free|ads|rent|buy',
-        'vote_count.gte': 40
+        'vote_count.gte': 40,
+        ...(moodFilter?.series ? { with_genres:moodFilter.series } : {})
       }),
-      tmdb('/person/popular', env, { language, page })
+      moodFilter ? Promise.resolve({ results:[] }) : tmdb('/person/popular', env, { language, page })
     ]);
 
     const movieCards = (movies.results || [])
@@ -237,6 +252,7 @@ async function handleFeed(request, env) {
       ok: true,
       source: 'tmdb',
       page,
+      mood,
       hasMore: page < Math.min(movies.total_pages || 500, 500),
       items
     });
