@@ -1,24 +1,71 @@
 (() => {
-  let page = 1;
+  const START_PAGE_MAX = 5;
+  const fallbackIds = new Set(catalog.map(item => item.id));
+
+  let page = randomStartPage();
   let loading = false;
   let exhausted = false;
   let configured = null;
+  let generation = 0;
+  let preferFreshItems = true;
+  let feedNonce = makeNonce();
 
   const knownIds = new Set(catalog.map(item => item.id));
+
+  function randomUnit() {
+    try {
+      const values = new Uint32Array(1);
+      crypto.getRandomValues(values);
+      return values[0] / 4294967296;
+    } catch {
+      return Math.random();
+    }
+  }
+
+  function randomStartPage() {
+    return 1 + Math.floor(randomUnit() * START_PAGE_MAX);
+  }
+
+  function makeNonce() {
+    return Math.floor(randomUnit() * 1e9).toString(36);
+  }
+
+  function shuffle(items = []) {
+    const copy = [...items];
+    for (let i = copy.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(randomUnit() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  }
+
+  function shuffleCatalog() {
+    const shuffled = shuffle(catalog);
+    catalog.splice(0, catalog.length, ...shuffled);
+  }
+
+  function keepFallbackOnly() {
+    const fallback = catalog.filter(item => fallbackIds.has(item.id));
+    catalog.splice(0, catalog.length, ...shuffle(fallback));
+    knownIds.clear();
+    catalog.forEach(item => knownIds.add(item.id));
+  }
 
   function remainingCards() {
     return catalog.filter(item => (state.filter === 'all' || item.type === state.filter) && !state.swipes[item.id]).length;
   }
 
-  function mergeItems(items = []) {
-    let added = 0;
-    for (const item of items) {
+  function mergeItems(items = [], { prefer = false } = {}) {
+    const fresh = [];
+    for (const item of shuffle(items)) {
       if (!item?.id || knownIds.has(item.id)) continue;
-      catalog.push(item);
+      fresh.push(item);
       knownIds.add(item.id);
-      added += 1;
     }
-    return added;
+    if (!fresh.length) return 0;
+    if (prefer) catalog.unshift(...fresh);
+    else catalog.push(...fresh);
+    return fresh.length;
   }
 
   function setLiveCredit(isLive) {
@@ -44,10 +91,17 @@
   async function loadMore({ silent = true } = {}) {
     if (loading || exhausted || configured === false) return;
     loading = true;
+    const requestGeneration = generation;
+    const requestPage = page;
 
     try {
-      const response = await fetch(`/api/feed?page=${page}&market=de-v2`, { headers: { accept: 'application/json' }, cache: 'no-store' });
+      const response = await fetch(`/api/feed?page=${requestPage}&market=de-v3&seed=${feedNonce}`, {
+        headers: { accept: 'application/json' },
+        cache: 'no-store'
+      });
       const data = await response.json().catch(() => ({}));
+
+      if (requestGeneration !== generation) return;
 
       if (!response.ok) {
         if (data.code === 'TMDB_NOT_CONFIGURED') configured = false;
@@ -55,19 +109,21 @@
       }
 
       configured = true;
-      const added = mergeItems(data.items || []);
-      page = Number(data.page || page) + 1;
+      const added = mergeItems(data.items || [], { prefer: preferFreshItems });
+      preferFreshItems = false;
+      page = Number(data.page || requestPage) + 1;
       exhausted = data.hasMore === false || added === 0;
       setLiveCredit(true);
       baseRenderDeck();
 
       if (remainingCards() < 10 && !exhausted) queueMicrotask(() => loadMore({ silent: true }));
     } catch (error) {
+      if (requestGeneration !== generation) return;
       console.warn('[FRAME TMDB]', error.message);
       setLiveCredit(false);
       if (!silent && configured !== false) showToast('TMDB-Feed gerade nicht erreichbar.');
     } finally {
-      loading = false;
+      if (requestGeneration === generation) loading = false;
     }
   }
 
@@ -77,6 +133,22 @@
     if (remainingCards() < 10) queueMicrotask(() => loadMore({ silent: true }));
   };
 
+  window.frameRandomizeFeed = function frameRandomizeFeed({ fresh = true } = {}) {
+    generation += 1;
+    loading = false;
+    exhausted = false;
+    configured = null;
+    page = randomStartPage();
+    feedNonce = makeNonce();
+    preferFreshItems = true;
+
+    if (fresh) keepFallbackOnly();
+    else shuffleCatalog();
+
+    baseRenderDeck();
+    queueMicrotask(() => loadMore({ silent: true }));
+  };
+
   document.querySelectorAll('.filter').forEach(button => {
     button.addEventListener('click', () => queueMicrotask(() => {
       if (remainingCards() < 10) loadMore({ silent: true });
@@ -84,5 +156,9 @@
   });
 
   setLiveCredit(false);
+
+  // Every real app/page start begins with a different order before TMDB even responds.
+  shuffleCatalog();
+  baseRenderDeck();
   loadMore({ silent: true });
 })();
