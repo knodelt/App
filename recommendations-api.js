@@ -8,6 +8,17 @@ const TV_GENRES = {
   Familie:10751, Kids:10762, Mystery:9648, News:10763, Reality:10764,
   'Sci-Fi & Fantasy':10765, Soap:10766, Talk:10767, 'War & Politics':10768, Western:37
 };
+const MOOD_GENRES = {
+  drama:{ label:'Drama', movie:[18], series:[18] },
+  horror:{ label:'Horror', movie:[27], series:[9648] },
+  tension:{ label:'Spannung', movie:[53,9648,80], series:[9648,80] },
+  action:{ label:'Action', movie:[28,12], series:[10759] },
+  laugh:{ label:'Lachen', movie:[35], series:[35] },
+  mindfuck:{ label:'Mindfuck', movie:[878,9648], series:[10765,9648] },
+  feelgood:{ label:'Feel-Good', movie:[35,10751], series:[35,10751] },
+  romance:{ label:'Romantik', movie:[10749], series:[18,35] }
+};
+
 const GENRE_NAMES = new Map();
 Object.entries({...MOVIE_GENRES, ...TV_GENRES}).forEach(([name,id]) => {
   if (!GENRE_NAMES.has(id)) GENRE_NAMES.set(id, name);
@@ -98,6 +109,9 @@ export async function handlePersonalizedRecommendations(request, env) {
   try { body = await request.json(); }
   catch { return json({ok:false, code:'BAD_JSON'}, 400); }
 
+  const mood = String(body?.mood || 'any').toLowerCase();
+  const moodConfig = MOOD_GENRES[mood] || null;
+
   const signals = (Array.isArray(body?.signals) ? body.signals : [])
     .slice(0,100)
     .map(normalizeSignal)
@@ -129,6 +143,8 @@ export async function handlePersonalizedRecommendations(request, env) {
   const topTvGenres = topGenreIds(tvGenreWeights);
   const badMovieGenres = negativeGenreIds(movieGenreWeights);
   const badTvGenres = negativeGenreIds(tvGenreWeights);
+  const discoverMovieGenres = moodConfig ? moodConfig.movie : topMovieGenres;
+  const discoverTvGenres = moodConfig ? moodConfig.series : topTvGenres;
 
   const candidates = new Map();
   function addCandidate(item, type, boost = 0, reason = '') {
@@ -186,9 +202,14 @@ export async function handlePersonalizedRecommendations(request, env) {
       watch_region:'DE',
       with_watch_monetization_types:'flatrate|free|ads|rent|buy',
       'vote_count.gte':100,
-      with_genres:topMovieGenres.join('|'),
+      with_genres:discoverMovieGenres.join('|'),
       without_genres:badMovieGenres.join(',')
-    }).then(data => (data.results || []).slice(0,20).forEach(item => addCandidate(item,'movie', topMovieGenres.length ? 3 : 1, 'Passt zu deinem Genreprofil')))
+    }).then(data => (data.results || []).slice(0,20).forEach(item => addCandidate(
+      item,
+      'movie',
+      moodConfig ? 8 : (topMovieGenres.length ? 3 : 1),
+      moodConfig ? `Heute: ${moodConfig.label}` : 'Passt zu deinem Genreprofil'
+    )))
   );
   tasks.push(
     tmdb('/discover/tv', env, {
@@ -196,9 +217,14 @@ export async function handlePersonalizedRecommendations(request, env) {
       watch_region:'DE',
       with_watch_monetization_types:'flatrate|free|ads|rent|buy',
       'vote_count.gte':60,
-      with_genres:topTvGenres.join('|'),
+      with_genres:discoverTvGenres.join('|'),
       without_genres:badTvGenres.join(',')
-    }).then(data => (data.results || []).slice(0,20).forEach(item => addCandidate(item,'series', topTvGenres.length ? 3 : 1, 'Passt zu deinem Genreprofil')))
+    }).then(data => (data.results || []).slice(0,20).forEach(item => addCandidate(
+      item,
+      'series',
+      moodConfig ? 8 : (topTvGenres.length ? 3 : 1),
+      moodConfig ? `Heute: ${moodConfig.label}` : 'Passt zu deinem Genreprofil'
+    )))
   );
 
   try { await Promise.all(tasks); }
@@ -209,11 +235,18 @@ export async function handlePersonalizedRecommendations(request, env) {
     return candidate.genreIds.reduce((sum,id) => sum + clamp(map.get(id) || 0, -10, 12), 0);
   }
 
+  function moodWeight(candidate) {
+    if (!moodConfig) return 0;
+    const ids = candidate.type === 'series' ? moodConfig.series : moodConfig.movie;
+    return candidate.genreIds.some(id => ids.includes(id)) ? 10 : -7;
+  }
+
   const ranked = [...candidates.values()].map(candidate => {
     const personal = genreWeight(candidate);
     const quality = clamp((candidate.voteAverage - 6) * 2.2, -5, 7);
     const popularity = clamp(Math.log10(candidate.popularity + 1) * 1.7, 0, 6);
-    const score = clamp(Math.round(61 + candidate.affinity + personal * 1.25 + quality + popularity), 48, 98);
+    const tonight = moodWeight(candidate);
+    const score = clamp(Math.round(61 + candidate.affinity + personal * 1.25 + quality + popularity + tonight), 48, 98);
 
     const map = candidate.type === 'series' ? tvGenreWeights : movieGenreWeights;
     const matchedGenres = candidate.genreIds
@@ -222,7 +255,8 @@ export async function handlePersonalizedRecommendations(request, env) {
       .sort((a,b)=>b.weight-a.weight)
       .slice(0,2)
       .map(x => `♥ ${x.name}`);
-    const reasons = [...matchedGenres, ...candidate.reasons].slice(0,3);
+    const moodReason = moodConfig && tonight > 0 ? [`Heute: ${moodConfig.label}`] : [];
+    const reasons = [...moodReason, ...matchedGenres, ...candidate.reasons].filter((value,index,array) => array.indexOf(value) === index).slice(0,3);
 
     return {
       tmdbId:candidate.tmdbId,
@@ -252,6 +286,7 @@ export async function handlePersonalizedRecommendations(request, env) {
     ok:true,
     source:'tmdb',
     profileSignals:signals.length,
+    mood,
     items:result
   });
 }
