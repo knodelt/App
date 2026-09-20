@@ -129,6 +129,10 @@ function renderDeck() {
     const isTop = reverseIndex === arr.length - 1;
     card.className = `swipe-card${isTop ? ' top-card' : ''}${item.poster ? ' has-poster' : ''}${item.type === 'person' ? ' person-card' : ''}`;
     card.dataset.id = item.id;
+    if (item.tmdbId && ['movie','series'].includes(item.type)) {
+      card.dataset.tmdbId = String(item.tmdbId);
+      card.dataset.mediaType = item.type;
+    }
     card.style.setProperty('--art', item.art);
     if (item.poster) card.style.setProperty('--poster', `url("${posterUrl(item.poster)}")`);
     card.innerHTML = `
