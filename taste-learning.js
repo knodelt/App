@@ -422,6 +422,48 @@
     window.getFrameOnlineModel = modelSnapshot;
   }
 
+  async function bootstrapHistoricalLearning() {
+    if (model.examples.length || model.steps || !Object.keys(state?.swipes || {}).length) return;
+
+    let history = {};
+    try { history = JSON.parse(localStorage.getItem('frame-recommendation-history-v1') || '{}') || {}; }
+    catch {}
+
+    const entries = Object.entries(state.swipes || {}).slice(-80);
+    const examples = [];
+
+    for (const [id,action] of entries) {
+      const catalogItem = catalog.find(item => item.id === id);
+      const historyItem = history[id];
+      const item = catalogItem || (historyItem ? {
+        id,
+        tmdbId:historyItem.tmdbId,
+        type:historyItem.type,
+        title:historyItem.title || '',
+        tags:historyItem.tags || []
+      } : null);
+
+      if (!item) continue;
+      const features = await getFeatures(item);
+      if (!features.length) continue;
+      examples.push(compactExample({
+        id,
+        tmdbId:item.tmdbId || null,
+        type:item.type || '',
+        title:item.title || '',
+        action,
+        features,
+        meta:{dwellMs:0,detailsOpened:false},
+        at:Number(historyItem?.updatedAt || Date.now())
+      }));
+    }
+
+    if (!examples.length) return;
+    model.examples = examples.sort((a,b)=>a.at-b.at).slice(-MAX_EXAMPLES);
+    rebuild();
+    event('history_bootstrap',{examples:model.examples.length});
+  }
+
   function ensureUi() {
     if (document.querySelector('#onlineLearningCard')) return;
     const anchor = document.querySelector('#tasteDnaInsights') || document.querySelector('#tasteDnaQuestionCard');
@@ -590,4 +632,5 @@
 
   observeDeck();
   render();
+  queueMicrotask(() => bootstrapHistoricalLearning());
 })();
