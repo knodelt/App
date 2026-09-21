@@ -144,6 +144,21 @@ export async function handlePersonalizedRecommendations(request, env) {
     .filter(entry => entry.a && entry.b && entry.weight !== 0);
   const dnaFeatureMap = new Map(dnaFeatures.map(entry => [entry.key,entry]));
 
+  const onlineModel = body?.onlineModel && typeof body.onlineModel === 'object' ? body.onlineModel : {};
+  const onlineFeatureWeights = (Array.isArray(onlineModel.featureWeights) ? onlineModel.featureWeights : [])
+    .slice(0,70)
+    .map(entry => ({
+      key:String(entry?.key || '').slice(0,100),
+      label:String(entry?.label || '').slice(0,100),
+      weight:clamp(Number(entry?.weight) || 0,-5,5),
+      confidence:clamp(Number(entry?.confidence) || 0,0,1)
+    }))
+    .filter(entry => entry.key && entry.weight !== 0);
+  const onlineFeatureMap = new Map(onlineFeatureWeights.map(entry => [entry.key,entry]));
+  const onlineBias = clamp(Number(onlineModel?.bias) || 0,-3,3);
+  const onlineExamples = clamp(Number(onlineModel?.examples) || 0,0,500);
+  const explorationRate = clamp(Number(onlineModel?.explorationRate) || .15,.05,.25);
+
   const excluded = {
     movie:new Set(signals.filter(s => s.type === 'movie').map(s => s.tmdbId)),
     series:new Set(signals.filter(s => s.type === 'series').map(s => s.tmdbId))
@@ -382,15 +397,51 @@ export async function handlePersonalizedRecommendations(request, env) {
     };
   }
 
+  function onlineScores(candidate) {
+    const keys = candidateFeatureSet(candidate);
+    let logit = onlineBias;
+    let known = 0;
+    let confidenceSum = 0;
+    let strongest = null;
+
+    for (const key of keys) {
+      const learned = onlineFeatureMap.get(key);
+      if (!learned) continue;
+      const contribution = learned.weight * learned.confidence;
+      logit += contribution;
+      known += 1;
+      confidenceSum += learned.confidence;
+      if (!strongest || Math.abs(contribution) > Math.abs(strongest.contribution)) {
+        strongest = {label:learned.label || key, contribution};
+      }
+    }
+
+    const probability = 1 / (1 + Math.exp(-clamp(logit,-12,12)));
+    const total = Math.max(1,keys.size);
+    const unknownShare = clamp((total-known)/total,0,1);
+    const averageConfidence = known ? confidenceSum/known : 0;
+    const uncertainty = clamp(unknownShare*.65 + (1-averageConfidence)*.35,0,1);
+
+    return {
+      probability,
+      score:clamp((probability-.5)*28,-14,14),
+      uncertainty,
+      strongest
+    };
+  }
+
   const ranked = [...candidates.values()].map(candidate => {
     const personal = genreWeight(candidate);
     const quality = clamp((candidate.voteAverage - 6) * 2.2, -5, 7);
     const popularity = clamp(Math.log10(candidate.popularity + 1) * 1.7, 0, 6);
     const tonight = moodWeight(candidate);
     const dna = dnaScores(candidate);
+    const learned = onlineScores(candidate);
+    const learnedWeight = onlineExamples >= 6 ? 1 : onlineExamples / 6;
     const score = clamp(Math.round(
       59 + candidate.affinity + personal * 1.05 + quality + popularity + tonight
-      + dna.featureScore * .82 + dna.pairScore * 1.05
+      + dna.featureScore * .70 + dna.pairScore * .88
+      + learned.score * learnedWeight
     ), 45, 98);
 
     const map = candidate.type === 'series' ? tvGenreWeights : movieGenreWeights;
@@ -403,7 +454,8 @@ export async function handlePersonalizedRecommendations(request, env) {
     const moodReason = moodConfig && tonight > 0 ? [`Heute: ${moodConfig.label}`] : [];
     const relationReason = dna.matchedPairs[0]?.label ? [`DNA: ${dna.matchedPairs[0].label}`] : [];
     const featureReason = dna.matched[0]?.label ? [`DNA: ${dna.matched[0].label}`] : [];
-    const reasons = [...moodReason, ...relationReason, ...featureReason, ...matchedGenres, ...candidate.reasons]
+    const learnedReason = learned.strongest?.contribution > .18 ? [`Gelernt: ${learned.strongest.label}`] : [];
+    const reasons = [...moodReason, ...learnedReason, ...relationReason, ...featureReason, ...matchedGenres, ...candidate.reasons]
       .filter((value,index,array) => array.indexOf(value) === index)
       .slice(0,3);
 
@@ -417,18 +469,56 @@ export async function handlePersonalizedRecommendations(request, env) {
       backdrop:candidate.backdrop,
       tags:candidate.genreIds.map(id => GENRE_NAMES.get(id)).filter(Boolean).slice(0,4),
       match:score,
+      learningProbability:Number(learned.probability.toFixed(3)),
+      uncertainty:Number(learned.uncertainty.toFixed(3)),
+      exploration:false,
       reasons
     };
   }).sort((a,b)=>b.match-a.match || a.title.localeCompare(b.title,'de'));
 
   const result = [];
   let movies = 0, series = 0;
-  for (const item of ranked) {
-    if (result.length >= 12) break;
-    if (item.type === 'movie' && movies >= 8) continue;
-    if (item.type === 'series' && series >= 6) continue;
+  const exploitTarget = onlineExamples >= 4 ? Math.max(9,Math.round(12*(1-explorationRate))) : 11;
+
+  function canAdd(item) {
+    if (result.some(entry => entry.type === item.type && entry.tmdbId === item.tmdbId)) return false;
+    if (item.type === 'movie' && movies >= 8) return false;
+    if (item.type === 'series' && series >= 6) return false;
+    return true;
+  }
+
+  function addResult(item) {
+    if (!canAdd(item) || result.length >= 12) return false;
     result.push(item);
     if (item.type === 'movie') movies += 1; else series += 1;
+    return true;
+  }
+
+  for (const item of ranked) {
+    if (result.length >= exploitTarget) break;
+    addResult(item);
+  }
+
+  const explorationPool = ranked
+    .filter(item => !result.some(entry => entry.type === item.type && entry.tmdbId === item.tmdbId))
+    .map(item => ({
+      item,
+      exploreScore:item.match + item.uncertainty*9 + Math.random()*1.5
+    }))
+    .sort((a,b)=>b.exploreScore-a.exploreScore);
+
+  for (const entry of explorationPool) {
+    if (result.length >= 12) break;
+    const candidate = {...entry.item, exploration:true};
+    if (!candidate.reasons.some(reason => reason === 'FRAME lernt hier bewusst dazu')) {
+      candidate.reasons = ['FRAME lernt hier bewusst dazu',...candidate.reasons].slice(0,3);
+    }
+    addResult(candidate);
+  }
+
+  for (const item of ranked) {
+    if (result.length >= 12) break;
+    addResult(item);
   }
 
   return json({
@@ -437,6 +527,12 @@ export async function handlePersonalizedRecommendations(request, env) {
     profileSignals:signals.length,
     tasteDnaFeatures:dnaFeatures.length,
     tasteDnaPairs:dnaPairs.length,
+    onlineLearning:{
+      algorithm:'online-logistic-pairwise-v1',
+      examples:onlineExamples,
+      features:onlineFeatureWeights.length,
+      explorationRate
+    },
     mood,
     items:result
   });
