@@ -118,6 +118,7 @@
       signals,
       tagWeights,
       tasteDNA: window.getFrameTasteDNA?.() || {version:2,featureWeights:[],pairWeights:[],answeredCount:0},
+      onlineModel: window.getFrameOnlineModel?.() || {version:1,algorithm:'online-logistic-pairwise-v1',steps:0,examples:0,explorationRate:.15,featureWeights:[]},
       mood: window.getFrameMood?.() || 'any'
     };
   }
@@ -340,7 +341,8 @@
     }
     if (note) {
       const dna = window.getFrameTasteDNA?.() || {};
-      note.textContent = `${signalCount} Swipes · ${Number(dna.answeredCount || 0)} Fragen · Taste DNA aktiv`;
+      const learned = window.getFrameOnlineModel?.() || {};
+      note.textContent = `${signalCount} Swipes · ${Number(dna.answeredCount || 0)} Fragen · ${Number(learned.examples || 0)} trainierte Entscheidungen`;
     }
 
     document.dispatchEvent(new CustomEvent('frame:recommendations-rendered'));
@@ -606,6 +608,14 @@
     cachedItems = [];
     lastSignature = '';
     updateProfileStrength();
+    if (document.querySelector('#recommendView')?.classList.contains('active')) {
+      queueMicrotask(() => refreshRecommendations({force:true}));
+    }
+  });
+
+  document.addEventListener('frame:online-model-changed', () => {
+    cachedItems = [];
+    lastSignature = '';
     if (document.querySelector('#recommendView')?.classList.contains('active')) {
       queueMicrotask(() => refreshRecommendations({force:true}));
     }
