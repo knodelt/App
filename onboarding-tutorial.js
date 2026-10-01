@@ -7,33 +7,38 @@
       kicker:'SCHRITT 1 · 5',
       title:'Das ist dein Film-Feed.',
       copy:'Einfach nach Gefühl entscheiden. FRAME lernt mit jedem Swipe ein bisschen genauer, was wirklich zu dir passt.',
-      gesture:true
+      gesture:true,
+      panel:'top'
     },
     {
       target:'#discoverView .actions',
       kicker:'SCHRITT 2 · 5',
       title:'Drei schnelle Entscheidungen.',
       copy:'Links = SUPER · hoch = MERKEN · rechts = MIST. Du kannst auch einfach die drei Buttons antippen.',
-      actions:true
+      actions:true,
+      panel:'top'
     },
     {
       target:'.undo-row',
       kicker:'SCHRITT 3 · 5',
       title:'Vertippt? Kein Problem.',
-      copy:'Mit SWIPE RÜCKGÄNGIG holst du genau die letzte Entscheidung zurück – inklusive Geschmack und Watchlist.'
+      copy:'Mit SWIPE RÜCKGÄNGIG holst du genau die letzte Entscheidung zurück – inklusive Geschmack und Watchlist.',
+      panel:'top'
     },
     {
       target:'#moodTrigger',
       kicker:'SCHRITT 4 · 5',
       title:'Was passt heute?',
-      copy:'Über Stimmung sagst du FRAME, ob heute eher Horror, Drama, Action, Feel-Good oder etwas anderes dran ist.'
+      copy:'Über Stimmung sagst du FRAME, ob heute eher Horror, Drama, Action, Feel-Good oder etwas anderes dran ist.',
+      panel:'bottom'
     },
     {
       target:'.bottom-nav',
       kicker:'SCHRITT 5 · 5',
       title:'Je mehr du swipest, desto besser wird FRAME.',
       copy:'Unter Für dich entstehen persönliche Treffer. Im Profil siehst du, was FRAME über deinen Geschmack gelernt hat.',
-      final:true
+      final:true,
+      panel:'top'
     }
   ];
 
@@ -73,15 +78,16 @@
       }
       .frame-tutorial-panel {
         position:fixed; z-index:303; left:14px; right:14px;
-        bottom:calc(14px + env(safe-area-inset-bottom));
+        top:auto; bottom:auto;
         width:auto; max-width:430px; margin:0 auto;
-        padding:18px;
+        padding:16px;
         border:1px solid rgba(255,255,255,.12);
-        border-radius:24px;
-        background:rgba(18,18,21,.97);
+        border-radius:22px;
+        background:rgba(18,18,21,.98);
         color:#f7f5f2;
-        box-shadow:0 22px 70px rgba(0,0,0,.5);
+        box-shadow:0 18px 55px rgba(0,0,0,.48);
         -webkit-backdrop-filter:blur(20px); backdrop-filter:blur(20px);
+        transition:top .18s ease,bottom .18s ease;
       }
       .frame-tutorial-top {
         display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
@@ -91,7 +97,7 @@
         font:800 9px/1 Manrope,system-ui,sans-serif; letter-spacing:.08em;
       }
       .frame-tutorial-title {
-        margin:0; color:#fff; font:650 27px/.98 Fraunces,Georgia,serif;
+        margin:0; color:#fff; font:650 24px/.98 Fraunces,Georgia,serif;
         letter-spacing:-.035em;
       }
       .frame-tutorial-skip {
@@ -99,7 +105,7 @@
         background:#202025; color:#99948e; font-size:9px; font-weight:800;
       }
       .frame-tutorial-copy {
-        margin:11px 0 0; color:#b9b4ad; font-size:12px; line-height:1.48;
+        margin:9px 0 0; color:#b9b4ad; font-size:11px; line-height:1.42;
       }
       .frame-tutorial-gesture {
         display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin-top:13px;
@@ -116,7 +122,7 @@
         display:block; margin-bottom:2px; font-size:17px; line-height:1;
       }
       .frame-tutorial-footer {
-        display:flex; align-items:center; gap:10px; margin-top:15px;
+        display:flex; align-items:center; gap:9px; margin-top:12px;
       }
       .frame-tutorial-dots {
         display:flex; gap:5px; flex:1 1 auto;
@@ -140,7 +146,7 @@
         display:block; margin-top:6px; color:#696661; font-size:9px; text-align:center;
       }
       @media (max-height:700px) {
-        .frame-tutorial-panel { padding:15px; border-radius:20px; }
+        .frame-tutorial-panel { padding:14px; border-radius:20px; }
         .frame-tutorial-title { font-size:23px; }
         .frame-tutorial-copy { font-size:11px; }
         .frame-tutorial-gesture span { min-height:38px; }
@@ -211,7 +217,8 @@
   function positionFocus() {
     if (!focus || !open) return;
     const target = targetForStep();
-    if (!target) {
+    const panel = root?.querySelector('.frame-tutorial-panel');
+    if (!target || !panel) {
       focus.className = 'frame-tutorial-focus no-target';
       return;
     }
@@ -232,6 +239,39 @@
     if (steps[current].target === '#moodTrigger') focus.style.borderRadius = '999px';
     else if (steps[current].target === '.bottom-nav') focus.style.borderRadius = '20px';
     else focus.style.borderRadius = '22px';
+
+    // Put the explanation on the opposite side of the highlighted UI.
+    panel.style.top = 'auto';
+    panel.style.bottom = 'auto';
+
+    const safeTop = 10 + Math.max(0, Number.parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sat') || '0', 10) || 0);
+    const safeBottom = 12;
+    const gap = 12;
+    const panelHeight = panel.offsetHeight;
+    const stepPreference = steps[current].panel;
+
+    const spaceAbove = Math.max(0, rect.top - gap - safeTop);
+    const spaceBelow = Math.max(0, window.innerHeight - rect.bottom - gap - safeBottom);
+
+    let side = stepPreference;
+    if (side === 'top' && spaceAbove < panelHeight && spaceBelow > spaceAbove) side = 'bottom';
+    if (side === 'bottom' && spaceBelow < panelHeight && spaceAbove > spaceBelow) side = 'top';
+
+    if (!side) side = spaceAbove >= spaceBelow ? 'top' : 'bottom';
+
+    if (side === 'top') {
+      const desiredTop = Math.max(safeTop, rect.top - gap - panelHeight);
+      panel.style.top = `${desiredTop}px`;
+    } else {
+      const desiredBottom = Math.max(safeBottom, window.innerHeight - rect.bottom + gap);
+      panel.style.bottom = `${desiredBottom}px`;
+    }
+
+    // Last guard: if target is huge (step 1), keep panel in a clean header zone.
+    if (current === 0 && rect.height > window.innerHeight * .48) {
+      panel.style.bottom = 'auto';
+      panel.style.top = `${Math.max(8, Math.min(rect.top - panelHeight - 10, 190))}px`;
+    }
   }
 
   function renderStep() {
