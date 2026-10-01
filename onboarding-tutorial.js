@@ -200,6 +200,8 @@
     });
 
     window.addEventListener('resize', () => { if (open) positionFocus(); }, {passive:true});
+    window.visualViewport?.addEventListener('resize', () => { if (open) positionFocus(); }, {passive:true});
+    window.visualViewport?.addEventListener('scroll', () => { if (open) positionFocus(); }, {passive:true});
     window.addEventListener('orientationchange', () => setTimeout(() => { if (open) positionFocus(); },180), {passive:true});
 
     const deck = document.querySelector('#cardDeck');
@@ -224,11 +226,16 @@
     }
 
     const rect = target.getBoundingClientRect();
+    const viewport = window.visualViewport;
+    const viewportTop = viewport?.offsetTop || 0;
+    const viewportHeight = viewport?.height || window.innerHeight;
+    const viewportBottom = viewportTop + viewportHeight;
+
     const pad = current === 0 ? 5 : 7;
     const left = Math.max(6,rect.left-pad);
-    const top = Math.max(6,rect.top-pad);
+    const top = Math.max(viewportTop + 6,rect.top-pad);
     const width = Math.min(window.innerWidth-left-6,rect.width+pad*2);
-    const height = Math.min(window.innerHeight-top-6,rect.height+pad*2);
+    const height = Math.min(viewportBottom-top-6,rect.height+pad*2);
 
     focus.className = 'frame-tutorial-focus';
     focus.style.left = `${left}px`;
@@ -240,37 +247,64 @@
     else if (steps[current].target === '.bottom-nav') focus.style.borderRadius = '20px';
     else focus.style.borderRadius = '22px';
 
-    // Put the explanation on the opposite side of the highlighted UI.
     panel.style.top = 'auto';
     panel.style.bottom = 'auto';
 
-    const safeTop = 10 + Math.max(0, Number.parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sat') || '0', 10) || 0);
-    const safeBottom = 12;
-    const gap = 12;
+    const gap = 14;
+    const safeTop = viewportTop + 10;
+    const safeBottom = viewportBottom - 12;
     const panelHeight = panel.offsetHeight;
-    const stepPreference = steps[current].panel;
-
     const spaceAbove = Math.max(0, rect.top - gap - safeTop);
-    const spaceBelow = Math.max(0, window.innerHeight - rect.bottom - gap - safeBottom);
+    const spaceBelow = Math.max(0, safeBottom - rect.bottom - gap);
 
-    let side = stepPreference;
-    if (side === 'top' && spaceAbove < panelHeight && spaceBelow > spaceAbove) side = 'bottom';
-    if (side === 'bottom' && spaceBelow < panelHeight && spaceAbove > spaceBelow) side = 'top';
+    let side = steps[current].panel || (spaceAbove >= spaceBelow ? 'top' : 'bottom');
 
-    if (!side) side = spaceAbove >= spaceBelow ? 'top' : 'bottom';
+    // Only switch away from the preferred side when it genuinely cannot fit.
+    if (side === 'top' && spaceAbove < panelHeight && spaceBelow >= panelHeight) side = 'bottom';
+    if (side === 'bottom' && spaceBelow < panelHeight && spaceAbove >= panelHeight) side = 'top';
 
-    if (side === 'top') {
-      const desiredTop = Math.max(safeTop, rect.top - gap - panelHeight);
-      panel.style.top = `${desiredTop}px`;
-    } else {
-      const desiredBottom = Math.max(safeBottom, window.innerHeight - rect.bottom + gap);
-      panel.style.bottom = `${desiredBottom}px`;
+    const placeAbove = () => {
+      const y = Math.max(safeTop, Math.min(rect.top - gap - panelHeight, safeBottom - panelHeight));
+      panel.style.top = `${y}px`;
+      return {top:y, bottom:y + panelHeight};
+    };
+
+    const placeBelow = () => {
+      const y = Math.max(safeTop, Math.min(rect.bottom + gap, safeBottom - panelHeight));
+      panel.style.top = `${y}px`;
+      return {top:y, bottom:y + panelHeight};
+    };
+
+    let placed = side === 'bottom' ? placeBelow() : placeAbove();
+
+    // Absolute collision guard: the explanation must never cover the highlighted target.
+    const targetTop = rect.top - pad;
+    const targetBottom = rect.bottom + pad;
+    const overlaps = () => placed.bottom > targetTop && placed.top < targetBottom;
+
+    if (overlaps()) {
+      const alternateFits = side === 'bottom'
+        ? spaceAbove >= Math.min(panelHeight, spaceAbove)
+        : spaceBelow >= Math.min(panelHeight, spaceBelow);
+
+      if (side === 'bottom' && spaceAbove > 80) {
+        placed = placeAbove();
+        side = 'top';
+      } else if (side === 'top' && spaceBelow > 80) {
+        placed = placeBelow();
+        side = 'bottom';
+      }
     }
 
-    // Last guard: if target is huge (step 1), keep panel in a clean header zone.
-    if (current === 0 && rect.height > window.innerHeight * .48) {
-      panel.style.bottom = 'auto';
-      panel.style.top = `${Math.max(8, Math.min(rect.top - panelHeight - 10, 190))}px`;
+    // Final hard separation even on unusually short Safari viewports.
+    if (placed.bottom > targetTop && placed.top < targetBottom) {
+      if (side === 'bottom') {
+        const y = Math.min(safeBottom - panelHeight, targetBottom + gap);
+        panel.style.top = `${Math.max(safeTop,y)}px`;
+      } else {
+        const y = Math.max(safeTop, targetTop - gap - panelHeight);
+        panel.style.top = `${y}px`;
+      }
     }
   }
 
