@@ -134,6 +134,11 @@
       exhausted = data.hasMore === false || added === 0;
       setLiveCredit(true);
       baseRenderDeck();
+      if (added > 0) {
+        document.dispatchEvent(new CustomEvent('frame:feed-loaded', {
+          detail:{ added, page:requestPage, catalogSize:catalog.length }
+        }));
+      }
 
       if (remainingCards() < 10 && !exhausted) queueMicrotask(() => loadMore({ silent: true }));
     } catch (error) {
