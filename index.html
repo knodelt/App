@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="/styles.css" />
   <link rel="stylesheet" href="/app-layout.css" />
   <link rel="stylesheet" href="/frame-reboot.css" />
+  <link rel="stylesheet" href="/frame-loop.css" />
   <title>FRAME — Filme & Serien entdecken</title>
 </head>
 <body>
@@ -98,10 +99,88 @@
       <section class="view" id="recommendView" data-view="recommend">
         <div class="section-head compact">
           <div>
-            <p class="eyebrow">Für dich ausgewählt</p>
-            <h1>Dein nächster Treffer</h1>
+            <p class="eyebrow">FRAME DAILY</p>
+            <h1>Heute bei FRAME</h1>
           </div>
-          <span class="match-orb">LIVE</span>
+          <span class="match-orb" id="dropProgress">0/7</span>
+        </div>
+
+        <div class="frame-loop-stack">
+          <section class="loop-panel" aria-labelledby="dailyDropHeading">
+            <div class="loop-panel-inner">
+              <div class="loop-kicker-row">
+                <p class="loop-kicker" id="dailyDropHeading">TODAY’S 7 · <span id="dropModeLabel">DEIN DROP</span></p>
+                <span class="loop-date" id="dropDateLabel">Heute</span>
+              </div>
+              <div class="drop-progress" id="dropProgressBar" aria-label="Fortschritt Daily Drop"></div>
+
+              <div class="drop-stage">
+                <div class="drop-art" id="dropArt">
+                  <span class="drop-card-index" id="dropCardIndex">01</span>
+                </div>
+                <div class="drop-copy">
+                  <small id="dropMeta">FRAME DAILY</small>
+                  <h2 id="dropTitle">Dein Drop wird vorbereitet.</h2>
+                  <p id="dropSub">Sieben Titel. Keine endlose Suche.</p>
+                </div>
+              </div>
+
+              <div class="drop-actions" id="dropActions">
+                <button class="drop-action like" id="dropLikeButton" type="button">← SUPER</button>
+                <button class="drop-action save" id="dropSaveButton" type="button">↑ MERKEN</button>
+                <button class="drop-action dislike" id="dropDislikeButton" type="button">MIST →</button>
+              </div>
+              <p class="drop-done" id="dropDone" hidden>Drop abgeschlossen.</p>
+            </div>
+          </section>
+
+          <section class="loop-panel room-panel" aria-labelledby="hiddenMatchHeading">
+            <div class="loop-panel-head">
+              <div class="room-title-wrap">
+                <p class="loop-kicker">HIDDEN MATCH</p>
+                <h2 id="hiddenMatchTitle">Room noch nicht aktiv.</h2>
+              </div>
+              <span class="hidden-match-badge" id="hiddenMatchBadge">?</span>
+            </div>
+            <p class="room-copy" id="hiddenMatchCopy">Eine zweite Person kann denselben Drop verdeckt spielen. Gemeinsame Treffer werden erst danach sichtbar.</p>
+
+            <div class="room-controls">
+              <input id="partnerNameInput" type="text" maxlength="24" autocomplete="off" placeholder="Name, z. B. Anna" aria-label="Name der zweiten Person" />
+              <button class="loop-btn primary" id="roomButton" type="button">ROOM STARTEN</button>
+            </div>
+            <div class="room-secondary">
+              <button class="loop-btn" id="dropModeButton" type="button" hidden>PARTNER ÜBERNIMMT</button>
+              <button class="loop-btn danger" id="roomEndButton" type="button" hidden>ROOM BEENDEN</button>
+            </div>
+            <div class="match-list" id="matchList" aria-live="polite"></div>
+          </section>
+
+          <section class="loop-panel pick-panel" aria-labelledby="pickHeading">
+            <div class="loop-panel-head">
+              <div>
+                <p class="loop-kicker">JUST PICK ONE</p>
+                <h2 id="pickHeading">FRAME entscheidet.</h2>
+              </div>
+              <span class="loop-mini">Keine Diskussion</span>
+            </div>
+            <p class="pick-intro">Gemeinsame Matches zuerst. Sonst nimmt FRAME deine Watchlist und deinen Geschmack.</p>
+
+            <div class="pick-result" id="pickResult" hidden>
+              <div class="pick-art" id="pickArt"></div>
+              <div class="pick-result-copy">
+                <span class="pick-source" id="pickSource">FRAME PICK</span>
+                <h3 id="pickTitle">Titel</h3>
+                <p id="pickMeta">Film</p>
+                <span class="pick-score" id="pickScore">0%</span>
+              </div>
+            </div>
+            <button class="pick-button" id="pickButton" type="button">FRAME ENTSCHEIDET</button>
+          </section>
+        </div>
+
+        <div class="frame-rec-heading">
+          <p class="eyebrow">Für dich ausgewählt</p>
+          <h2>Aus deinem Geschmack</h2>
         </div>
         <div class="recommend-hero" id="recommendHero"></div>
         <div class="why-panel">
@@ -158,7 +237,7 @@
     <nav class="bottom-nav" aria-label="Hauptnavigation">
       <button class="nav-item active" data-target="discover"><span>◉</span><small>Entdecken</small></button>
       <button class="nav-item" data-target="watchlist"><span>⌑</span><small>Merken</small></button>
-      <button class="nav-item" data-target="recommend"><span>✦</span><small>Für dich</small></button>
+      <button class="nav-item" data-target="recommend"><span>✦</span><small>Heute</small></button>
       <button class="nav-item" data-target="taste"><span>◎</span><small>Profil</small></button>
     </nav>
   </div>
@@ -176,5 +255,6 @@
   <script src="/streaming-availability.js" defer></script>
   <script src="/swipe-guidance.js" defer></script>
   <script src="/onboarding-tutorial.js" defer></script>
+  <script src="/frame-loop.js" defer></script>
 </body>
 </html>
