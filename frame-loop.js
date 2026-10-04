@@ -97,6 +97,7 @@
       loop.daily = {
         date,
         items,
+        catalogSize: Array.isArray(catalog) ? catalog.length : items.length,
         userVotes: {},
         partnerVotes: {},
         completedByUser: false,
@@ -469,6 +470,16 @@
     document.addEventListener('frame:swipe-undone', event => undoSwipe(event.detail));
     document.addEventListener('frame:view-changed', event => {
       if (event.detail && event.detail.target === 'recommend') renderAll();
+    });
+    document.addEventListener('frame:feed-loaded', event => {
+      const daily = ensureDaily();
+      const noVotes = Object.keys(daily.userVotes || {}).length === 0 && Object.keys(daily.partnerVotes || {}).length === 0;
+      const grew = Number(event.detail && event.detail.catalogSize || catalog.length) > Number(daily.catalogSize || 0);
+      if (noVotes && grew) {
+        loop.daily = null;
+        ensureDaily();
+        renderAll();
+      }
     });
     document.addEventListener('frame:taste-reset', () => {
       const daily = ensureDaily();
