@@ -579,7 +579,7 @@
 
   renderRecommendations = function frameRenderPersonalizedRecommendations() {
     updateProfileStrength();
-    queueMicrotask(() => refreshRecommendations());
+    if (recommendationSurfaceVisible()) queueMicrotask(() => refreshRecommendations());
   };
 
   updateProfileStrength();
