@@ -345,6 +345,7 @@
       roomPanel.classList.toggle('flow-primary', roomActive && mode === 'user' && userDone && !partnerDone);
       roomPanel.classList.toggle('flow-compact', !roomActive && !userDone);
       roomPanel.classList.toggle('flow-complete', roomActive && partnerDone && mode === 'user');
+      roomPanel.classList.toggle('flow-after-pick', !roomActive && mode === 'user' && userDone);
     }
 
     const canPick = mode === 'user' && userDone && (!roomActive || partnerDone);
