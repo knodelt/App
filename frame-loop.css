@@ -588,3 +588,10 @@
   padding-left: 2px;
   padding-right: 2px;
 }
+
+
+.frame-loop-stack > #dailyDropPanel { order: 1; }
+.frame-loop-stack > #roomPanel { order: 2; }
+.frame-loop-stack > #pickPanel { order: 3; }
+.frame-loop-stack > #roomPanel.flow-after-pick { order: 3; }
+.frame-loop-stack > #roomPanel.flow-after-pick + #pickPanel { order: 2; }
