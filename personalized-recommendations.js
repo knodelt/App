@@ -7,6 +7,19 @@
   let cachedItems = [];
   let loading = false;
 
+  function recommendationSurfaceVisible() {
+    return document.querySelector('#recommendationModal')?.classList.contains('open') || false;
+  }
+
+  function setRecommendationModal(open) {
+    const modal = document.querySelector('#recommendationModal');
+    if (!modal) return;
+    modal.classList.toggle('open', Boolean(open));
+    modal.setAttribute('aria-hidden', open ? 'false' : 'true');
+    if (open) queueMicrotask(() => refreshRecommendations());
+  }
+
+
   function loadHistory() {
     try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}') || {}; }
     catch { return {}; }
@@ -553,7 +566,7 @@
     lastSignature = '';
     originalRecordSwipe(id, action);
     updateProfileStrength();
-    if (document.querySelector('#recommendView')?.classList.contains('active')) {
+    if (recommendationSurfaceVisible()) {
       queueMicrotask(() => refreshRecommendations({force:true}));
     }
   };
@@ -571,14 +584,18 @@
 
   updateProfileStrength();
 
-  document.querySelectorAll('.nav-item').forEach(button => {
-    if (button.dataset.target === 'recommend') {
-      button.addEventListener('click', () => queueMicrotask(() => refreshRecommendations()));
-    }
-  });
+  const recommendOpen = document.querySelector('#recommendShortcut');
+  const recommendClose = document.querySelector('#recommendationClose');
+  const recommendSurface = document.querySelector('#recommendationModal');
 
-  const recommendView = document.querySelector('#recommendView');
-  recommendView?.addEventListener('click', event => {
+  recommendOpen?.addEventListener('click', () => setRecommendationModal(true));
+  recommendClose?.addEventListener('click', () => setRecommendationModal(false));
+  recommendSurface?.addEventListener('click', event => {
+    if (event.target === recommendSurface) {
+      setRecommendationModal(false);
+      return;
+    }
+
     const actionButton = event.target.closest('[data-rec-action]');
     if (actionButton) {
       event.preventDefault();
@@ -596,10 +613,14 @@
     }
   });
 
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && recommendationSurfaceVisible()) setRecommendationModal(false);
+  });
+
   document.addEventListener('frame:mood-changed', () => {
     cachedItems = [];
     lastSignature = '';
-    if (document.querySelector('#recommendView')?.classList.contains('active')) {
+    if (recommendationSurfaceVisible()) {
       queueMicrotask(() => refreshRecommendations({force:true}));
     }
   });
@@ -608,7 +629,7 @@
     cachedItems = [];
     lastSignature = '';
     updateProfileStrength();
-    if (document.querySelector('#recommendView')?.classList.contains('active')) {
+    if (recommendationSurfaceVisible()) {
       queueMicrotask(() => refreshRecommendations({force:true}));
     }
   });
@@ -616,7 +637,7 @@
   document.addEventListener('frame:online-model-changed', () => {
     cachedItems = [];
     lastSignature = '';
-    if (document.querySelector('#recommendView')?.classList.contains('active')) {
+    if (recommendationSurfaceVisible()) {
       queueMicrotask(() => refreshRecommendations({force:true}));
     }
   });
@@ -627,7 +648,7 @@
     lastSignature = '';
     updateProfileStrength();
     try { renderTaste(); } catch {}
-    if (document.querySelector('#recommendView')?.classList.contains('active')) {
+    if (recommendationSurfaceVisible()) {
       queueMicrotask(() => refreshRecommendations({force:true}));
     }
   });
