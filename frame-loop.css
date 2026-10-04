@@ -449,3 +449,142 @@
     font-size: 26px;
   }
 }
+
+
+/* Progressive hierarchy: only the next useful step gets visual priority. */
+.loop-panel[hidden] {
+  display: none !important;
+}
+
+.loop-panel.flow-primary {
+  border-color: rgba(255,77,95,.34);
+  box-shadow: inset 0 0 0 1px rgba(255,77,95,.05);
+}
+
+.loop-panel.flow-complete:not(.flow-primary) {
+  background: rgba(255,255,255,.025);
+}
+
+.loop-panel.flow-complete:not(.flow-primary) .drop-stage {
+  min-height: 172px;
+}
+
+.room-panel.flow-compact {
+  padding: 13px 16px;
+  background: rgba(255,255,255,.025);
+}
+
+.room-panel.flow-compact .loop-panel-head {
+  align-items: center;
+}
+
+.room-panel.flow-compact h2 {
+  font-size: 20px;
+}
+
+.room-panel.flow-compact .room-copy {
+  margin-top: 7px;
+}
+
+.room-panel.flow-compact .hidden-match-badge {
+  width: 38px;
+  height: 38px;
+  flex-basis: 38px;
+  border-radius: 13px;
+}
+
+.pick-button:disabled {
+  opacity: .45;
+  cursor: default;
+}
+
+/* Personalized recommendations belong to Discover, not the daily decision flow. */
+.recommend-shortcut {
+  color: var(--text) !important;
+  border-color: rgba(255,77,95,.24) !important;
+  background: rgba(255,77,95,.08) !important;
+}
+
+.recommendation-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 145;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(5,5,7,.72);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s ease;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.recommendation-modal.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.recommendation-sheet {
+  width: min(100%, 520px);
+  max-height: 88dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.12);
+  border-bottom: 0;
+  border-radius: 28px 28px 0 0;
+  background: #0f0f12;
+  transform: translateY(18px);
+  transition: transform .2s ease;
+  box-shadow: 0 -24px 70px rgba(0,0,0,.55);
+}
+
+.recommendation-modal.open .recommendation-sheet {
+  transform: none;
+}
+
+.recommendation-sheet-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 18px 18px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.recommendation-sheet-head h2 {
+  margin: 0;
+  color: var(--text);
+  font: 650 28px/1 var(--font-display);
+  letter-spacing: -.03em;
+}
+
+.recommendation-close {
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text);
+  font: 500 26px/1 var(--font-ui);
+}
+
+.recommendation-sheet-scroll {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 14px 16px calc(22px + env(safe-area-inset-bottom));
+}
+
+.recommendation-sheet .recommend-hero {
+  min-height: 300px;
+}
+
+.recommendation-sheet .why-panel {
+  padding-left: 2px;
+  padding-right: 2px;
+}
