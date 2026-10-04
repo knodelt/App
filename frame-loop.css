@@ -500,9 +500,15 @@
 
 /* Personalized recommendations belong to Discover, not the daily decision flow. */
 .recommend-shortcut {
-  color: var(--text) !important;
-  border-color: rgba(255,77,95,.24) !important;
-  background: rgba(255,77,95,.08) !important;
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 8px 14px;
+  border: 1px solid rgba(255,77,95,.24);
+  border-radius: 999px;
+  background: rgba(255,77,95,.08);
+  color: var(--text);
+  white-space: nowrap;
+  font: 800 12px/1 var(--font-ui);
 }
 
 .recommendation-modal {
