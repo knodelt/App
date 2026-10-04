@@ -263,6 +263,10 @@ function recordSwipe(id, action) {
   persist();
   updateUndoButton();
 
+  document.dispatchEvent(new CustomEvent('frame:swipe-recorded', {
+    detail:{ id, action, item:item || null }
+  }));
+
   const labels = {like:'Super. Geschmack gespeichert.', dislike:'Mist. Wird berücksichtigt.', save:'Auf die Watchlist gesetzt.'};
   showToast(labels[action]);
   renderDeck();
@@ -366,6 +370,7 @@ function switchView(target) {
   $$('.view').forEach(v=>v.classList.toggle('active', v.dataset.view===target));
   $$('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.target===target));
   if (target !== 'discover') updateUI();
+  document.dispatchEvent(new CustomEvent('frame:view-changed', { detail:{ target } }));
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
