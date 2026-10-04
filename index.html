@@ -50,6 +50,7 @@
           <button class="mood-trigger" id="moodTrigger" type="button" aria-haspopup="dialog">
             <span id="moodTriggerText">Stimmung · Egal</span>
           </button>
+          <button class="filter recommend-shortcut" id="recommendShortcut" type="button" aria-haspopup="dialog">✦ Für dich</button>
         </div>
 
         <div class="deck-wrap">
@@ -106,7 +107,7 @@
         </div>
 
         <div class="frame-loop-stack">
-          <section class="loop-panel" aria-labelledby="dailyDropHeading">
+          <section class="loop-panel" id="dailyDropPanel" aria-labelledby="dailyDropHeading">
             <div class="loop-panel-inner">
               <div class="loop-kicker-row">
                 <p class="loop-kicker" id="dailyDropHeading">TODAY’S 7 · <span id="dropModeLabel">DEIN DROP</span></p>
@@ -134,7 +135,7 @@
             </div>
           </section>
 
-          <section class="loop-panel room-panel" aria-labelledby="hiddenMatchHeading">
+          <section class="loop-panel room-panel" id="roomPanel" aria-labelledby="hiddenMatchHeading">
             <div class="loop-panel-head">
               <div class="room-title-wrap">
                 <p class="loop-kicker">HIDDEN MATCH</p>
@@ -155,7 +156,7 @@
             <div class="match-list" id="matchList" aria-live="polite"></div>
           </section>
 
-          <section class="loop-panel pick-panel" aria-labelledby="pickHeading">
+          <section class="loop-panel pick-panel" id="pickPanel" aria-labelledby="pickHeading" hidden>
             <div class="loop-panel-head">
               <div>
                 <p class="loop-kicker">JUST PICK ONE</p>
@@ -178,16 +179,6 @@
           </section>
         </div>
 
-        <div class="frame-rec-heading">
-          <p class="eyebrow">Für dich ausgewählt</p>
-          <h2>Aus deinem Geschmack</h2>
-        </div>
-        <div class="recommend-hero" id="recommendHero"></div>
-        <div class="why-panel">
-          <p class="eyebrow">Warum das passt</p>
-          <div id="reasonChips" class="reason-chips"></div>
-        </div>
-        <div class="recommend-list" id="recommendList"></div>
       </section>
 
       <section class="view" id="tasteView" data-view="taste">
@@ -240,6 +231,27 @@
       <button class="nav-item" data-target="recommend"><span>✦</span><small>Heute</small></button>
       <button class="nav-item" data-target="taste"><span>◎</span><small>Profil</small></button>
     </nav>
+  </div>
+
+
+  <div class="recommendation-modal" id="recommendationModal" aria-hidden="true">
+    <div class="recommendation-sheet" role="dialog" aria-modal="true" aria-labelledby="recommendationSheetTitle">
+      <div class="recommendation-sheet-head">
+        <div>
+          <p class="eyebrow">Für dich ausgewählt</p>
+          <h2 id="recommendationSheetTitle">Aus deinem Geschmack</h2>
+        </div>
+        <button class="recommendation-close" id="recommendationClose" type="button" aria-label="Empfehlungen schließen">×</button>
+      </div>
+      <div class="recommendation-sheet-scroll">
+        <div class="recommend-hero" id="recommendHero"></div>
+        <div class="why-panel">
+          <p class="eyebrow">Warum das passt</p>
+          <div id="reasonChips" class="reason-chips"></div>
+        </div>
+        <div class="recommend-list" id="recommendList"></div>
+      </div>
+    </div>
   </div>
 
   <div class="toast" id="toast" role="status"></div>
