@@ -1,0 +1,451 @@
+/* FRAME retention loop — Daily Drop, local Room and Just Pick One */
+
+#recommendView {
+  gap: 0;
+}
+
+#recommendView .section-head.compact {
+  flex: 0 0 auto;
+  margin-bottom: 16px !important;
+}
+
+#dropProgress {
+  width: 54px !important;
+  height: 54px !important;
+  border-radius: 18px !important;
+  background: var(--surface) !important;
+  border: 1px solid var(--line) !important;
+  color: var(--text) !important;
+  font: 800 12px/1 var(--font-ui) !important;
+}
+
+.frame-loop-stack {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.loop-panel {
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.loop-panel-inner {
+  padding: 16px;
+}
+
+.loop-kicker-row,
+.loop-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.loop-kicker {
+  margin: 0;
+  color: var(--accent);
+  font: 800 10px/1 var(--font-ui);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.loop-date,
+.loop-mini {
+  color: var(--soft);
+  font: 700 10px/1.2 var(--font-ui);
+}
+
+.drop-progress {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  margin: 12px 0 14px;
+}
+
+.drop-progress span {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.10);
+  transition: background .18s ease, transform .18s ease;
+}
+
+.drop-progress span.done {
+  background: var(--accent);
+  transform: scaleY(1.15);
+}
+
+.drop-stage {
+  position: relative;
+  min-height: 238px;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #101014;
+  border: 1px solid rgba(255,255,255,.08);
+}
+
+.drop-art {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(0,0,0,.03) 0%, rgba(0,0,0,.10) 34%, rgba(0,0,0,.88) 100%),
+    linear-gradient(145deg,#34343a,#141418 55%,#0b0b0d);
+  background-size: cover;
+  background-position: center 24%;
+}
+
+.drop-card-index {
+  position: absolute;
+  top: 13px;
+  right: 13px;
+  display: grid;
+  place-items: center;
+  min-width: 38px;
+  height: 30px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: rgba(11,11,13,.68);
+  border: 1px solid rgba(255,255,255,.14);
+  color: white;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font: 800 10px/1 var(--font-ui);
+}
+
+.drop-finish-mark {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: white;
+  font: 700 74px/1 var(--font-display);
+}
+
+.drop-copy {
+  position: absolute;
+  z-index: 2;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+}
+
+.drop-copy small {
+  display: block;
+  margin-bottom: 6px;
+  color: #d6d0ca;
+  font: 800 10px/1.2 var(--font-ui);
+}
+
+.drop-copy h2 {
+  margin: 0;
+  color: white;
+  font: 650 clamp(27px, 8vw, 36px)/.98 var(--font-display);
+  letter-spacing: -.03em;
+  text-shadow: 0 3px 20px rgba(0,0,0,.55);
+}
+
+.drop-copy p {
+  margin: 7px 0 0;
+  max-width: 95%;
+  color: #d0cbc5;
+  font: 600 11px/1.35 var(--font-ui);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.drop-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.drop-action {
+  min-height: 44px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: #101014;
+  color: var(--text);
+  font: 800 10px/1 var(--font-ui);
+}
+
+.drop-action.like { color: var(--green); }
+.drop-action.save { color: var(--yellow); }
+.drop-action.dislike { color: #ff7a87; }
+
+.drop-action:active,
+.loop-btn:active,
+.pick-button:active {
+  transform: scale(.98);
+}
+
+.drop-done {
+  margin: 10px 0 0;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.04);
+  color: var(--muted);
+  text-align: center;
+  font: 700 11px/1.35 var(--font-ui);
+}
+
+.room-panel {
+  padding: 16px;
+}
+
+.room-title-wrap {
+  min-width: 0;
+}
+
+.room-panel h2,
+.pick-panel h2,
+.frame-rec-heading h2 {
+  margin: 3px 0 0;
+  color: var(--text);
+  font: 650 24px/1 var(--font-display);
+  letter-spacing: -.025em;
+}
+
+.hidden-match-badge {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  background: var(--accent-soft);
+  border: 1px solid rgba(255,77,95,.28);
+  color: var(--accent);
+  font: 800 17px/1 var(--font-ui);
+}
+
+.room-copy {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font: 600 11px/1.45 var(--font-ui);
+}
+
+.room-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  margin-top: 13px;
+}
+
+.room-controls input {
+  min-width: 0;
+  height: 44px;
+  padding: 0 13px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: #0f0f12;
+  color: var(--text);
+  outline: none;
+  font: 700 14px/1 var(--font-ui);
+}
+
+.room-controls input:focus {
+  border-color: rgba(255,77,95,.5);
+}
+
+.room-controls input:disabled {
+  opacity: .72;
+}
+
+.loop-btn {
+  min-height: 44px;
+  padding: 0 13px;
+  border-radius: 13px;
+  border: 1px solid var(--line);
+  background: #1a1a1f;
+  color: var(--text);
+  font: 800 10px/1 var(--font-ui);
+}
+
+.loop-btn.primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: white;
+}
+
+.room-secondary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.room-secondary .loop-btn {
+  flex: 1 1 150px;
+}
+
+.room-secondary .loop-btn.danger {
+  color: #ff8994;
+}
+
+.match-list {
+  display: grid;
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.match-chip {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 10px;
+  border-radius: 13px;
+  background: rgba(255,255,255,.045);
+  border: 1px solid rgba(255,255,255,.06);
+}
+
+.match-chip span {
+  color: var(--accent);
+}
+
+.match-chip b {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 800 12px/1.2 var(--font-ui);
+}
+
+.match-chip small {
+  color: var(--soft);
+  font: 700 10px/1 var(--font-ui);
+}
+
+.pick-panel {
+  padding: 16px;
+}
+
+.pick-intro {
+  margin: 9px 0 0;
+  color: var(--muted);
+  font: 600 11px/1.45 var(--font-ui);
+}
+
+.pick-result {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 12px;
+  margin-top: 13px;
+  padding: 10px;
+  border-radius: 17px;
+  background: rgba(255,255,255,.045);
+  border: 1px solid rgba(255,255,255,.07);
+}
+
+.pick-result[hidden] {
+  display: none !important;
+}
+
+.pick-art {
+  width: 84px;
+  aspect-ratio: 2/3;
+  border-radius: 12px;
+  background: #111115 center 22% / cover no-repeat;
+}
+
+.pick-result-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.pick-source {
+  color: var(--accent);
+  font: 800 9px/1 var(--font-ui);
+  letter-spacing: .06em;
+}
+
+.pick-result h3 {
+  margin: 5px 0 0;
+  color: var(--text);
+  font: 650 23px/1 var(--font-display);
+  letter-spacing: -.025em;
+}
+
+.pick-result p {
+  margin: 7px 0 0;
+  color: var(--muted);
+  font: 600 10px/1.35 var(--font-ui);
+}
+
+.pick-score {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin-top: 8px;
+  padding: 5px 7px;
+  border-radius: 999px;
+  background: rgba(185,243,106,.12);
+  color: var(--green);
+  font: 800 10px/1 var(--font-ui);
+}
+
+.pick-button {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 12px;
+  border: 0;
+  border-radius: 15px;
+  background: var(--text);
+  color: #0b0b0d;
+  font: 800 11px/1 var(--font-ui);
+  letter-spacing: .02em;
+}
+
+.frame-rec-heading {
+  margin: 2px 2px 12px;
+  padding-top: 4px;
+}
+
+.frame-rec-heading p {
+  margin-bottom: 5px;
+}
+
+#recommendView .recommend-hero {
+  flex: 0 0 auto;
+}
+
+#recommendView .why-panel {
+  flex: 0 0 auto;
+}
+
+#recommendView .recommend-list {
+  flex: 0 0 auto;
+  padding-bottom: 18px;
+}
+
+@media (max-width: 380px) {
+  .room-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .pick-result {
+    grid-template-columns: 74px minmax(0, 1fr);
+  }
+
+  .pick-art {
+    width: 74px;
+  }
+}
+
+@media (max-height: 720px) {
+  .drop-stage {
+    min-height: 208px;
+  }
+
+  .drop-copy h2 {
+    font-size: 26px;
+  }
+}
