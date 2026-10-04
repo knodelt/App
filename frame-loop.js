@@ -93,6 +93,8 @@
     const valid = loop.daily && loop.daily.date === date && Array.isArray(loop.daily.items) && loop.daily.items.length >= 1;
 
     if (!valid) {
+      mode = 'user';
+      safeSet(MODE_KEY, mode);
       const items = mediaPool().slice(0, 7).map(snapshot);
       loop.daily = {
         date,
