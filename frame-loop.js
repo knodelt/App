@@ -275,7 +275,9 @@
       if (meta) meta.textContent = mode === 'partner' ? (loop.room.partnerName || 'Partner') : 'TODAY’S 7';
       if (sub) sub.textContent = mode === 'partner'
         ? 'Gib das Handy zurück. Deine Entscheidungen bleiben verborgen.'
-        : (loop.room.active ? 'Jetzt siehst du, ob zwischen euch ein FRAME entstanden ist.' : 'Morgen wartet automatisch ein neuer Drop.');
+        : (loop.room.active
+          ? (loop.daily.completedByPartner ? 'Ihr seid beide fertig. Jetzt kann FRAME für euch entscheiden.' : (loop.room.partnerName || 'Partner') + ' ist als Nächstes dran.')
+          : '7/7 erledigt. Jetzt kann FRAME aus deinen Signalen eine Entscheidung machen.');
       if (controls) controls.hidden = true;
       if (done) done.hidden = false;
       return;
@@ -319,6 +321,53 @@
     }
 
     if (endButton) endButton.hidden = !loop.room.active;
+  }
+
+  function renderFlowState() {
+    const daily = ensureDaily();
+    const dropPanel = document.querySelector('#dailyDropPanel');
+    const roomPanel = document.querySelector('#roomPanel');
+    const pickPanel = document.querySelector('#pickPanel');
+    const pickIntro = document.querySelector('.pick-intro');
+    const pickButton = document.querySelector('#pickButton');
+    const userDone = Boolean(daily.completedByUser);
+    const partnerDone = Boolean(daily.completedByPartner);
+    const roomActive = Boolean(loop.room.active);
+
+    if (dropPanel) {
+      dropPanel.classList.toggle('flow-complete', mode === 'user' && userDone);
+      dropPanel.classList.toggle('flow-partner', mode === 'partner');
+      dropPanel.classList.toggle('flow-primary', (mode === 'user' && !userDone) || mode === 'partner');
+    }
+
+    if (roomPanel) {
+      roomPanel.hidden = false;
+      roomPanel.classList.toggle('flow-primary', roomActive && mode === 'user' && userDone && !partnerDone);
+      roomPanel.classList.toggle('flow-compact', !roomActive && !userDone);
+      roomPanel.classList.toggle('flow-complete', roomActive && partnerDone && mode === 'user');
+    }
+
+    const canPick = mode === 'user' && userDone && (!roomActive || partnerDone);
+    if (pickPanel) {
+      pickPanel.hidden = !canPick;
+      pickPanel.classList.toggle('flow-primary', canPick);
+    }
+
+    if (pickIntro) {
+      if (!roomActive) {
+        pickIntro.textContent = 'Dein Drop ist erledigt. FRAME nimmt jetzt Watchlist und Geschmack und macht aus Auswahl eine Entscheidung.';
+      } else {
+        const matches = commonMatches().length;
+        pickIntro.textContent = matches
+          ? matches + (matches === 1 ? ' gemeinsamer Match steht bereit. FRAME entscheidet daraus zuerst.' : ' gemeinsame Matches stehen bereit. FRAME entscheidet daraus zuerst.')
+          : 'Ihr seid beide fertig. FRAME nimmt eure gemeinsamen Signale und danach deine Watchlist.';
+      }
+    }
+
+    if (pickButton) {
+      pickButton.disabled = !canPick;
+      if (canPick && !document.querySelector('#pickResult:not([hidden])')) pickButton.textContent = 'FRAME ENTSCHEIDET';
+    }
   }
 
   function renderMatchStatus() {
@@ -436,6 +485,7 @@
     renderDrop();
     renderRoom();
     renderMatchStatus();
+    renderFlowState();
   }
 
   function syncSwipe(detail) {
