@@ -13,6 +13,9 @@ FRAME ist ein Mobile-first-Prototyp für eine Film- und Serien-Discovery-App. St
 - Filter für Filme, Serien und People
 - Poster, Profilbilder und Kurzinfos
 - lokale Watchlist
+- täglicher **Daily Drop** mit 7 stabilen Film-/Serienkarten
+- **Hidden Match** als lokaler Pass-the-phone-Room für zwei Personen
+- **Just Pick One** priorisiert gemeinsame Matches, danach Watchlist und Taste-Signale
 - lokales Geschmacksprofil („Movie DNA“)
 - einfache, nachvollziehbare Empfehlungen aus Tags und Swipe-Signalen
 - installierbare PWA
@@ -93,8 +96,9 @@ Ohne lokales Worker-Runtime-Setup läuft dabei nur der Seed-Katalog. Für das ko
 3. Detailansicht für Filme/Serien/People
 4. Auth + Profile
 5. Swipe-Daten serverseitig speichern
-6. gemeinsamer Taste-Match zwischen Freunden
-7. später optional Capacitor für native iOS-/Android-Builds
+6. lokale Room-Abstraktion auf echte Accounts + serverseitige Room-Synchronisation umstellen
+7. Push/Reminder für neue Daily Drops und neue gemeinsame Matches
+8. später optional Capacitor für native iOS-/Android-Builds
 
 ---
 
