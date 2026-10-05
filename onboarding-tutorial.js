@@ -210,10 +210,10 @@
         box-shadow:0 0 0 9999px rgba(4,4,6,.78),0 0 0 5px rgba(255,77,95,.14);
         transition:
           opacity .16s ease,
-          top .42s cubic-bezier(.16,1,.3,1),
-          left .42s cubic-bezier(.16,1,.3,1),
-          width .42s cubic-bezier(.16,1,.3,1),
-          height .42s cubic-bezier(.16,1,.3,1),
+          top .52s cubic-bezier(.2,.8,.2,1),
+          left .52s cubic-bezier(.2,.8,.2,1),
+          width .52s cubic-bezier(.2,.8,.2,1),
+          height .52s cubic-bezier(.2,.8,.2,1),
           border-radius .22s ease;
         will-change:opacity,top,left,width,height;
       }
@@ -322,11 +322,11 @@
         display:none !important;
       }
       .frame-tutorial-panel.final-page {
-        position:relative;
-        left:auto; right:auto;
-        top:auto !important; bottom:auto !important;
-        width:min(100%,430px);
+        position:fixed;
+        left:18px; right:18px;
+        width:auto;
         max-width:430px;
+        margin:0 auto;
         max-height:calc(100vh - 28px);
         max-height:calc(100dvh - 28px);
         overflow-y:auto;
@@ -371,6 +371,9 @@
       }
       .frame-tutorial-panel.final-page .frame-tutorial-back {
         display:none !important;
+      }
+      .frame-tutorial.final-step.is-sliding .frame-tutorial-next {
+        pointer-events:auto !important;
       }
       .frame-tutorial-panel.final-page .frame-tutorial-next {
         order:1;
@@ -569,8 +572,13 @@
       if (current > 0) changeStep(current - 1);
     });
     root.querySelector('.frame-tutorial-next').addEventListener('click', () => {
-      if (current >= steps.length - 1) closeTutorial(true);
-      else changeStep(current + 1);
+      if (current >= steps.length - 1) {
+        transitioning = false;
+        root.classList.remove('is-sliding');
+        closeTutorial(true);
+      } else {
+        changeStep(current + 1);
+      }
     });
 
     const reposition = () => { if (open) requestAnimationFrame(positionFocus); };
@@ -626,8 +634,12 @@
 
     if (steps[current]?.finalPage) {
       focus.className = 'frame-tutorial-focus';
-      panel.style.top = '';
-      panel.style.bottom = '';
+      const viewport = window.visualViewport;
+      const viewportTop = viewport?.offsetTop || 0;
+      const viewportHeight = viewport?.height || window.innerHeight;
+      const panelHeight = Math.min(panel.scrollHeight || panel.offsetHeight, viewportHeight - 28);
+      panel.style.bottom = 'auto';
+      panel.style.top = `${Math.max(viewportTop + 14, viewportTop + (viewportHeight - panelHeight) / 2)}px`;
       return;
     }
 
@@ -749,13 +761,10 @@
     }
 
     const oldRect = panel.getBoundingClientRect();
-    const previousStep = steps[current];
 
     current = nextIndex;
     renderStep({position:false});
 
-    // Scroll/view switches are synchronous enough for layout, but give FRAME one
-    // short frame to expose the target before calculating the destination.
     requestAnimationFrame(() => {
       scrollTargetIntoView(steps[current]);
       positionFocus();
@@ -764,46 +773,43 @@
         const newRect = panel.getBoundingClientRect();
         const dx = oldRect.left - newRect.left;
         const dy = oldRect.top - newRect.top;
-
         const distance = Math.hypot(dx,dy);
-        const duration = Math.round(Math.min(560, Math.max(320, 300 + distance * .28)));
+        const duration = Math.round(Math.min(620, Math.max(380, 350 + distance * .30)));
+        const easing = 'cubic-bezier(.2,.8,.2,1)';
 
-        let animation = null;
-        if (typeof panel.animate === 'function') {
-          animation = panel.animate(
-            [
-              { transform:`translate(${dx}px, ${dy}px)`, offset:0 },
-              { transform:'translate(0px, 0px)', offset:1 }
-            ],
-            {
-              duration,
-              easing:'cubic-bezier(.16,1,.3,1)',
-              fill:'none'
-            }
-          );
-        }
-
+        let finished = false;
         const finish = () => {
+          if (finished) return;
+          finished = true;
+          if (transitionTimer) clearTimeout(transitionTimer);
+          transitionTimer = null;
+          panel.style.transition = '';
+          panel.style.transform = '';
+          panel.style.height = '';
+          panel.style.overflow = '';
           root.classList.remove('is-sliding');
           transitioning = false;
-          transitionTimer = null;
-          panel.style.transform = '';
         };
 
-        if (animation) {
-          animation.addEventListener('finish', finish, {once:true});
-          animation.addEventListener('cancel', finish, {once:true});
-        } else {
-          panel.style.transition = 'none';
-          panel.style.transform = `translate(${dx}px, ${dy}px)`;
-          panel.getBoundingClientRect();
-          panel.style.transition = `transform ${duration}ms cubic-bezier(.16,1,.3,1)`;
+        // First: visually keep the panel exactly where it was, despite the DOM already
+        // containing the new step. Also preserve the old height so the card itself morphs.
+        panel.style.transition = 'none';
+        panel.style.transform = `translate(${dx}px, ${dy}px)`;
+        panel.style.height = `${oldRect.height}px`;
+        panel.style.overflow = 'hidden';
+        panel.getBoundingClientRect();
+
+        requestAnimationFrame(() => {
+          panel.style.transition = `transform ${duration}ms ${easing}, height ${duration}ms ${easing}`;
           panel.style.transform = 'translate(0px,0px)';
-          transitionTimer = setTimeout(() => {
-            panel.style.transition = '';
-            finish();
-          }, duration + 30);
-        }
+          panel.style.height = `${newRect.height}px`;
+        });
+
+        // Safari safety net: the tutorial must always unlock.
+        transitionTimer = setTimeout(finish, duration + 140);
+        panel.addEventListener('transitionend', event => {
+          if (event.propertyName === 'transform') finish();
+        }, {once:true});
       });
     });
   }
