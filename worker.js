@@ -53,11 +53,54 @@ function isGermanyRelevantMedia(item, type = 'movie') {
 }
 
 function isGermanyRelevantPerson(item) {
-  const knownFor = Array.isArray(item?.known_for) ? item.known_for : [];
-  return knownFor.some(work => {
-    const type = work?.media_type === 'tv' ? 'series' : work?.media_type === 'movie' ? 'movie' : null;
-    return type && isGermanyRelevantMedia(work, type);
+  const knownFor = (Array.isArray(item?.known_for) ? item.known_for : [])
+    .filter(work => work?.media_type === 'movie' || work?.media_type === 'tv');
+
+  if (!knownFor.length) return false;
+
+  const relevantWorks = knownFor.filter(work => {
+    const type = work.media_type === 'tv' ? 'series' : 'movie';
+    return isGermanyRelevantMedia(work, type);
   });
+  if (!relevantWorks.length) return false;
+
+  const personPopularity = Number(item?.popularity || 0);
+  const localLanguageWorks = knownFor.filter(work =>
+    LOCAL_MARKET_LANGUAGES.has(String(work?.original_language || '').toLowerCase())
+  );
+  const localShare = localLanguageWorks.length / knownFor.length;
+
+  // If nearly all known credits come from the JA/ZH/KO local-language catalogue,
+  // require a genuine international breakout. This prevents locally famous people
+  // from dominating the German feed while keeping globally known Asian talent.
+  if (localShare >= 0.67) {
+    const hasRelevantNonLocalCredit = relevantWorks.some(work =>
+      !LOCAL_MARKET_LANGUAGES.has(String(work?.original_language || '').toLowerCase())
+    );
+
+    const hasInternationalBreakout = localLanguageWorks.some(work => {
+      const votes = Number(work?.vote_count || 0);
+      const popularity = Number(work?.popularity || 0);
+      const hasGermanOverview = Boolean(String(work?.overview || '').trim());
+
+      return hasGermanOverview && (
+        votes >= 2500 ||
+        popularity >= 100 ||
+        (votes >= 1200 && popularity >= 65)
+      );
+    });
+
+    if (!hasRelevantNonLocalCredit && !hasInternationalBreakout) return false;
+    if (!hasRelevantNonLocalCredit && personPopularity < 12) return false;
+  }
+
+  // Generic floor for people: one moderately relevant title is not enough when the
+  // person itself is extremely obscure in TMDB's global ranking.
+  const strongestVotes = Math.max(0, ...relevantWorks.map(work => Number(work?.vote_count || 0)));
+  const strongestPopularity = Math.max(0, ...relevantWorks.map(work => Number(work?.popularity || 0)));
+  if (personPopularity < 5 && strongestVotes < 1200 && strongestPopularity < 50) return false;
+
+  return true;
 }
 
 function json(data, status = 200, extraHeaders = {}) {
