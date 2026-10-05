@@ -34,8 +34,8 @@
         background-position:center !important;
       }
       .swipe-card.image-only.person-card .person-portrait-bg {
-        filter:blur(18px) brightness(.56) saturate(.88);
-        opacity:.86;
+        filter:blur(22px) brightness(.78) saturate(1);
+        opacity:1;
       }
       .swipe-card.image-only.person-card .person-portrait-fg {
         background-size:auto 104%;
@@ -45,12 +45,10 @@
         opacity:1;
         background:linear-gradient(
           90deg,
-          rgba(8,8,10,.42) 0%,
-          rgba(8,8,10,.16) 15%,
-          transparent 30%,
-          transparent 70%,
-          rgba(8,8,10,.16) 85%,
-          rgba(8,8,10,.42) 100%
+          rgba(8,8,10,.10) 0%,
+          transparent 24%,
+          transparent 76%,
+          rgba(8,8,10,.10) 100%
         ) !important;
       }
       .swipe-card.image-only .card-art::before,
