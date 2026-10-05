@@ -81,23 +81,41 @@ function injectCardV2Styles() {
     }
 
     .person-portrait-bg {
-      inset:-9%;
+      inset:-11%;
       z-index:0;
       background-image:var(--poster);
       background-size:cover;
-      background-position:center 18%;
+      background-position:center 16%;
       background-repeat:no-repeat;
-      filter:blur(20px) brightness(.48) saturate(.82);
-      transform:scale(1.08);
-      opacity:.92;
+      filter:blur(24px) brightness(.72) saturate(.98);
+      transform:scale(1.12);
+      opacity:1;
     }
 
     .person-portrait-fg {
       z-index:1;
       background-image:var(--poster);
-      background-size:auto 106%;
+      background-size:auto 108%;
       background-position:center 8%;
       background-repeat:no-repeat;
+      -webkit-mask-image:linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(0,0,0,.18) 7%,
+        #000 18%,
+        #000 82%,
+        rgba(0,0,0,.18) 93%,
+        transparent 100%
+      );
+      mask-image:linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(0,0,0,.18) 7%,
+        #000 18%,
+        #000 82%,
+        rgba(0,0,0,.18) 93%,
+        transparent 100%
+      );
     }
 
     .person-portrait-shade {
@@ -105,14 +123,12 @@ function injectCardV2Styles() {
       background:
         linear-gradient(
           90deg,
-          rgba(8,8,10,.76) 0%,
-          rgba(8,8,10,.44) 10%,
-          rgba(8,8,10,.12) 22%,
-          transparent 34%,
-          transparent 66%,
-          rgba(8,8,10,.12) 78%,
-          rgba(8,8,10,.44) 90%,
-          rgba(8,8,10,.76) 100%
+          rgba(8,8,10,.18) 0%,
+          rgba(8,8,10,.07) 11%,
+          transparent 26%,
+          transparent 74%,
+          rgba(8,8,10,.07) 89%,
+          rgba(8,8,10,.18) 100%
         ),
         linear-gradient(
           180deg,
