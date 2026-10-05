@@ -75,70 +75,23 @@ function injectCardV2Styles() {
     .person-portrait-bg,
     .person-portrait-fg,
     .person-portrait-shade {
-      position:absolute;
-      inset:0;
-      pointer-events:none;
-    }
-
-    .person-portrait-bg {
-      inset:-11%;
-      z-index:0;
-      background-image:var(--poster);
-      background-size:cover;
-      background-position:center 16%;
-      background-repeat:no-repeat;
-      filter:blur(24px) brightness(.72) saturate(.98);
-      transform:scale(1.12);
-      opacity:1;
-    }
-
-    .person-portrait-fg {
-      z-index:1;
-      background-image:var(--poster);
-      background-size:auto 108%;
-      background-position:center 8%;
-      background-repeat:no-repeat;
-      -webkit-mask-image:linear-gradient(
-        90deg,
-        transparent 0%,
-        rgba(0,0,0,.18) 7%,
-        #000 18%,
-        #000 82%,
-        rgba(0,0,0,.18) 93%,
-        transparent 100%
-      );
-      mask-image:linear-gradient(
-        90deg,
-        transparent 0%,
-        rgba(0,0,0,.18) 7%,
-        #000 18%,
-        #000 82%,
-        rgba(0,0,0,.18) 93%,
-        transparent 100%
-      );
-    }
-
-    .person-portrait-shade {
       z-index:2;
       background:
         linear-gradient(
-          90deg,
-          rgba(8,8,10,.18) 0%,
-          rgba(8,8,10,.07) 11%,
-          transparent 26%,
-          transparent 74%,
-          rgba(8,8,10,.07) 89%,
-          rgba(8,8,10,.18) 100%
-        ),
-        linear-gradient(
           180deg,
-          rgba(4,4,6,.02) 0%,
-          rgba(4,4,6,.03) 36%,
-          rgba(4,4,6,.28) 58%,
-          rgba(4,4,6,.80) 79%,
-          rgba(7,7,9,.98) 100%
+          rgba(4,4,6,0) 0%,
+          rgba(4,4,6,.04) 42%,
+          rgba(4,4,6,.22) 62%,
+          rgba(4,4,6,.72) 82%,
+          rgba(7,7,9,.96) 100%
         ),
-        radial-gradient(circle at 50% 25%, transparent 32%, rgba(0,0,0,.08) 68%, rgba(0,0,0,.22) 100%);
+        radial-gradient(
+          circle at 50% 20%,
+          transparent 0%,
+          transparent 42%,
+          rgba(0,0,0,.06) 72%,
+          rgba(0,0,0,.16) 100%
+        );
     }
 
     .swipe-card.person-card.has-poster .card-art::before,
