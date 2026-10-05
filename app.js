@@ -66,14 +66,72 @@ function injectCardV2Styles() {
         center;
     }
     .swipe-card.has-poster.person-card .card-art {
-      background-size:
-        cover,
-        auto 104%,
-        cover;
-      background-position:
-        center,
-        center 9%,
-        center;
+      background-image:var(--art);
+      background-size:cover;
+      background-position:center;
+      background-repeat:no-repeat;
+    }
+
+    .person-portrait-bg,
+    .person-portrait-fg,
+    .person-portrait-shade {
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+    }
+
+    .person-portrait-bg {
+      inset:-9%;
+      z-index:0;
+      background-image:var(--poster);
+      background-size:cover;
+      background-position:center 18%;
+      background-repeat:no-repeat;
+      filter:blur(20px) brightness(.48) saturate(.82);
+      transform:scale(1.08);
+      opacity:.92;
+    }
+
+    .person-portrait-fg {
+      z-index:1;
+      background-image:var(--poster);
+      background-size:auto 100%;
+      background-position:center 7%;
+      background-repeat:no-repeat;
+    }
+
+    .person-portrait-shade {
+      z-index:2;
+      background:
+        linear-gradient(
+          180deg,
+          rgba(4,4,6,.02) 0%,
+          rgba(4,4,6,.03) 36%,
+          rgba(4,4,6,.28) 58%,
+          rgba(4,4,6,.80) 79%,
+          rgba(7,7,9,.98) 100%
+        ),
+        radial-gradient(circle at 50% 25%, transparent 32%, rgba(0,0,0,.08) 68%, rgba(0,0,0,.22) 100%);
+    }
+
+    .swipe-card.person-card.has-poster .card-art::before,
+    .swipe-card.person-card.has-poster .card-art::after {
+      opacity:0 !important;
+    }
+
+    .swipe-card.person-card .card-title {
+      text-wrap:balance;
+      max-width:100%;
+    }
+    .swipe-card.person-card.person-name-long .card-title {
+      font-size:clamp(29px,8.2vw,38px) !important;
+      line-height:.94 !important;
+      letter-spacing:-.04em !important;
+    }
+    .swipe-card.person-card.person-name-xl .card-title {
+      font-size:clamp(25px,7.2vw,33px) !important;
+      line-height:.96 !important;
+      letter-spacing:-.035em !important;
     }
     .swipe-card .card-art::before {
       background:
@@ -177,7 +235,10 @@ function renderDeck() {
   activeItems.slice(0,3).reverse().forEach((item, reverseIndex, arr) => {
     const card = document.createElement('article');
     const isTop = reverseIndex === arr.length - 1;
-    card.className = `swipe-card${isTop ? ' top-card' : ''}${item.poster ? ' has-poster' : ''}${item.type === 'person' ? ' person-card' : ''}`;
+    const personNameClass = item.type === 'person'
+      ? (item.title.length >= 34 ? ' person-name-xl' : item.title.length >= 24 ? ' person-name-long' : '')
+      : '';
+    card.className = `swipe-card${isTop ? ' top-card' : ''}${item.poster ? ' has-poster' : ''}${item.type === 'person' ? ' person-card' : ''}${personNameClass}`;
     card.dataset.id = item.id;
     if (item.tmdbId && ['movie','series'].includes(item.type)) {
       card.dataset.tmdbId = String(item.tmdbId);
@@ -187,6 +248,7 @@ function renderDeck() {
     if (item.poster) card.style.setProperty('--poster', `url("${posterUrl(item.poster)}")`);
     card.innerHTML = `
       <div class="card-art">
+        ${item.type === 'person' && item.poster ? '<span class="person-portrait-bg"></span><span class="person-portrait-fg"></span><span class="person-portrait-shade"></span>' : ''}
         <span class="art-symbol">${item.symbol}</span><span class="art-lines"></span>
       </div>
       <div class="card-top"><span class="type-badge">${typeLabel(item.type)}</span></div>
