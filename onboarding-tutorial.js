@@ -294,14 +294,36 @@
       .frame-tutorial-back[hidden] { display:none; }
       .frame-tutorial-next { border:0; background:#171316; color:#fff; }
 
+      .frame-tutorial.final-step {
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding:14px;
+        box-sizing:border-box;
+      }
+      .frame-tutorial.final-step .frame-tutorial-focus {
+        inset:0 !important;
+      }
       .frame-tutorial-panel.final-page {
-        left:18px; right:18px;
+        position:relative;
+        left:auto; right:auto;
+        top:auto !important; bottom:auto !important;
+        transform:none !important;
+        width:min(100%,430px);
         max-width:430px;
+        max-height:calc(100vh - 28px);
+        max-height:calc(100dvh - 28px);
+        overflow-y:auto;
+        overscroll-behavior:contain;
+        -webkit-overflow-scrolling:touch;
+        box-sizing:border-box;
         padding:27px 22px 22px;
         border-radius:30px;
         text-align:center;
         box-shadow:0 28px 90px rgba(0,0,0,.54);
+        scrollbar-width:none;
       }
+      .frame-tutorial-panel.final-page::-webkit-scrollbar { display:none; }
       .frame-tutorial-panel.final-page .frame-tutorial-top {
         display:block;
       }
@@ -377,6 +399,36 @@
       }
 
       @media (max-height:700px) {
+        .frame-tutorial-panel.final-page {
+          padding:20px 18px 17px;
+          border-radius:24px;
+        }
+        .frame-tutorial-panel.final-page .frame-tutorial-title {
+          font-size:31px;
+        }
+        .frame-tutorial-panel.final-page .frame-tutorial-copy {
+          margin-top:10px;
+          font-size:10.5px;
+        }
+        .frame-tutorial-panel.final-page .frame-tutorial-footer {
+          margin-top:14px;
+        }
+        .frame-tutorial-panel.final-page .frame-tutorial-next {
+          min-height:52px;
+        }
+        .frame-tutorial-finish {
+          margin-top:12px;
+          gap:6px;
+        }
+        .frame-tutorial-finish-mark {
+          width:50px; height:50px;
+          border-radius:16px;
+          font-size:27px;
+        }
+        .frame-tutorial-finish span {
+          font-size:9px;
+        }
+
         .frame-welcome-card { padding:20px 18px 17px; border-radius:25px; }
         .frame-welcome-kicker { margin-top:17px; }
         .frame-welcome h2 { font-size:34px; }
@@ -386,6 +438,48 @@
         .frame-tutorial-panel { padding:13px; border-radius:19px; }
         .frame-tutorial-title { font-size:21px; }
         .frame-tutorial-copy { font-size:10px; }
+      }
+
+      @media (max-height:540px) {
+        .frame-tutorial.final-step { padding:8px; }
+        .frame-tutorial-panel.final-page {
+          max-height:calc(100dvh - 16px);
+          padding:14px 16px 12px;
+          border-radius:20px;
+        }
+        .frame-tutorial-panel.final-page .frame-tutorial-kicker {
+          margin-bottom:5px;
+        }
+        .frame-tutorial-panel.final-page .frame-tutorial-title {
+          font-size:27px;
+        }
+        .frame-tutorial-panel.final-page .frame-tutorial-copy {
+          margin-top:7px;
+          font-size:9.5px;
+          line-height:1.35;
+        }
+        .frame-tutorial-finish {
+          margin-top:8px;
+          gap:4px;
+        }
+        .frame-tutorial-finish-mark {
+          width:42px; height:42px;
+          border-radius:13px;
+          font-size:23px;
+        }
+        .frame-tutorial-finish strong { font-size:10px; }
+        .frame-tutorial-finish span { font-size:8.5px; }
+        .frame-tutorial-panel.final-page .frame-tutorial-footer {
+          margin-top:9px;
+        }
+        .frame-tutorial-panel.final-page .frame-tutorial-next {
+          min-height:46px;
+          font-size:12px;
+        }
+        .frame-tutorial-panel.final-page .frame-tutorial-back {
+          min-height:26px;
+          padding:4px 10px;
+        }
       }
     `;
     document.head.appendChild(style);
@@ -522,9 +616,9 @@
 
     if (steps[current]?.finalPage) {
       focus.className = 'frame-tutorial-focus no-target';
-      panel.style.top = '50%';
-      panel.style.bottom = 'auto';
-      panel.style.transform = 'translateY(-50%)';
+      panel.style.top = '';
+      panel.style.bottom = '';
+      panel.style.transform = '';
       return;
     }
 
@@ -638,7 +732,12 @@
     setStepView(step);
 
     const panel = root.querySelector('.frame-tutorial-panel');
-    if (panel && !step.finalPage) panel.style.transform = '';
+    root.classList.toggle('final-step', Boolean(step.finalPage));
+    if (panel && !step.finalPage) {
+      panel.style.top = '';
+      panel.style.bottom = '';
+      panel.style.transform = '';
+    }
     panel?.classList.toggle('final-page', Boolean(step.finalPage));
 
     root.querySelector('.frame-tutorial-kicker').textContent = step.kicker;
