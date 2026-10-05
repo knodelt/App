@@ -210,10 +210,10 @@
         box-shadow:0 0 0 9999px rgba(4,4,6,.78),0 0 0 5px rgba(255,77,95,.14);
         transition:
           opacity .16s ease,
-          top .26s cubic-bezier(.22,.61,.36,1),
-          left .26s cubic-bezier(.22,.61,.36,1),
-          width .26s cubic-bezier(.22,.61,.36,1),
-          height .26s cubic-bezier(.22,.61,.36,1),
+          top .34s cubic-bezier(.22,.78,.25,1),
+          left .34s cubic-bezier(.22,.78,.25,1),
+          width .34s cubic-bezier(.22,.78,.25,1),
+          height .34s cubic-bezier(.22,.78,.25,1),
           border-radius .22s ease;
         will-change:opacity,top,left,width,height;
       }
@@ -233,19 +233,14 @@
           linear-gradient(145deg,#ffc0b5 0%,#ff8f9a 46%,#ff536c 100%);
         color:#171316;
         box-shadow:0 20px 62px rgba(0,0,0,.48);
-        transition:
-          opacity .16s ease,
-          transform .20s cubic-bezier(.22,.61,.36,1);
-        will-change:opacity,transform;
+        will-change:transform;
       }
 
-      .frame-tutorial.is-changing .frame-tutorial-panel {
-        opacity:0;
-        transform:translateY(7px) scale(.985);
+      .frame-tutorial.is-sliding .frame-tutorial-panel,
+      .frame-tutorial.is-sliding .frame-tutorial-back,
+      .frame-tutorial.is-sliding .frame-tutorial-next,
+      .frame-tutorial.is-sliding .frame-tutorial-skip {
         pointer-events:none;
-      }
-      .frame-tutorial.is-changing .frame-tutorial-focus {
-        opacity:0;
       }
       .frame-tutorial-top {
         display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
@@ -345,9 +340,6 @@
         scrollbar-width:none;
       }
       .frame-tutorial-panel.final-page::-webkit-scrollbar { display:none; }
-      .frame-tutorial.is-changing .frame-tutorial-panel.final-page {
-        transform:translateY(7px) scale(.985);
-      }
       .frame-tutorial-panel.final-page .frame-tutorial-top {
         display:block;
       }
@@ -420,6 +412,11 @@
         color:rgba(23,19,22,.67);
         font-size:10px;
         line-height:1.4;
+      }
+
+      @media (prefers-reduced-motion:reduce) {
+        .frame-tutorial-focus { transition:none !important; }
+        .frame-tutorial-panel { animation:none !important; }
       }
 
       @media (max-height:700px) {
@@ -746,24 +743,78 @@
     if (!root || !open || transitioning) return;
     if (nextIndex < 0 || nextIndex >= steps.length || nextIndex === current) return;
 
+    const panel = root.querySelector('.frame-tutorial-panel');
+    if (!panel) return;
+
     transitioning = true;
-    root.classList.add('is-changing');
-    if (transitionTimer) clearTimeout(transitionTimer);
+    root.classList.add('is-sliding');
 
-    transitionTimer = setTimeout(() => {
-      current = nextIndex;
-      renderStep();
+    if (transitionTimer) {
+      clearTimeout(transitionTimer);
+      transitionTimer = null;
+    }
 
-      // renderStep changes view and positions the new target after a short layout settle.
-      transitionTimer = setTimeout(() => {
-        root.classList.remove('is-changing');
-        transitioning = false;
-        transitionTimer = null;
-      }, 150);
-    }, 150);
+    const oldRect = panel.getBoundingClientRect();
+    const previousStep = steps[current];
+
+    current = nextIndex;
+    renderStep({position:false});
+
+    // Scroll/view switches are synchronous enough for layout, but give FRAME one
+    // short frame to expose the target before calculating the destination.
+    requestAnimationFrame(() => {
+      scrollTargetIntoView(steps[current]);
+      positionFocus();
+
+      requestAnimationFrame(() => {
+        const newRect = panel.getBoundingClientRect();
+        const dx = oldRect.left - newRect.left;
+        const dy = oldRect.top - newRect.top;
+
+        const distance = Math.hypot(dx,dy);
+        const duration = Math.round(Math.min(440, Math.max(260, 250 + distance * .22)));
+
+        let animation = null;
+        if (typeof panel.animate === 'function') {
+          animation = panel.animate(
+            [
+              { transform:`translate(${dx}px, ${dy}px)`, offset:0 },
+              { transform:'translate(0px, 0px)', offset:1 }
+            ],
+            {
+              duration,
+              easing:'cubic-bezier(.22,.78,.25,1)',
+              fill:'none'
+            }
+          );
+        }
+
+        const finish = () => {
+          root.classList.remove('is-sliding');
+          transitioning = false;
+          transitionTimer = null;
+          panel.style.transform = '';
+        };
+
+        if (animation) {
+          animation.addEventListener('finish', finish, {once:true});
+          animation.addEventListener('cancel', finish, {once:true});
+        } else {
+          panel.style.transition = 'none';
+          panel.style.transform = `translate(${dx}px, ${dy}px)`;
+          panel.getBoundingClientRect();
+          panel.style.transition = `transform ${duration}ms cubic-bezier(.22,.78,.25,1)`;
+          panel.style.transform = 'translate(0px,0px)';
+          transitionTimer = setTimeout(() => {
+            panel.style.transition = '';
+            finish();
+          }, duration + 30);
+        }
+      });
+    });
   }
 
-  function renderStep() {
+  function renderStep({position=true} = {}) {
     const step = steps[current];
     if (!step || !root) return;
 
@@ -788,10 +839,12 @@
       .map((_,index) => `<span class="frame-tutorial-dot${index===current?' active':''}"></span>`)
       .join('');
 
-    setTimeout(() => {
-      scrollTargetIntoView(step);
-      requestAnimationFrame(() => requestAnimationFrame(positionFocus));
-    },55);
+    if (position) {
+      requestAnimationFrame(() => {
+        scrollTargetIntoView(step);
+        requestAnimationFrame(positionFocus);
+      });
+    }
   }
 
   function startTour() {
@@ -804,7 +857,7 @@
       clearTimeout(transitionTimer);
       transitionTimer = null;
     }
-    root.classList.remove('is-changing');
+    root.classList.remove('is-changing','is-sliding');
     root.hidden = false;
     renderStep();
   }
@@ -823,7 +876,7 @@
       clearTimeout(transitionTimer);
       transitionTimer = null;
     }
-    root.classList.remove('is-changing','final-step');
+    root.classList.remove('is-changing','is-sliding','final-step');
     root.hidden = true;
     if (remember) markSeen();
     try {
