@@ -38,11 +38,20 @@
         opacity:.86;
       }
       .swipe-card.image-only.person-card .person-portrait-fg {
-        background-size:auto 100%;
-        background-position:center 6%;
+        background-size:auto 104%;
+        background-position:center 7%;
       }
       .swipe-card.image-only.person-card .person-portrait-shade {
-        opacity:0;
+        opacity:1;
+        background:linear-gradient(
+          90deg,
+          rgba(8,8,10,.42) 0%,
+          rgba(8,8,10,.16) 15%,
+          transparent 30%,
+          transparent 70%,
+          rgba(8,8,10,.16) 85%,
+          rgba(8,8,10,.42) 100%
+        ) !important;
       }
       .swipe-card.image-only .card-art::before,
       .swipe-card.image-only .card-art::after {
