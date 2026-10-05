@@ -5,7 +5,7 @@
     {
       view:'discover',
       target:'.top-card',
-      kicker:'SCHRITT 1 · 7',
+      kicker:'SCHRITT 1 · 8',
       title:'Das ist dein Film-Feed.',
       copy:'Entscheide einfach nach Gefühl. FRAME lernt aus deinen Swipes, welche Filme, Serien und People wirklich zu dir passen.',
       extra:'gestures',
@@ -14,7 +14,7 @@
     {
       view:'discover',
       target:'#discoverView .actions',
-      kicker:'SCHRITT 2 · 7',
+      kicker:'SCHRITT 2 · 8',
       title:'Drei schnelle Entscheidungen.',
       copy:'Links = SUPER · hoch = MERKEN · rechts = MIST. Du kannst auch die Buttons antippen. Tippen auf die Karte zeigt nur das Bild, halten öffnet Details.',
       panel:'top'
@@ -22,7 +22,7 @@
     {
       view:'discover',
       target:'.undo-row',
-      kicker:'SCHRITT 3 · 7',
+      kicker:'SCHRITT 3 · 8',
       title:'Vertippt? Kein Problem.',
       copy:'SWIPE RÜCKGÄNGIG nimmt genau deine letzte Entscheidung zurück – inklusive Watchlist und gelerntem Geschmack.',
       panel:'top'
@@ -30,7 +30,7 @@
     {
       view:'discover',
       target:'#moodTrigger',
-      kicker:'SCHRITT 4 · 7',
+      kicker:'SCHRITT 4 · 8',
       title:'Was passt heute?',
       copy:'Mit Stimmung sagst du FRAME, ob heute eher Horror, Drama, Action, Feel-Good oder etwas anderes dran ist. Das verändert nur den heutigen Abend – nicht deinen langfristigen Geschmack.',
       panel:'bottom'
@@ -38,7 +38,7 @@
     {
       view:'recommend',
       target:'#dailyDropPanel',
-      kicker:'SCHRITT 5 · 7',
+      kicker:'SCHRITT 5 · 8',
       title:'Dein FRAME Daily Drop.',
       copy:'Unter Heute bekommst du jeden Tag sieben Titel. Ein kurzer Drop statt endloser Suche: SUPER, MERKEN oder MIST – danach ist für heute Schluss.',
       extra:'daily',
@@ -48,7 +48,7 @@
     {
       view:'recommend',
       target:'#roomPanel',
-      kicker:'SCHRITT 6 · 7',
+      kicker:'SCHRITT 6 · 8',
       title:'Hidden Match für zwei.',
       copy:'Eine zweite Person spielt denselben Daily Drop verdeckt. Erst wenn ihr beide entschieden habt, zeigt FRAME eure gemeinsamen SUPER- oder MERKEN-Treffer.',
       extra:'matches',
@@ -58,12 +58,22 @@
     {
       view:'recommend',
       target:'.bottom-nav',
-      kicker:'SCHRITT 7 · 7',
+      kicker:'SCHRITT 7 · 8',
       title:'Und wenn ihr euch nicht entscheiden könnt?',
       copy:'Just Pick One nimmt gemeinsame Matches zuerst. Gibt es keine, nutzt FRAME Watchlist und Geschmack und entscheidet für euch. Im Profil siehst du außerdem, was FRAME über deinen Geschmack lernt.',
       extra:'pick',
-      final:true,
       panel:'top'
+    },
+    {
+      view:'discover',
+      target:'',
+      kicker:'SCHRITT 8 · 8',
+      title:'Viel Spaß mit FRAME.',
+      copy:'Du bist startklar. Swipe los, merk dir deine Favoriten und lass FRAME mit jeder Entscheidung ein bisschen besser werden.',
+      extra:'start',
+      final:true,
+      finalPage:true,
+      panel:'center'
     }
   ];
 
@@ -206,45 +216,46 @@
         position:fixed; z-index:303; left:14px; right:14px;
         top:auto; bottom:auto;
         width:auto; max-width:430px; margin:0 auto;
-        padding:15px;
-        border:1px solid rgba(255,255,255,.12);
-        border-radius:22px;
-        background:rgba(18,18,21,.98);
-        color:#f7f5f2;
-        box-shadow:0 18px 55px rgba(0,0,0,.48);
-        -webkit-backdrop-filter:blur(20px); backdrop-filter:blur(20px);
+        padding:17px;
+        border:1px solid rgba(255,255,255,.26);
+        border-radius:24px;
+        background:
+          radial-gradient(circle at 86% 8%, rgba(255,255,255,.34), transparent 26%),
+          linear-gradient(145deg,#ffc0b5 0%,#ff8f9a 46%,#ff536c 100%);
+        color:#171316;
+        box-shadow:0 20px 62px rgba(0,0,0,.48);
       }
       .frame-tutorial-top {
         display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
       }
       .frame-tutorial-kicker {
-        display:block; margin-bottom:5px; color:#ff6070;
+        display:block; margin-bottom:5px; color:rgba(23,19,22,.62);
         font:800 9px/1 Manrope,system-ui,sans-serif; letter-spacing:.08em;
       }
       .frame-tutorial-title {
-        margin:0; color:#fff; font:650 23px/.98 Fraunces,Georgia,serif;
+        margin:0; color:#171316; font:650 24px/.98 Fraunces,Georgia,serif;
         letter-spacing:-.035em;
       }
       .frame-tutorial-skip {
         flex:0 0 auto; min-height:31px; padding:6px 9px;
-        border:0; border-radius:999px; background:#202025; color:#99948e;
+        border:1px solid rgba(23,19,22,.12); border-radius:999px; background:rgba(255,255,255,.24); color:#2d2429;
         font-size:9px; font-weight:800;
       }
       .frame-tutorial-copy {
-        margin:9px 0 0; color:#b9b4ad; font-size:10.5px; line-height:1.43;
+        margin:9px 0 0; color:rgba(23,19,22,.78); font-size:10.8px; line-height:1.45;
       }
       .frame-tutorial-gesture {
         display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:11px;
       }
       .frame-tutorial-gesture span {
         display:grid; place-items:center; min-height:39px;
-        border:1px solid rgba(255,255,255,.09); border-radius:12px;
-        background:#1a1a1f; color:#ddd8d1;
+        border:1px solid rgba(255,255,255,.26); border-radius:12px;
+        background:rgba(255,255,255,.24); color:#211a1e;
         font-size:9px; font-weight:800; text-align:center;
       }
-      .frame-tutorial-gesture span:nth-child(1) b { color:#b9f36a; }
-      .frame-tutorial-gesture span:nth-child(2) b { color:#f7c85f; }
-      .frame-tutorial-gesture span:nth-child(3) b { color:#ff7a86; }
+      .frame-tutorial-gesture span:nth-child(1) b,
+      .frame-tutorial-gesture span:nth-child(2) b,
+      .frame-tutorial-gesture span:nth-child(3) b { color:#171316; }
       .frame-tutorial-gesture b { display:block; margin-bottom:2px; font-size:16px; line-height:1; }
 
       .frame-tutorial-feature {
@@ -253,35 +264,117 @@
       .frame-tutorial-feature div {
         display:grid; grid-template-columns:29px minmax(0,1fr); gap:8px; align-items:center;
         padding:8px 9px; border-radius:12px;
-        background:#1a1a1f; border:1px solid rgba(255,255,255,.08);
+        background:rgba(255,255,255,.24); border:1px solid rgba(255,255,255,.26);
       }
       .frame-tutorial-feature b {
         display:grid; place-items:center;
         width:29px; height:29px; border-radius:9px;
-        background:rgba(255,77,95,.12); color:#ff7180;
+        background:rgba(23,19,22,.10); color:#171316;
         font-size:13px;
       }
       .frame-tutorial-feature span {
-        color:#d5d0c9; font-size:9.5px; line-height:1.3;
+        color:#2b2328; font-size:9.5px; line-height:1.3;
       }
-      .frame-tutorial-feature strong { color:#fff; }
+      .frame-tutorial-feature strong { color:#171316; }
 
       .frame-tutorial-footer {
         display:flex; align-items:center; gap:8px; margin-top:12px;
       }
       .frame-tutorial-dots { display:flex; gap:4px; flex:1 1 auto; }
-      .frame-tutorial-dot { width:5px; height:5px; border-radius:50%; background:#3b393d; }
-      .frame-tutorial-dot.active { width:16px; border-radius:99px; background:#ff4d5f; }
+      .frame-tutorial-dot { width:5px; height:5px; border-radius:50%; background:rgba(23,19,22,.22); }
+      .frame-tutorial-dot.active { width:16px; border-radius:99px; background:#171316; }
       .frame-tutorial-back,
       .frame-tutorial-next {
         min-height:40px; padding:8px 13px; border-radius:13px;
         font-size:10.5px; font-weight:800;
       }
       .frame-tutorial-back {
-        border:1px solid rgba(255,255,255,.10); background:#1a1a1f; color:#aaa59e;
+        border:1px solid rgba(23,19,22,.14); background:rgba(255,255,255,.22); color:#2d2429;
       }
       .frame-tutorial-back[hidden] { display:none; }
-      .frame-tutorial-next { border:0; background:#f7f5f2; color:#0b0b0d; }
+      .frame-tutorial-next { border:0; background:#171316; color:#fff; }
+
+      .frame-tutorial-panel.final-page {
+        left:18px; right:18px;
+        max-width:430px;
+        padding:27px 22px 22px;
+        border-radius:30px;
+        text-align:center;
+        box-shadow:0 28px 90px rgba(0,0,0,.54);
+      }
+      .frame-tutorial-panel.final-page .frame-tutorial-top {
+        display:block;
+      }
+      .frame-tutorial-panel.final-page .frame-tutorial-kicker {
+        margin-bottom:10px;
+      }
+      .frame-tutorial-panel.final-page .frame-tutorial-title {
+        max-width:330px;
+        margin:0 auto;
+        font-size:38px;
+        line-height:.94;
+        letter-spacing:-.045em;
+      }
+      .frame-tutorial-panel.final-page .frame-tutorial-copy {
+        max-width:340px;
+        margin:14px auto 0;
+        font-size:12px;
+        line-height:1.48;
+      }
+      .frame-tutorial-panel.final-page .frame-tutorial-skip,
+      .frame-tutorial-panel.final-page .frame-tutorial-dots {
+        display:none;
+      }
+      .frame-tutorial-panel.final-page .frame-tutorial-footer {
+        display:grid;
+        grid-template-columns:1fr;
+        gap:8px;
+        margin-top:20px;
+      }
+      .frame-tutorial-panel.final-page .frame-tutorial-back {
+        order:2;
+        justify-self:center;
+        min-height:34px;
+        border:0;
+        background:transparent;
+        color:rgba(23,19,22,.55);
+      }
+      .frame-tutorial-panel.final-page .frame-tutorial-next {
+        order:1;
+        width:100%;
+        min-height:58px;
+        padding:12px 18px;
+        border-radius:17px;
+        font-size:14px;
+        font-weight:900;
+        letter-spacing:.055em;
+        box-shadow:0 13px 30px rgba(23,19,22,.18);
+      }
+      .frame-tutorial-finish {
+        display:grid;
+        place-items:center;
+        gap:8px;
+        margin-top:18px;
+      }
+      .frame-tutorial-finish-mark {
+        display:grid;
+        place-items:center;
+        width:60px; height:60px;
+        border-radius:19px;
+        background:rgba(23,19,22,.11);
+        color:#171316;
+        font:700 32px/1 Fraunces,Georgia,serif;
+      }
+      .frame-tutorial-finish strong {
+        color:#171316;
+        font-size:12px;
+      }
+      .frame-tutorial-finish span {
+        max-width:300px;
+        color:rgba(23,19,22,.67);
+        font-size:10px;
+        line-height:1.4;
+      }
 
       @media (max-height:700px) {
         .frame-welcome-card { padding:20px 18px 17px; border-radius:25px; }
@@ -425,7 +518,19 @@
     if (!focus || !open) return;
     const target = targetForStep();
     const panel = root?.querySelector('.frame-tutorial-panel');
-    if (!target || !panel) {
+    if (!panel) return;
+
+    if (steps[current]?.finalPage) {
+      focus.className = 'frame-tutorial-focus no-target';
+      panel.style.top = '50%';
+      panel.style.bottom = 'auto';
+      panel.style.transform = 'translateY(-50%)';
+      return;
+    }
+
+    panel.style.transform = '';
+
+    if (!target) {
       focus.className = 'frame-tutorial-focus no-target';
       return;
     }
@@ -515,6 +620,14 @@
           <div><b>1</b><span><strong>Just Pick One:</strong> FRAME macht aus Auswahl eine Entscheidung.</span></div>
         </div>`;
     }
+    if (type === 'start') {
+      return `
+        <div class="frame-tutorial-finish">
+          <div class="frame-tutorial-finish-mark">F</div>
+          <strong>Dein Feed wartet.</strong>
+          <span>Viel Spaß beim Entdecken – und keine Sorge: FRAME wird mit jedem Swipe persönlicher.</span>
+        </div>`;
+    }
     return '';
   }
 
@@ -524,11 +637,15 @@
 
     setStepView(step);
 
+    const panel = root.querySelector('.frame-tutorial-panel');
+    if (panel && !step.finalPage) panel.style.transform = '';
+    panel?.classList.toggle('final-page', Boolean(step.finalPage));
+
     root.querySelector('.frame-tutorial-kicker').textContent = step.kicker;
     root.querySelector('.frame-tutorial-title').textContent = step.title;
     root.querySelector('.frame-tutorial-copy').textContent = step.copy;
     root.querySelector('.frame-tutorial-back').hidden = current === 0;
-    root.querySelector('.frame-tutorial-next').textContent = step.final ? 'Los swipen' : 'Weiter';
+    root.querySelector('.frame-tutorial-next').textContent = step.final ? 'LOS SWIPEN' : 'Weiter';
     root.querySelector('.frame-tutorial-extra').innerHTML = extraMarkup(step.extra);
     root.querySelector('.frame-tutorial-dots').innerHTML = steps
       .map((_,index) => `<span class="frame-tutorial-dot${index===current?' active':''}"></span>`)
