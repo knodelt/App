@@ -53,7 +53,28 @@ function injectCardV2Styles() {
       background-position: center 20%;
       background-repeat: no-repeat;
     }
-    .swipe-card.person-card .card-art { background-position: center 15%; }
+
+    /* Show more of real TMDB artwork instead of aggressively cropping it. */
+    .swipe-card.has-poster .card-art {
+      background-size:
+        cover,
+        auto 112%,
+        cover;
+      background-position:
+        center,
+        center 16%,
+        center;
+    }
+    .swipe-card.has-poster.person-card .card-art {
+      background-size:
+        cover,
+        auto 104%,
+        cover;
+      background-position:
+        center,
+        center 9%,
+        center;
+    }
     .swipe-card .card-art::before {
       background:
         radial-gradient(circle at 72% 20%, rgba(255,255,255,.15), transparent 18%),
