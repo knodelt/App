@@ -81,6 +81,8 @@
   let root = null;
   let focus = null;
   let open = false;
+  let transitioning = false;
+  let transitionTimer = null;
 
   function seen() {
     try { return localStorage.getItem(STORAGE_KEY) === 'done'; }
@@ -206,7 +208,14 @@
         border:2px solid rgba(255,255,255,.92);
         border-radius:22px;
         box-shadow:0 0 0 9999px rgba(4,4,6,.78),0 0 0 5px rgba(255,77,95,.14);
-        transition:top .2s ease,left .2s ease,width .2s ease,height .2s ease,border-radius .2s ease;
+        transition:
+          opacity .16s ease,
+          top .26s cubic-bezier(.22,.61,.36,1),
+          left .26s cubic-bezier(.22,.61,.36,1),
+          width .26s cubic-bezier(.22,.61,.36,1),
+          height .26s cubic-bezier(.22,.61,.36,1),
+          border-radius .22s ease;
+        will-change:opacity,top,left,width,height;
       }
       .frame-tutorial-focus.no-target {
         inset:0 !important; width:0 !important; height:0 !important; border:0 !important;
@@ -224,6 +233,19 @@
           linear-gradient(145deg,#ffc0b5 0%,#ff8f9a 46%,#ff536c 100%);
         color:#171316;
         box-shadow:0 20px 62px rgba(0,0,0,.48);
+        transition:
+          opacity .16s ease,
+          transform .20s cubic-bezier(.22,.61,.36,1);
+        will-change:opacity,transform;
+      }
+
+      .frame-tutorial.is-changing .frame-tutorial-panel {
+        opacity:0;
+        transform:translateY(7px) scale(.985);
+        pointer-events:none;
+      }
+      .frame-tutorial.is-changing .frame-tutorial-focus {
+        opacity:0;
       }
       .frame-tutorial-top {
         display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
@@ -302,13 +324,12 @@
         box-sizing:border-box;
       }
       .frame-tutorial.final-step .frame-tutorial-focus {
-        inset:0 !important;
+        display:none !important;
       }
       .frame-tutorial-panel.final-page {
         position:relative;
         left:auto; right:auto;
         top:auto !important; bottom:auto !important;
-        transform:none !important;
         width:min(100%,430px);
         max-width:430px;
         max-height:calc(100vh - 28px);
@@ -324,6 +345,9 @@
         scrollbar-width:none;
       }
       .frame-tutorial-panel.final-page::-webkit-scrollbar { display:none; }
+      .frame-tutorial.is-changing .frame-tutorial-panel.final-page {
+        transform:translateY(7px) scale(.985);
+      }
       .frame-tutorial-panel.final-page .frame-tutorial-top {
         display:block;
       }
@@ -550,17 +574,11 @@
 
     root.querySelector('.frame-tutorial-skip').addEventListener('click', () => closeTutorial(true));
     root.querySelector('.frame-tutorial-back').addEventListener('click', () => {
-      if (current > 0) {
-        current -= 1;
-        renderStep();
-      }
+      if (current > 0) changeStep(current - 1);
     });
     root.querySelector('.frame-tutorial-next').addEventListener('click', () => {
       if (current >= steps.length - 1) closeTutorial(true);
-      else {
-        current += 1;
-        renderStep();
-      }
+      else changeStep(current + 1);
     });
 
     const reposition = () => { if (open) requestAnimationFrame(positionFocus); };
@@ -615,10 +633,9 @@
     if (!panel) return;
 
     if (steps[current]?.finalPage) {
-      focus.className = 'frame-tutorial-focus no-target';
+      focus.className = 'frame-tutorial-focus';
       panel.style.top = '';
       panel.style.bottom = '';
-      panel.style.transform = '';
       return;
     }
 
@@ -725,6 +742,27 @@
     return '';
   }
 
+  function changeStep(nextIndex) {
+    if (!root || !open || transitioning) return;
+    if (nextIndex < 0 || nextIndex >= steps.length || nextIndex === current) return;
+
+    transitioning = true;
+    root.classList.add('is-changing');
+    if (transitionTimer) clearTimeout(transitionTimer);
+
+    transitionTimer = setTimeout(() => {
+      current = nextIndex;
+      renderStep();
+
+      // renderStep changes view and positions the new target after a short layout settle.
+      transitionTimer = setTimeout(() => {
+        root.classList.remove('is-changing');
+        transitioning = false;
+        transitionTimer = null;
+      }, 150);
+    }, 150);
+  }
+
   function renderStep() {
     const step = steps[current];
     if (!step || !root) return;
@@ -753,7 +791,7 @@
     setTimeout(() => {
       scrollTargetIntoView(step);
       requestAnimationFrame(() => requestAnimationFrame(positionFocus));
-    },90);
+    },55);
   }
 
   function startTour() {
@@ -761,6 +799,12 @@
     closeWelcome();
     current = 0;
     open = true;
+    transitioning = false;
+    if (transitionTimer) {
+      clearTimeout(transitionTimer);
+      transitionTimer = null;
+    }
+    root.classList.remove('is-changing');
     root.hidden = false;
     renderStep();
   }
@@ -774,6 +818,12 @@
   function closeTutorial(remember = true) {
     if (!root) return;
     open = false;
+    transitioning = false;
+    if (transitionTimer) {
+      clearTimeout(transitionTimer);
+      transitionTimer = null;
+    }
+    root.classList.remove('is-changing','final-step');
     root.hidden = true;
     if (remember) markSeen();
     try {
