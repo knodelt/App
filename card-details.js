@@ -29,8 +29,20 @@
         transform:none !important;
       }
       .swipe-card.image-only.person-card .card-art {
-        background-size:auto 100%, cover !important;
-        background-position:center 7%, center !important;
+        background-image:var(--art) !important;
+        background-size:cover !important;
+        background-position:center !important;
+      }
+      .swipe-card.image-only.person-card .person-portrait-bg {
+        filter:blur(18px) brightness(.56) saturate(.88);
+        opacity:.86;
+      }
+      .swipe-card.image-only.person-card .person-portrait-fg {
+        background-size:auto 100%;
+        background-position:center 6%;
+      }
+      .swipe-card.image-only.person-card .person-portrait-shade {
+        opacity:0;
       }
       .swipe-card.image-only .card-art::before,
       .swipe-card.image-only .card-art::after {
@@ -72,7 +84,11 @@
       .swipe-card.detail-open > .swipe-stamp { opacity:0; pointer-events:none; }
       .swipe-card.detail-open .card-art {
         filter:brightness(.64) saturate(.82) contrast(.94) blur(.45px);
-        transform:scale(1.032);
+        transform:scale(1.018);
+      }
+      .swipe-card.detail-open.person-card .person-portrait-fg {
+        transform:scale(1.008);
+        transform-origin:center 20%;
       }
 
       .detail-close {
