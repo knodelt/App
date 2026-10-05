@@ -571,7 +571,10 @@
     showWelcome();
   };
 
-  document.querySelector('#tutorialReplayButton')?.addEventListener('click', () => startTour());
+  document.querySelector('#tutorialReplayButton')?.addEventListener('click', () => {
+    ensureUi();
+    showWelcome();
+  });
 
   if (!seen()) {
     window.addEventListener('load', () => {
