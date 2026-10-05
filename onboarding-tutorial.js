@@ -210,10 +210,10 @@
         box-shadow:0 0 0 9999px rgba(4,4,6,.78),0 0 0 5px rgba(255,77,95,.14);
         transition:
           opacity .16s ease,
-          top .34s cubic-bezier(.22,.78,.25,1),
-          left .34s cubic-bezier(.22,.78,.25,1),
-          width .34s cubic-bezier(.22,.78,.25,1),
-          height .34s cubic-bezier(.22,.78,.25,1),
+          top .42s cubic-bezier(.16,1,.3,1),
+          left .42s cubic-bezier(.16,1,.3,1),
+          width .42s cubic-bezier(.16,1,.3,1),
+          height .42s cubic-bezier(.16,1,.3,1),
           border-radius .22s ease;
         will-change:opacity,top,left,width,height;
       }
@@ -370,12 +370,7 @@
         margin-top:20px;
       }
       .frame-tutorial-panel.final-page .frame-tutorial-back {
-        order:2;
-        justify-self:center;
-        min-height:34px;
-        border:0;
-        background:transparent;
-        color:rgba(23,19,22,.55);
+        display:none !important;
       }
       .frame-tutorial-panel.final-page .frame-tutorial-next {
         order:1;
@@ -771,7 +766,7 @@
         const dy = oldRect.top - newRect.top;
 
         const distance = Math.hypot(dx,dy);
-        const duration = Math.round(Math.min(440, Math.max(260, 250 + distance * .22)));
+        const duration = Math.round(Math.min(560, Math.max(320, 300 + distance * .28)));
 
         let animation = null;
         if (typeof panel.animate === 'function') {
@@ -782,7 +777,7 @@
             ],
             {
               duration,
-              easing:'cubic-bezier(.22,.78,.25,1)',
+              easing:'cubic-bezier(.16,1,.3,1)',
               fill:'none'
             }
           );
@@ -802,7 +797,7 @@
           panel.style.transition = 'none';
           panel.style.transform = `translate(${dx}px, ${dy}px)`;
           panel.getBoundingClientRect();
-          panel.style.transition = `transform ${duration}ms cubic-bezier(.22,.78,.25,1)`;
+          panel.style.transition = `transform ${duration}ms cubic-bezier(.16,1,.3,1)`;
           panel.style.transform = 'translate(0px,0px)';
           transitionTimer = setTimeout(() => {
             panel.style.transition = '';
