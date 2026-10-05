@@ -75,22 +75,66 @@ function injectCardV2Styles() {
     .person-portrait-bg,
     .person-portrait-fg,
     .person-portrait-shade {
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+    }
+
+    .person-portrait-bg {
+      inset:-16%;
+      z-index:0;
+      background-image:var(--poster);
+      background-size:cover;
+      background-position:center 14%;
+      background-repeat:no-repeat;
+      filter:blur(34px) brightness(.92) saturate(1.08);
+      transform:scale(1.22);
+      opacity:1;
+    }
+
+    .person-portrait-fg {
+      z-index:1;
+      background-image:var(--poster);
+      background-size:auto 108%;
+      background-position:center 8%;
+      background-repeat:no-repeat;
+      -webkit-mask-image:linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(0,0,0,.30) 9%,
+        #000 20%,
+        #000 80%,
+        rgba(0,0,0,.30) 91%,
+        transparent 100%
+      );
+      mask-image:linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(0,0,0,.30) 9%,
+        #000 20%,
+        #000 80%,
+        rgba(0,0,0,.30) 91%,
+        transparent 100%
+      );
+    }
+
+    .person-portrait-shade {
       z-index:2;
       background:
         linear-gradient(
           180deg,
           rgba(4,4,6,0) 0%,
-          rgba(4,4,6,.04) 42%,
-          rgba(4,4,6,.22) 62%,
-          rgba(4,4,6,.72) 82%,
-          rgba(7,7,9,.96) 100%
+          rgba(4,4,6,.03) 42%,
+          rgba(4,4,6,.18) 62%,
+          rgba(4,4,6,.66) 82%,
+          rgba(7,7,9,.94) 100%
         ),
         radial-gradient(
           circle at 50% 20%,
           transparent 0%,
-          transparent 42%,
-          rgba(0,0,0,.06) 72%,
-          rgba(0,0,0,.16) 100%
+          transparent 46%,
+          rgba(0,0,0,.05) 74%,
+          rgba(0,0,0,.14) 100%
         );
     }
 
