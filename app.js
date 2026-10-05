@@ -95,14 +95,25 @@ function injectCardV2Styles() {
     .person-portrait-fg {
       z-index:1;
       background-image:var(--poster);
-      background-size:auto 100%;
-      background-position:center 7%;
+      background-size:auto 106%;
+      background-position:center 8%;
       background-repeat:no-repeat;
     }
 
     .person-portrait-shade {
       z-index:2;
       background:
+        linear-gradient(
+          90deg,
+          rgba(8,8,10,.76) 0%,
+          rgba(8,8,10,.44) 10%,
+          rgba(8,8,10,.12) 22%,
+          transparent 34%,
+          transparent 66%,
+          rgba(8,8,10,.12) 78%,
+          rgba(8,8,10,.44) 90%,
+          rgba(8,8,10,.76) 100%
+        ),
         linear-gradient(
           180deg,
           rgba(4,4,6,.02) 0%,
@@ -140,7 +151,9 @@ function injectCardV2Styles() {
     }
     .swipe-card.has-poster .art-symbol,
     .swipe-card.has-poster .art-lines { opacity: 0; }
-    .card-copy { bottom: 19px; }
+    .card-copy { bottom: 19px; z-index:5; }
+    .card-top { z-index:6; }
+    .swipe-stamp { z-index:8; }
     .card-title { text-shadow: 0 2px 18px rgba(0,0,0,.58); }
     .card-sub { color:#d0cbc2; font-weight:600; }
     .card-blurb {
