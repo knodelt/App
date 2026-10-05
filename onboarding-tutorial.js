@@ -462,7 +462,6 @@
       @media (max-height:540px) {
         .frame-tutorial.final-step { padding:8px; }
         .frame-tutorial-panel.final-page {
-          max-height:calc(100dvh - 16px);
           padding:14px 16px 12px;
           border-radius:20px;
         }
@@ -636,13 +635,24 @@
       focus.className = 'frame-tutorial-focus';
       const viewport = window.visualViewport;
       const viewportTop = viewport?.offsetTop || 0;
-      const viewportHeight = viewport?.height || window.innerHeight;
-      const panelHeight = Math.min(panel.scrollHeight || panel.offsetHeight, viewportHeight - 28);
+      const viewportHeight = viewport?.height || document.documentElement.clientHeight || window.innerHeight;
+      const safe = 14;
+      const maxHeight = Math.max(260, viewportHeight - safe * 2);
+
       panel.style.bottom = 'auto';
-      panel.style.top = `${Math.max(viewportTop + 14, viewportTop + (viewportHeight - panelHeight) / 2)}px`;
+      panel.style.height = '';
+      panel.style.maxHeight = `${maxHeight}px`;
+      panel.style.overflowY = 'auto';
+
+      const panelHeight = Math.min(panel.getBoundingClientRect().height, maxHeight);
+      const centeredTop = viewportTop + Math.max(safe, (viewportHeight - panelHeight) / 2);
+      panel.style.top = `${centeredTop}px`;
       return;
     }
 
+    panel.style.maxHeight = '';
+    panel.style.overflowY = '';
+    panel.style.height = '';
     panel.style.transform = '';
 
     if (!target) {
@@ -765,52 +775,49 @@
     current = nextIndex;
     renderStep({position:false});
 
+    const settle = steps[current]?.scroll ? 70 : 28;
+
     requestAnimationFrame(() => {
       scrollTargetIntoView(steps[current]);
-      positionFocus();
 
-      requestAnimationFrame(() => {
-        const newRect = panel.getBoundingClientRect();
-        const dx = oldRect.left - newRect.left;
-        const dy = oldRect.top - newRect.top;
-        const distance = Math.hypot(dx,dy);
-        const duration = Math.round(Math.min(620, Math.max(380, 350 + distance * .30)));
-        const easing = 'cubic-bezier(.2,.8,.2,1)';
-
-        let finished = false;
-        const finish = () => {
-          if (finished) return;
-          finished = true;
-          if (transitionTimer) clearTimeout(transitionTimer);
-          transitionTimer = null;
-          panel.style.transition = '';
-          panel.style.transform = '';
-          panel.style.height = '';
-          panel.style.overflow = '';
-          root.classList.remove('is-sliding');
-          transitioning = false;
-        };
-
-        // First: visually keep the panel exactly where it was, despite the DOM already
-        // containing the new step. Also preserve the old height so the card itself morphs.
-        panel.style.transition = 'none';
-        panel.style.transform = `translate(${dx}px, ${dy}px)`;
-        panel.style.height = `${oldRect.height}px`;
-        panel.style.overflow = 'hidden';
-        panel.getBoundingClientRect();
+      setTimeout(() => {
+        positionFocus();
 
         requestAnimationFrame(() => {
-          panel.style.transition = `transform ${duration}ms ${easing}, height ${duration}ms ${easing}`;
-          panel.style.transform = 'translate(0px,0px)';
-          panel.style.height = `${newRect.height}px`;
-        });
+          const newRect = panel.getBoundingClientRect();
+          const dx = oldRect.left - newRect.left;
+          const dy = oldRect.top - newRect.top;
+          const distance = Math.hypot(dx,dy);
+          const duration = Math.round(Math.min(590, Math.max(390, 370 + distance * .22)));
+          const easing = 'cubic-bezier(.16,1,.3,1)';
 
-        // Safari safety net: the tutorial must always unlock.
-        transitionTimer = setTimeout(finish, duration + 140);
-        panel.addEventListener('transitionend', event => {
-          if (event.propertyName === 'transform') finish();
-        }, {once:true});
-      });
+          let finished = false;
+          const finish = () => {
+            if (finished) return;
+            finished = true;
+            if (transitionTimer) clearTimeout(transitionTimer);
+            transitionTimer = null;
+            panel.style.transition = '';
+            panel.style.transform = '';
+            root.classList.remove('is-sliding');
+            transitioning = false;
+          };
+
+          panel.style.transition = 'none';
+          panel.style.transform = `translate3d(${dx}px,${dy}px,0)`;
+          panel.getBoundingClientRect();
+
+          requestAnimationFrame(() => {
+            panel.style.transition = `transform ${duration}ms ${easing}`;
+            panel.style.transform = 'translate3d(0,0,0)';
+          });
+
+          transitionTimer = setTimeout(finish, duration + 160);
+          panel.addEventListener('transitionend', event => {
+            if (event.propertyName === 'transform') finish();
+          }, {once:true});
+        });
+      }, settle);
     });
   }
 
