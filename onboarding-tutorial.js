@@ -665,7 +665,6 @@
     else if (steps[current]?.target === '.bottom-nav') focus.style.borderRadius = '20px';
     else focus.style.borderRadius = '22px';
 
-    panel.style.top = 'auto';
     panel.style.bottom = 'auto';
 
     const gap = 13;
@@ -823,8 +822,7 @@
     const panel = root.querySelector('.frame-tutorial-panel');
     root.classList.toggle('final-step', Boolean(step.finalPage));
     if (panel && !step.finalPage) {
-      panel.style.top = '';
-      panel.style.bottom = '';
+      panel.style.bottom = 'auto';
       panel.style.transform = '';
     }
     panel?.classList.toggle('final-page', Boolean(step.finalPage));
