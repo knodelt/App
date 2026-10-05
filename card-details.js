@@ -21,12 +21,32 @@
         pointer-events:none !important;
       }
       .swipe-card.image-only .card-art {
-        background-image:var(--poster, var(--art)), var(--art) !important;
-        background-size:auto 106%, cover !important;
-        background-position:center 14%, center !important;
+        background-image:var(--art) !important;
+        background-size:cover !important;
+        background-position:center !important;
         background-repeat:no-repeat !important;
         filter:none !important;
         transform:none !important;
+      }
+      .swipe-card.image-only:not(.person-card) .media-poster-bg {
+        filter:blur(30px) brightness(.84) saturate(1.06);
+        transform:scale(1.18);
+        opacity:1;
+      }
+      .swipe-card.image-only:not(.person-card) .media-poster-fg {
+        background-size:auto 108%;
+        background-position:center 13%;
+      }
+      .swipe-card.image-only:not(.person-card) .media-poster-shade {
+        opacity:1;
+        background:
+          linear-gradient(
+            180deg,
+            rgba(4,4,6,0) 0%,
+            rgba(4,4,6,.02) 58%,
+            rgba(4,4,6,.14) 80%,
+            rgba(7,7,9,.70) 100%
+          ) !important;
       }
       .swipe-card.image-only.person-card .card-art {
         background-image:var(--art) !important;
