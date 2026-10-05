@@ -114,7 +114,7 @@
     const requestPage = page;
 
     try {
-      const response = await fetch(`/api/feed?page=${requestPage}&market=de-v4&seed=${feedNonce}&mood=${encodeURIComponent(currentMood)}`, {
+      const response = await fetch(`/api/feed?page=${requestPage}&market=de-v5&seed=${feedNonce}&mood=${encodeURIComponent(currentMood)}`, {
         headers: { accept: 'application/json' },
         cache: 'no-store'
       });
