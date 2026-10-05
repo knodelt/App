@@ -54,22 +54,84 @@ function injectCardV2Styles() {
       background-repeat: no-repeat;
     }
 
-    /* Show more of real TMDB artwork instead of aggressively cropping it. */
-    .swipe-card.has-poster .card-art {
-      background-size:
-        cover,
-        auto 112%,
-        cover;
-      background-position:
-        center,
-        center 16%,
-        center;
-    }
+    /* Layer artwork over a blurred fill so portrait posters don't create hard side bars. */
+    .swipe-card.has-poster:not(.person-card) .card-art,
     .swipe-card.has-poster.person-card .card-art {
       background-image:var(--art);
       background-size:cover;
       background-position:center;
       background-repeat:no-repeat;
+    }
+
+    .media-poster-bg,
+    .media-poster-fg,
+    .media-poster-shade {
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+    }
+
+    .media-poster-bg {
+      inset:-14%;
+      z-index:0;
+      background-image:var(--poster);
+      background-size:cover;
+      background-position:center 18%;
+      background-repeat:no-repeat;
+      filter:blur(30px) brightness(.76) saturate(1.04);
+      transform:scale(1.18);
+      opacity:1;
+    }
+
+    .media-poster-fg {
+      z-index:1;
+      background-image:var(--poster);
+      background-size:auto 108%;
+      background-position:center 14%;
+      background-repeat:no-repeat;
+      -webkit-mask-image:linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(0,0,0,.24) 8%,
+        #000 18%,
+        #000 82%,
+        rgba(0,0,0,.24) 92%,
+        transparent 100%
+      );
+      mask-image:linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(0,0,0,.24) 8%,
+        #000 18%,
+        #000 82%,
+        rgba(0,0,0,.24) 92%,
+        transparent 100%
+      );
+    }
+
+    .media-poster-shade {
+      z-index:2;
+      background:
+        linear-gradient(
+          180deg,
+          rgba(4,4,6,0) 0%,
+          rgba(4,4,6,.03) 40%,
+          rgba(4,4,6,.20) 60%,
+          rgba(4,4,6,.70) 80%,
+          rgba(7,7,9,.96) 100%
+        ),
+        radial-gradient(
+          circle at 50% 22%,
+          transparent 0%,
+          transparent 48%,
+          rgba(0,0,0,.05) 76%,
+          rgba(0,0,0,.14) 100%
+        );
+    }
+
+    .swipe-card.has-poster:not(.person-card) .card-art::before,
+    .swipe-card.has-poster:not(.person-card) .card-art::after {
+      opacity:0 !important;
     }
 
     .person-portrait-bg,
@@ -275,6 +337,7 @@ function renderDeck() {
     card.innerHTML = `
       <div class="card-art">
         ${item.type === 'person' && item.poster ? '<span class="person-portrait-bg"></span><span class="person-portrait-fg"></span><span class="person-portrait-shade"></span>' : ''}
+        ${item.type !== 'person' && item.poster ? '<span class="media-poster-bg"></span><span class="media-poster-fg"></span><span class="media-poster-shade"></span>' : ''}
         <span class="art-symbol">${item.symbol}</span><span class="art-lines"></span>
       </div>
       <div class="card-top"><span class="type-badge">${typeLabel(item.type)}</span></div>
