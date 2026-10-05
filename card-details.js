@@ -22,13 +22,15 @@
       }
       .swipe-card.image-only .card-art {
         background-image:var(--poster, var(--art)), var(--art) !important;
-        background-size:cover !important;
-        background-position:center 20% !important;
+        background-size:auto 106%, cover !important;
+        background-position:center 14%, center !important;
+        background-repeat:no-repeat !important;
         filter:none !important;
         transform:none !important;
       }
       .swipe-card.image-only.person-card .card-art {
-        background-position:center 15% !important;
+        background-size:auto 100%, cover !important;
+        background-position:center 7%, center !important;
       }
       .swipe-card.image-only .card-art::before,
       .swipe-card.image-only .card-art::after {
