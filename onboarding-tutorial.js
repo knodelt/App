@@ -322,11 +322,13 @@
         display:none !important;
       }
       .frame-tutorial-panel.final-page {
-        position:fixed;
-        left:18px; right:18px;
-        width:auto;
+        position:relative;
+        left:auto; right:auto;
+        top:auto !important;
+        bottom:auto !important;
+        width:min(100%,430px);
         max-width:430px;
-        margin:0 auto;
+        margin:0;
         max-height:calc(100vh - 28px);
         max-height:calc(100dvh - 28px);
         overflow-y:auto;
@@ -633,20 +635,11 @@
 
     if (steps[current]?.finalPage) {
       focus.className = 'frame-tutorial-focus';
-      const viewport = window.visualViewport;
-      const viewportTop = viewport?.offsetTop || 0;
-      const viewportHeight = viewport?.height || document.documentElement.clientHeight || window.innerHeight;
-      const safe = 14;
-      const maxHeight = Math.max(260, viewportHeight - safe * 2);
-
-      panel.style.bottom = 'auto';
+      panel.style.top = '';
+      panel.style.bottom = '';
       panel.style.height = '';
-      panel.style.maxHeight = `${maxHeight}px`;
-      panel.style.overflowY = 'auto';
-
-      const panelHeight = Math.min(panel.getBoundingClientRect().height, maxHeight);
-      const centeredTop = viewportTop + Math.max(safe, (viewportHeight - panelHeight) / 2);
-      panel.style.top = `${centeredTop}px`;
+      panel.style.maxHeight = '';
+      panel.style.overflowY = '';
       return;
     }
 
@@ -829,8 +822,16 @@
 
     const panel = root.querySelector('.frame-tutorial-panel');
     root.classList.toggle('final-step', Boolean(step.finalPage));
-    if (panel && !step.finalPage) {
-      panel.style.bottom = 'auto';
+    if (panel) {
+      if (step.finalPage) {
+        panel.style.top = '';
+        panel.style.bottom = '';
+        panel.style.maxHeight = '';
+        panel.style.height = '';
+        panel.style.overflowY = '';
+      } else {
+        panel.style.bottom = 'auto';
+      }
       panel.style.transform = '';
     }
     panel?.classList.toggle('final-page', Boolean(step.finalPage));
