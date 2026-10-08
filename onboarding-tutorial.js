@@ -117,18 +117,24 @@
         color:#171316;
         box-shadow:0 28px 90px rgba(0,0,0,.52);
       }
-      .frame-welcome-card::after {
-        content:"F"; position:absolute; right:-12px; top:76px;
-        color:rgba(23,19,22,.08);
-        font:700 190px/.75 Fraunces,Georgia,serif;
-        pointer-events:none;
+      .frame-welcome-card::after { display:none; }
+      .frame-welcome-logo-wrap {
+        position:relative; z-index:1;
+        display:flex; align-items:center; justify-content:center;
+        width:min(230px,72vw);
+        min-height:72px;
+        margin:0;
+        padding:10px 14px;
+        border-radius:18px;
+        background:#111114;
+        box-shadow:0 12px 30px rgba(23,19,22,.18);
       }
-      .frame-welcome-mark {
-        display:grid; place-items:center;
-        width:50px; height:50px; border-radius:15px;
-        background:#171316; color:#fff;
-        font:700 31px/1 Fraunces,Georgia,serif;
-        box-shadow:0 12px 30px rgba(23,19,22,.16);
+      .frame-welcome-logo {
+        display:block;
+        width:100%;
+        height:auto;
+        max-height:62px;
+        object-fit:contain;
       }
       .frame-welcome-kicker {
         display:block; margin-top:24px;
@@ -394,14 +400,23 @@
         gap:8px;
         margin-top:18px;
       }
-      .frame-tutorial-finish-mark {
-        display:grid;
-        place-items:center;
-        width:60px; height:60px;
-        border-radius:19px;
-        background:rgba(23,19,22,.11);
-        color:#171316;
-        font:700 32px/1 Fraunces,Georgia,serif;
+      .frame-tutorial-finish-logo-wrap {
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        width:min(190px,62vw);
+        min-height:58px;
+        padding:8px 12px;
+        border-radius:16px;
+        background:#111114;
+        box-shadow:0 10px 24px rgba(23,19,22,.14);
+      }
+      .frame-tutorial-finish-logo {
+        display:block;
+        width:100%;
+        height:auto;
+        max-height:50px;
+        object-fit:contain;
       }
       .frame-tutorial-finish strong {
         color:#171316;
@@ -441,10 +456,11 @@
           margin-top:12px;
           gap:6px;
         }
-        .frame-tutorial-finish-mark {
-          width:50px; height:50px;
-          border-radius:16px;
-          font-size:27px;
+        .frame-tutorial-finish-logo-wrap {
+          width:min(165px,58vw);
+          min-height:50px;
+          padding:7px 10px;
+          border-radius:14px;
         }
         .frame-tutorial-finish span {
           font-size:9px;
@@ -482,10 +498,11 @@
           margin-top:8px;
           gap:4px;
         }
-        .frame-tutorial-finish-mark {
-          width:42px; height:42px;
-          border-radius:13px;
-          font-size:23px;
+        .frame-tutorial-finish-logo-wrap {
+          width:min(145px,54vw);
+          min-height:44px;
+          padding:6px 9px;
+          border-radius:12px;
         }
         .frame-tutorial-finish strong { font-size:10px; }
         .frame-tutorial-finish span { font-size:8.5px; }
@@ -514,7 +531,7 @@
     welcome.hidden = true;
     welcome.innerHTML = `
       <section class="frame-welcome-card" role="dialog" aria-modal="true" aria-labelledby="frameWelcomeTitle">
-        <div class="frame-welcome-mark">F</div>
+        <div class="frame-welcome-logo-wrap"><img class="frame-welcome-logo" src="/frame-logo.svg" alt="FRAME" /></div>
         <span class="frame-welcome-kicker">DEIN FILMGESCHMACK · DEINE ENTSCHEIDUNG</span>
         <h2 id="frameWelcomeTitle">Willkommen bei FRAME</h2>
         <p class="frame-welcome-lead">Entdecke Filme, Serien und People, die wirklich zu dir passen.</p>
@@ -740,7 +757,7 @@
     if (type === 'start') {
       return `
         <div class="frame-tutorial-finish">
-          <div class="frame-tutorial-finish-mark">F</div>
+          <div class="frame-tutorial-finish-logo-wrap"><img class="frame-tutorial-finish-logo" src="/frame-logo.svg" alt="FRAME" /></div>
           <strong>Dein Feed wartet.</strong>
           <span>Viel Spaß beim Entdecken – und keine Sorge: FRAME wird mit jedem Swipe persönlicher.</span>
         </div>`;
