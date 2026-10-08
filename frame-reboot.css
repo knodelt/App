@@ -1098,3 +1098,50 @@ h1 em {
 #discoverView .action-undo:not(:disabled):active {
   transform:scale(.985);
 }
+
+
+/* ---------- Official FRAME brand ---------- */
+.brand {
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  min-width:0 !important;
+  padding:0 !important;
+  gap:0 !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+}
+.brand-logo {
+  display:block !important;
+  width:clamp(104px,29vw,118px) !important;
+  height:auto !important;
+  max-height:40px !important;
+  object-fit:contain !important;
+  object-position:left center !important;
+}
+.brand-mark,
+.brand-copy {
+  display:none !important;
+}
+.empty-brand-logo {
+  display:block;
+  width:min(190px,62vw);
+  height:auto;
+  margin:0 auto 16px;
+  object-fit:contain;
+}
+.tiny-brand-logo {
+  display:block;
+  width:120px;
+  height:auto;
+  margin:0 auto;
+  opacity:.52;
+}
+
+@media (max-width:380px) {
+  .brand-logo {
+    width:100px !important;
+    max-height:38px !important;
+  }
+}
