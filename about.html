@@ -27,13 +27,14 @@
     .notice{padding:14px 15px;border-radius:15px;background:rgba(1,180,228,.07);border:1px solid rgba(1,180,228,.18);color:#d9e8ea!important}
     .source-link{display:inline-flex;margin-top:9px;color:var(--gold);text-decoration:none;font-size:10px;font-weight:700;letter-spacing:.06em}.source-link::after{content:' ↗'}
     .status{display:flex;gap:8px;align-items:center;margin-top:14px;color:#8d8a84;font-size:9px}.dot{width:7px;height:7px;border-radius:50%;background:#90cea1;box-shadow:0 0 18px rgba(144,206,161,.38)}
-    .legal{font-size:9px!important;color:#66635e!important}.brandline{text-align:center;margin:32px 0 0;color:#363532;font-size:7px;letter-spacing:.23em}
+    .legal{font-size:9px!important;color:#66635e!important}.about-logo{display:block;width:min(235px,70vw);height:auto;margin:0 0 28px;object-fit:contain}.brandline{display:flex;justify-content:center;margin:34px 0 0}.brandline img{display:block;width:min(180px,55vw);height:auto;opacity:.55}
   </style>
 </head>
 <body>
   <div class="grain" aria-hidden="true"></div>
   <main>
     <a class="back" href="/"><span>←</span> ZURÜCK ZU FRAME</a>
+    <img class="about-logo" src="/frame-logo.svg" alt="FRAME" />
 
     <p class="eyebrow">CREDITS · DATENQUELLEN</p>
     <h1>Über <em>FRAME</em></h1>
@@ -71,7 +72,7 @@
       <p class="legal">Der aktuelle Prototyp befindet sich in Entwicklung und ist nicht als kommerzielles Angebot gedacht.</p>
     </section>
 
-    <p class="brandline">FRAME / ABOUT / 24 FPS</p>
+    <div class="brandline"><img src="/frame-logo.svg" alt="FRAME" /></div>
   </main>
 </body>
 </html>
