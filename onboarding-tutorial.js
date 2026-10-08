@@ -531,7 +531,7 @@
     welcome.hidden = true;
     welcome.innerHTML = `
       <section class="frame-welcome-card" role="dialog" aria-modal="true" aria-labelledby="frameWelcomeTitle">
-        <div class="frame-welcome-logo-wrap"><img class="frame-welcome-logo" src="/frame-logo.svg" alt="FRAME" /></div>
+        <div class="frame-welcome-logo-wrap"><img class="frame-welcome-logo" src="/frame-logo-official.png" alt="FRAME" /></div>
         <span class="frame-welcome-kicker">DEIN FILMGESCHMACK · DEINE ENTSCHEIDUNG</span>
         <h2 id="frameWelcomeTitle">Willkommen bei FRAME</h2>
         <p class="frame-welcome-lead">Entdecke Filme, Serien und People, die wirklich zu dir passen.</p>
@@ -757,7 +757,7 @@
     if (type === 'start') {
       return `
         <div class="frame-tutorial-finish">
-          <div class="frame-tutorial-finish-logo-wrap"><img class="frame-tutorial-finish-logo" src="/frame-logo.svg" alt="FRAME" /></div>
+          <div class="frame-tutorial-finish-logo-wrap"><img class="frame-tutorial-finish-logo" src="/frame-logo-official.png" alt="FRAME" /></div>
           <strong>Dein Feed wartet.</strong>
           <span>Viel Spaß beim Entdecken – und keine Sorge: FRAME wird mit jedem Swipe persönlicher.</span>
         </div>`;
