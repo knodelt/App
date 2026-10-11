@@ -1,4 +1,4 @@
-const CACHE = 'frame-v70-real-selected-logo';
+const CACHE = 'frame-v71-original-logo-style';
 const ASSETS = ['/', '/index.html', '/about.html', '/styles.css', '/app-layout.css', '/frame-reboot.css', '/frame-loop.css', '/viewport-lock.js', '/app.js', '/mood-filter.js', '/tmdb-feed.js', '/card-details.js', '/watchlist-controls.js', '/taste-dna.js', '/personalized-recommendations.js', '/taste-learning.js', '/streaming-availability.js', '/swipe-guidance.js', '/manifest.webmanifest', '/frame-icon-official.png', '/frame-logo-original.jpg', '/onboarding-tutorial.js', '/frame-loop.js'];
 
 self.addEventListener('install', event => {
