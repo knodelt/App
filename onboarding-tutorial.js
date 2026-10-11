@@ -121,19 +121,19 @@
       .frame-welcome-logo-wrap {
         position:relative; z-index:1;
         display:flex; align-items:center; justify-content:center;
-        width:min(230px,72vw);
-        min-height:72px;
+        width:min(250px,72vw);
+        min-height:85px;
         margin:0;
         padding:10px 14px;
         border-radius:18px;
-        background:#111114;
-        box-shadow:0 12px 30px rgba(23,19,22,.18);
+        background:#fff;
+        box-shadow:0 12px 30px rgba(23,19,22,.12);
       }
       .frame-welcome-logo {
         display:block;
         width:100%;
         height:auto;
-        max-height:62px;
+        max-height:82px;
         object-fit:contain;
       }
       .frame-welcome-kicker {
@@ -408,8 +408,8 @@
         min-height:58px;
         padding:8px 12px;
         border-radius:16px;
-        background:#111114;
-        box-shadow:0 10px 24px rgba(23,19,22,.14);
+        background:#fff;
+        box-shadow:0 10px 24px rgba(23,19,22,.12);
       }
       .frame-tutorial-finish-logo {
         display:block;
@@ -531,7 +531,7 @@
     welcome.hidden = true;
     welcome.innerHTML = `
       <section class="frame-welcome-card" role="dialog" aria-modal="true" aria-labelledby="frameWelcomeTitle">
-        <div class="frame-welcome-logo-wrap"><img class="frame-welcome-logo" src="/frame-logo-official.png" alt="FRAME" /></div>
+        <div class="frame-welcome-logo-wrap"><img class="frame-welcome-logo" src="/frame-logo-original.jpg" alt="FRAME" /></div>
         <span class="frame-welcome-kicker">DEIN FILMGESCHMACK · DEINE ENTSCHEIDUNG</span>
         <h2 id="frameWelcomeTitle">Willkommen bei FRAME</h2>
         <p class="frame-welcome-lead">Entdecke Filme, Serien und People, die wirklich zu dir passen.</p>
@@ -757,7 +757,7 @@
     if (type === 'start') {
       return `
         <div class="frame-tutorial-finish">
-          <div class="frame-tutorial-finish-logo-wrap"><img class="frame-tutorial-finish-logo" src="/frame-logo-official.png" alt="FRAME" /></div>
+          <div class="frame-tutorial-finish-logo-wrap"><img class="frame-tutorial-finish-logo" src="/frame-logo-original.jpg" alt="FRAME" /></div>
           <strong>Dein Feed wartet.</strong>
           <span>Viel Spaß beim Entdecken – und keine Sorge: FRAME wird mit jedem Swipe persönlicher.</span>
         </div>`;
