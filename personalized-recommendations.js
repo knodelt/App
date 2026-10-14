@@ -14,7 +14,8 @@
   function invalidateRecommendations() {
     ++requestSerial;
     loading = false;
-    invalidateRecommendations();
+    cachedItems = [];
+    lastSignature = '';
   }
 
   function recommendationSurfaceVisible() {
