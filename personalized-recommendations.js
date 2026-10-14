@@ -11,6 +11,12 @@
   let readyNoticeTimer = null;
   let lastReadinessProbe = 0;
 
+  function invalidateRecommendations() {
+    ++requestSerial;
+    loading = false;
+    invalidateRecommendations();
+  }
+
   function recommendationSurfaceVisible() {
     return Boolean(document.querySelector('#personalizedView')?.classList.contains('active'));
   }
@@ -632,8 +638,7 @@
     const payload = buildPayload();
     const stats = readinessStats(payload);
     if (!stats.ready) {
-      cachedItems = [];
-      lastSignature = '';
+      invalidateRecommendations();
       updateReadyIndicator(false);
       if (recommendationSurfaceVisible()) renderLearningProgress(stats);
       return [];
@@ -709,8 +714,7 @@
       history[id] = snapshot;
       saveHistory();
     }
-    cachedItems = [];
-    lastSignature = '';
+    invalidateRecommendations();
     originalRecordSwipe(id, action);
     updateProfileStrength();
     updateReadyIndicator();
@@ -781,16 +785,14 @@
   });
 
   document.addEventListener('frame:mood-changed', () => {
-    cachedItems = [];
-    lastSignature = '';
+    invalidateRecommendations();
     if (recommendationSurfaceVisible()) {
       queueMicrotask(() => refreshRecommendations({force:true}));
     }
   });
 
   document.addEventListener('frame:taste-dna-changed', () => {
-    cachedItems = [];
-    lastSignature = '';
+    invalidateRecommendations();
     updateProfileStrength();
     if (recommendationSurfaceVisible()) {
       queueMicrotask(() => refreshRecommendations({force:true}));
@@ -798,8 +800,7 @@
   });
 
   document.addEventListener('frame:online-model-changed', () => {
-    cachedItems = [];
-    lastSignature = '';
+    invalidateRecommendations();
     if (recommendationSurfaceVisible()) {
       queueMicrotask(() => refreshRecommendations({force:true}));
     }
@@ -807,8 +808,7 @@
 
   document.addEventListener('frame:swipe-undone', () => {
     syncHistory();
-    cachedItems = [];
-    lastSignature = '';
+    invalidateRecommendations();
     updateProfileStrength();
     updateReadyIndicator();
     hideReadyNotice();
@@ -823,8 +823,7 @@
   document.addEventListener('frame:taste-reset', () => {
     history = {};
     saveHistory();
-    cachedItems = [];
-    lastSignature = '';
+    invalidateRecommendations();
     try {
       localStorage.removeItem(READY_ANNOUNCED_KEY);
       localStorage.removeItem(READY_VIEWED_KEY);
@@ -836,8 +835,7 @@
   window.addEventListener('storage', event => {
     if (event.key === 'frame-state' || event.key === HISTORY_KEY) {
       history = loadHistory();
-      cachedItems = [];
-      lastSignature = '';
+      invalidateRecommendations();
       updateProfileStrength();
       updateReadyIndicator();
       scheduleReadyProbe();
