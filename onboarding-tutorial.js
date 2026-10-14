@@ -60,7 +60,7 @@
       target:'.bottom-nav',
       kicker:'SCHRITT 7 · 8',
       title:'Und wenn ihr euch nicht entscheiden könnt?',
-      copy:'Just Pick One nimmt gemeinsame Matches zuerst. Gibt es keine, nutzt FRAME Watchlist und Geschmack und entscheidet für euch. Im Profil siehst du außerdem, was FRAME über deinen Geschmack lernt.',
+      copy:'Just Pick One priorisiert eure Matches und nutzt sonst Watchlist und Geschmack. Unten wartet ✦ Für dich mit persönlichen Tipps, sobald genug Swipes vorliegen. Im Profil siehst du, was FRAME lernt.',
       extra:'pick',
       panel:'top'
     },
