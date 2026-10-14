@@ -163,6 +163,7 @@ body {
 /* Secondary screens live inside the app shell; page itself never scrolls. */
 #watchlistView,
 #recommendView,
+#personalizedView,
 #tasteView {
   overflow-y: auto;
   overscroll-behavior: contain;
