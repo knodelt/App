@@ -91,6 +91,7 @@
 
   function markSeen() {
     try { localStorage.setItem(STORAGE_KEY,'done'); } catch {}
+    queueMicrotask(() => document.dispatchEvent(new Event('frame:onboarding-complete')));
   }
 
   function injectStyles() {
