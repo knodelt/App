@@ -9,16 +9,10 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/frame-icon-original.svg",
+      "src": "/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "/frame-icon-official.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     }
   ]
 }
