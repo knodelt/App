@@ -121,20 +121,22 @@
       .frame-welcome-logo-wrap {
         position:relative; z-index:1;
         display:flex; align-items:center; justify-content:center;
-        width:min(250px,72vw);
-        min-height:85px;
+        width:min(245px,72vw);
+        min-height:0;
         margin:0;
-        padding:10px 14px;
-        border-radius:18px;
-        background:#fff;
-        box-shadow:0 12px 30px rgba(23,19,22,.12);
+        padding:0;
+        border:0;
+        border-radius:0;
+        background:transparent;
+        box-shadow:none;
       }
       .frame-welcome-logo {
         display:block;
         width:100%;
         height:auto;
-        max-height:82px;
+        max-height:none;
         object-fit:contain;
+        mix-blend-mode:multiply;
       }
       .frame-welcome-kicker {
         display:block; margin-top:24px;
@@ -404,19 +406,21 @@
         display:flex;
         align-items:center;
         justify-content:center;
-        width:min(190px,62vw);
-        min-height:58px;
-        padding:8px 12px;
-        border-radius:16px;
-        background:#fff;
-        box-shadow:0 10px 24px rgba(23,19,22,.12);
+        width:min(184px,60vw);
+        min-height:0;
+        padding:0;
+        border:0;
+        border-radius:0;
+        background:transparent;
+        box-shadow:none;
       }
       .frame-tutorial-finish-logo {
         display:block;
         width:100%;
         height:auto;
-        max-height:50px;
+        max-height:none;
         object-fit:contain;
+        mix-blend-mode:multiply;
       }
       .frame-tutorial-finish strong {
         color:#171316;
@@ -457,10 +461,10 @@
           gap:6px;
         }
         .frame-tutorial-finish-logo-wrap {
-          width:min(165px,58vw);
-          min-height:50px;
-          padding:7px 10px;
-          border-radius:14px;
+          width:min(157px,56vw);
+          min-height:0;
+          padding:0;
+          border-radius:0;
         }
         .frame-tutorial-finish span {
           font-size:9px;
@@ -499,10 +503,10 @@
           gap:4px;
         }
         .frame-tutorial-finish-logo-wrap {
-          width:min(145px,54vw);
-          min-height:44px;
-          padding:6px 9px;
-          border-radius:12px;
+          width:min(140px,52vw);
+          min-height:0;
+          padding:0;
+          border-radius:0;
         }
         .frame-tutorial-finish strong { font-size:10px; }
         .frame-tutorial-finish span { font-size:8.5px; }
