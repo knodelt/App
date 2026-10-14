@@ -627,20 +627,31 @@
     }
   }
 
-  async function refreshRecommendations({force=false} = {}) {
-    if (loading && !force) return;
+  async function refreshRecommendations({force=false, background=false} = {}) {
     const payload = buildPayload();
-    const signature = JSON.stringify(payload);
+    const stats = readinessStats(payload);
+    if (!stats.ready) {
+      cachedItems = [];
+      lastSignature = '';
+      updateReadyIndicator(false);
+      if (recommendationSurfaceVisible()) renderLearningProgress(stats);
+      return [];
+    }
+    if (loading && !force) return [];
 
+    const signature = JSON.stringify(payload);
     if (!force && signature === lastSignature && cachedItems.length) {
-      renderPersonalized(cachedItems, payload.signals.length);
-      return;
+      if (recommendationSurfaceVisible()) renderPersonalized(cachedItems, payload.signals.length);
+      if (cachedItems.filter(item => item.tmdbId && ['movie','series'].includes(item.type)).length >= 3) {
+        announceReadyIfNeeded();
+      }
+      return cachedItems;
     }
 
     const serial = ++requestSerial;
     loading = true;
     const heroHost = document.querySelector('#recommendHero');
-    if (heroHost && !cachedItems.length) {
+    if (!background && recommendationSurfaceVisible() && heroHost && !cachedItems.length) {
       heroHost.innerHTML = '<div class="recommend-loading"><div><b>FRAME rechnet.</b>Dein persönlicher Filmraum wird neu zusammengestellt.</div></div>';
     }
 
@@ -653,15 +664,28 @@
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.ok || !Array.isArray(data.items)) throw new Error(data.message || `Recommendations ${response.status}`);
-      if (serial !== requestSerial) return;
+      if (serial !== requestSerial) return [];
+
       cachedItems = data.items;
       lastSignature = signature;
-      renderPersonalized(cachedItems, data.profileSignals ?? payload.signals.length);
+      if (recommendationSurfaceVisible()) {
+        renderPersonalized(cachedItems, data.profileSignals ?? payload.signals.length);
+      }
+      // A notification means the server actually returned several distinct titles,
+      // not merely that the local swipe counter reached a number.
+      const validIds = new Set(cachedItems
+        .filter(item => item.tmdbId && ['movie','series'].includes(item.type))
+        .map(item => `${item.type}:${item.tmdbId}`));
+      if (validIds.size >= 3) announceReadyIfNeeded();
+      return cachedItems;
     } catch (error) {
       console.warn('[FRAME PERSONALIZED]', error.message);
-      if (serial !== requestSerial) return;
-      if (cachedItems.length) renderPersonalized(cachedItems, payload.signals.length);
-      else if (heroHost) heroHost.innerHTML = '<div class="recommend-error"><div><b>Gerade keine Empfehlungen.</b>Der TMDB-Dienst ist momentan nicht erreichbar. Deine Swipes bleiben gespeichert.</div></div>';
+      if (serial !== requestSerial) return [];
+      if (recommendationSurfaceVisible()) {
+        if (cachedItems.length) renderPersonalized(cachedItems, payload.signals.length);
+        else if (heroHost) heroHost.innerHTML = '<div class="recommend-error"><div><b>Gerade keine Empfehlungen.</b>Der TMDB-Dienst ist momentan nicht erreichbar. Deine Swipes bleiben gespeichert.</div></div>';
+      }
+      return [];
     } finally {
       if (serial === requestSerial) loading = false;
     }
