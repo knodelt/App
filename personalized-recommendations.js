@@ -6,17 +6,26 @@
   let requestSerial = 0;
   let cachedItems = [];
   let loading = false;
+  const READY_ANNOUNCED_KEY = 'frame-for-you-ready-announced-v1';
+  const READY_VIEWED_KEY = 'frame-for-you-ready-viewed-v1';
+  let readyNoticeTimer = null;
+  let lastReadinessProbe = 0;
 
   function recommendationSurfaceVisible() {
-    return document.querySelector('#recommendationModal')?.classList.contains('open') || false;
+    return Boolean(document.querySelector('#personalizedView')?.classList.contains('active'));
   }
 
   function setRecommendationModal(open) {
     const modal = document.querySelector('#recommendationModal');
     if (!modal) return;
+    if (open && !recommendationSurfaceVisible()) switchView('personalized');
+    if (!open && recommendationSurfaceVisible()) switchView('discover');
     modal.classList.toggle('open', Boolean(open));
     modal.setAttribute('aria-hidden', open ? 'false' : 'true');
-    if (open) queueMicrotask(() => refreshRecommendations());
+    if (open) {
+      hideReadyNotice();
+      queueMicrotask(() => refreshRecommendations());
+    }
   }
 
 
@@ -134,6 +143,113 @@
       onlineModel: window.getFrameOnlineModel?.() || {version:1,algorithm:'online-logistic-pairwise-v1',steps:0,examples:0,explorationRate:.15,featureWeights:[]},
       mood: window.getFrameMood?.() || 'any'
     };
+  }
+
+  // A few swipes are not enough to promise a useful match. Count distinct
+  // TMDB film/series decisions with both positive and negative examples.
+  function readinessStats(payload = buildPayload()) {
+    const media = payload.signals.filter(entry =>
+      (entry.type === 'movie' || entry.type === 'series') &&
+      Number(entry.tmdbId) > 0
+    );
+    const positive = media.filter(entry => entry.action === 'like' || entry.action === 'save');
+    const negative = media.filter(entry => entry.action === 'dislike');
+    const ready = media.length >= 12 && positive.length >= 4 && negative.length >= 3;
+    const percent = Math.min(100, Math.round(
+      Math.min(1,media.length / 12) * 60 +
+      Math.min(1,positive.length / 4) * 25 +
+      Math.min(1,negative.length / 3) * 15
+    ));
+    return {ready, media:media.length, positives:positive.length, negatives:negative.length, percent};
+  }
+
+  function readyFlag(key) {
+    try { return localStorage.getItem(key) === '1'; } catch { return false; }
+  }
+
+  function setReadyFlag(key) {
+    try { localStorage.setItem(key, '1'); } catch {}
+  }
+
+  function updateReadyIndicator(ready = readinessStats().ready) {
+    const dot = document.querySelector('#forYouNewIndicator');
+    if (dot) dot.hidden = !(ready && readyFlag(READY_ANNOUNCED_KEY) && !readyFlag(READY_VIEWED_KEY));
+  }
+
+  function hideReadyNotice() {
+    if (readyNoticeTimer) clearTimeout(readyNoticeTimer);
+    readyNoticeTimer = null;
+    const notice = document.querySelector('#forYouReadyNotice');
+    if (notice) notice.hidden = true;
+  }
+
+  function markRecommendationsViewed() {
+    if (!readinessStats().ready) return;
+    setReadyFlag(READY_ANNOUNCED_KEY);
+    setReadyFlag(READY_VIEWED_KEY);
+    hideReadyNotice();
+    updateReadyIndicator(true);
+  }
+
+  function isOnboardingActive() {
+    const welcome = document.querySelector('.frame-welcome');
+    const tour = document.querySelector('.frame-tutorial');
+    return Boolean((welcome && !welcome.hidden) || (tour && !tour.hidden));
+  }
+
+  function announceReadyIfNeeded() {
+    if (readyFlag(READY_ANNOUNCED_KEY)) {
+      updateReadyIndicator(true);
+      return;
+    }
+    if (recommendationSurfaceVisible()) {
+      markRecommendationsViewed();
+      return;
+    }
+    if (isOnboardingActive()) return;
+
+    // Announce only after a successful API response with several real titles.
+    setReadyFlag(READY_ANNOUNCED_KEY);
+    updateReadyIndicator(true);
+    const notice = document.querySelector('#forYouReadyNotice');
+    if (!notice) return;
+    notice.hidden = false;
+    if (readyNoticeTimer) clearTimeout(readyNoticeTimer);
+    readyNoticeTimer = setTimeout(hideReadyNotice, 9000);
+  }
+
+  function renderLearningProgress(stats) {
+    const hero = document.querySelector('#recommendHero');
+    const list = document.querySelector('#recommendList');
+    const reasons = document.querySelector('#reasonChips');
+    if (!hero || !list || !reasons) return;
+    const missing = stats.media < 12
+      ? `Noch ${12 - stats.media} Film- oder Serienentscheidungen bis zu deinem ersten Mix.`
+      : stats.positives < 4
+        ? `Entscheide noch bei ${4 - stats.positives} Titeln mit SUPER oder MERKEN.`
+        : `Noch ${3 - stats.negatives} MIST-Entscheidungen helfen beim Eingrenzen.`;
+    hero.innerHTML = `<div class="for-you-learning">
+      <span class="eyebrow">FRAME lernt</span>
+      <strong>Dein Geschmack nimmt Form an.</strong>
+      <p>${missing} So vermeidest du beliebige Empfehlungen.</p>
+      <div class="for-you-learning-progress" role="progressbar" aria-label="Fortschritt bis zu persönlichen Empfehlungen" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${stats.percent}"><span style="width:${stats.percent}%"></span></div>
+      <small>${stats.media}/12 Titel · ${stats.positives}/4 SUPER oder MERKEN · ${stats.negatives}/3 MIST</small>
+      <button type="button" id="forYouKeepSwiping">Weiter swipen</button>
+    </div>`;
+    hero.removeAttribute('data-tmdb-id');
+    hero.removeAttribute('data-media-type');
+    list.innerHTML = '';
+    reasons.innerHTML = '<span>Aus deinen Entscheidungen entsteht dein persönliches Profil</span>';
+    hero.querySelector('#forYouKeepSwiping')?.addEventListener('click', () => switchView('discover'));
+  }
+
+  function probeReadyInBackground() {
+    if (readyFlag(READY_ANNOUNCED_KEY) || recommendationSurfaceVisible() || loading) return;
+    if (!readinessStats().ready) return;
+    const now = Date.now();
+    if (now - lastReadinessProbe < 12000) return;
+    lastReadinessProbe = now;
+    queueMicrotask(() => refreshRecommendations({background:true}));
   }
 
   function profileStrength() {
