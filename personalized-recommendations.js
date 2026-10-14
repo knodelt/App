@@ -152,22 +152,29 @@
     };
   }
 
-  // A few swipes are not enough to promise a useful match. Count distinct
-  // TMDB film/series decisions with both positive and negative examples.
-  function readinessStats(payload = buildPayload()) {
-    const media = payload.signals.filter(entry =>
-      (entry.type === 'movie' || entry.type === 'series') &&
-      Number(entry.tmdbId) > 0
-    );
-    const positive = media.filter(entry => entry.action === 'like' || entry.action === 'save');
-    const negative = media.filter(entry => entry.action === 'dislike');
-    const ready = media.length >= 12 && positive.length >= 4 && negative.length >= 3;
-    const percent = Math.min(100, Math.round(
-      Math.min(1,media.length / 12) * 60 +
-      Math.min(1,positive.length / 4) * 25 +
-      Math.min(1,negative.length / 3) * 15
+  // The very first FRAME cards are curated local seeds. Their user votes
+  // matter for taste learning even though they do not always have TMDB IDs.
+  // Server-side candidate generation uses TMDB seeds when available and
+  // otherwise also learns from genre/tag weights, DNA and the online model.
+  function readinessStats() {
+    syncHistory();
+    const media = Object.entries(state.swipes || {}).filter(([id, action]) => {
+      if (!['like','save','dislike'].includes(action)) return false;
+      const known = history[id] || catalog.find(item => item.id === id);
+      const type = known?.type || parseTmdbId(id)?.type;
+      return type === 'movie' || type === 'series';
+    });
+    const positives = media.filter(([,action]) => action === 'like' || action === 'save').length;
+    const negatives = media.filter(([,action]) => action === 'dislike').length;
+    // A balanced profile can start after eight real media decisions; someone
+    // who simply likes everything can still get a first mix after twelve.
+    const ready = media.length >= 8 && positives >= 3 && (negatives >= 2 || media.length >= 12);
+    const percent = ready ? 100 : Math.min(99, Math.round(
+      Math.min(1,media.length / 8) * 55 +
+      Math.min(1,positives / 3) * 30 +
+      Math.min(1,negatives / 2) * 15
     ));
-    return {ready, media:media.length, positives:positive.length, negatives:negative.length, percent};
+    return {ready,media:media.length,positives,negatives,percent};
   }
 
   function readyFlag(key) {
@@ -231,17 +238,19 @@
     const list = document.querySelector('#recommendList');
     const reasons = document.querySelector('#reasonChips');
     if (!hero || !list || !reasons) return;
-    const missing = stats.media < 12
-      ? `Noch ${12 - stats.media} Film- oder Serienentscheidungen bis zu deinem ersten Mix.`
-      : stats.positives < 4
-        ? `Entscheide noch bei ${4 - stats.positives} Titeln mit SUPER oder MERKEN.`
-        : `Noch ${3 - stats.negatives} MIST-Entscheidungen helfen beim Eingrenzen.`;
+    const missing = stats.media < 8
+      ? `Noch ${8 - stats.media} Film- oder Serienentscheidungen für deine ersten Tipps.`
+      : stats.positives < 3
+        ? `Noch ${3 - stats.positives} positive Entscheidungen mit SUPER oder MERKEN.`
+        : stats.negatives < 2
+          ? `Zwei MIST helfen beim Eingrenzen – alternativ lernt FRAME nach zwölf Entscheidungen auch ohne MIST.`
+          : 'FRAME prüft gerade deine Vorschläge.';
     hero.innerHTML = `<div class="for-you-learning">
       <span class="eyebrow">FRAME lernt</span>
       <strong>Dein Geschmack nimmt Form an.</strong>
       <p>${missing} So vermeidest du beliebige Empfehlungen.</p>
       <div class="for-you-learning-progress" role="progressbar" aria-label="Fortschritt bis zu persönlichen Empfehlungen" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${stats.percent}"><span style="width:${stats.percent}%"></span></div>
-      <small>${stats.media}/12 Titel · ${stats.positives}/4 SUPER oder MERKEN · ${stats.negatives}/3 MIST</small>
+      <small>${stats.media} Titel · ${stats.positives} SUPER/MERKEN · ${stats.negatives} MIST</small>
       <button type="button" id="forYouKeepSwiping">Weiter swipen</button>
     </div>`;
     hero.removeAttribute('data-tmdb-id');
