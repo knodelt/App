@@ -198,12 +198,13 @@
   }
 
   function announceReadyIfNeeded() {
-    if (readyFlag(READY_ANNOUNCED_KEY)) {
-      updateReadyIndicator(true);
-      return;
-    }
+    // Opening the tab acknowledges the notification, including on later visits.
     if (recommendationSurfaceVisible()) {
       markRecommendationsViewed();
+      return;
+    }
+    if (readyFlag(READY_ANNOUNCED_KEY)) {
+      updateReadyIndicator(true);
       return;
     }
     if (isOnboardingActive()) return;
