@@ -693,6 +693,12 @@
 
   injectStyles();
   syncHistory();
+  updateReadyIndicator();
+  let readyProbeTimer = null;
+  const scheduleReadyProbe = () => {
+    if (readyProbeTimer) clearTimeout(readyProbeTimer);
+    readyProbeTimer = setTimeout(probeReadyInBackground, 900);
+  };
 
   const originalRecordSwipe = recordSwipe;
   recordSwipe = function frameRecordSwipeWithHistory(id, action) {
@@ -706,8 +712,11 @@
     lastSignature = '';
     originalRecordSwipe(id, action);
     updateProfileStrength();
+    updateReadyIndicator();
     if (recommendationSurfaceVisible()) {
       queueMicrotask(() => refreshRecommendations({force:true}));
+    } else {
+      scheduleReadyProbe();
     }
   };
 
@@ -723,6 +732,9 @@
   };
 
   updateProfileStrength();
+  // Existing users with a trained profile should be informed after a fresh
+  // verification, without requiring an extra swipe.
+  window.addEventListener('load', () => setTimeout(probeReadyInBackground, 850));
 
   const recommendOpen = document.querySelector('#recommendShortcut');
   const recommendClose = document.querySelector('#recommendationClose');
@@ -730,12 +742,22 @@
 
   recommendOpen?.addEventListener('click', () => setRecommendationModal(true));
   recommendClose?.addEventListener('click', () => setRecommendationModal(false));
+  document.querySelector('#forYouReadyOpen')?.addEventListener('click', () => setRecommendationModal(true));
+  document.querySelector('#forYouReadyDismiss')?.addEventListener('click', hideReadyNotice);
+  document.addEventListener('frame:view-changed', event => {
+    const visible = event.detail?.target === 'personalized';
+    recommendSurface?.classList.toggle('open', visible);
+    recommendSurface?.setAttribute('aria-hidden', visible ? 'false' : 'true');
+    if (visible) hideReadyNotice();
+  });
+  document.addEventListener('frame:onboarding-complete', () => {
+    if (readyFlag(READY_ANNOUNCED_KEY)) return;
+    const current = readinessStats();
+    if (!current.ready) return;
+    if (cachedItems.filter(item => item.tmdbId && ['movie','series'].includes(item.type)).length >= 3) announceReadyIfNeeded();
+    else probeReadyInBackground();
+  });
   recommendSurface?.addEventListener('click', event => {
-    if (event.target === recommendSurface) {
-      setRecommendationModal(false);
-      return;
-    }
-
     const actionButton = event.target.closest('[data-rec-action]');
     if (actionButton) {
       event.preventDefault();
@@ -787,10 +809,27 @@
     cachedItems = [];
     lastSignature = '';
     updateProfileStrength();
+    updateReadyIndicator();
+    hideReadyNotice();
     try { renderTaste(); } catch {}
     if (recommendationSurfaceVisible()) {
       queueMicrotask(() => refreshRecommendations({force:true}));
+    } else {
+      scheduleReadyProbe();
     }
+  });
+
+  document.addEventListener('frame:taste-reset', () => {
+    history = {};
+    saveHistory();
+    cachedItems = [];
+    lastSignature = '';
+    try {
+      localStorage.removeItem(READY_ANNOUNCED_KEY);
+      localStorage.removeItem(READY_VIEWED_KEY);
+    } catch {}
+    hideReadyNotice();
+    updateReadyIndicator(false);
   });
 
   window.addEventListener('storage', event => {
@@ -799,6 +838,11 @@
       cachedItems = [];
       lastSignature = '';
       updateProfileStrength();
+      updateReadyIndicator();
+      scheduleReadyProbe();
+    }
+    if (event.key === READY_ANNOUNCED_KEY || event.key === READY_VIEWED_KEY) {
+      updateReadyIndicator();
     }
   });
 })();
