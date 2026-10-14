@@ -129,6 +129,7 @@
         border-radius:0;
         background:transparent;
         box-shadow:none;
+        mix-blend-mode:multiply;
       }
       .frame-welcome-logo {
         display:block;
@@ -136,7 +137,6 @@
         height:auto;
         max-height:none;
         object-fit:contain;
-        mix-blend-mode:multiply;
       }
       .frame-welcome-kicker {
         display:block; margin-top:24px;
@@ -413,6 +413,7 @@
         border-radius:0;
         background:transparent;
         box-shadow:none;
+        mix-blend-mode:multiply;
       }
       .frame-tutorial-finish-logo {
         display:block;
@@ -420,7 +421,6 @@
         height:auto;
         max-height:none;
         object-fit:contain;
-        mix-blend-mode:multiply;
       }
       .frame-tutorial-finish strong {
         color:#171316;
