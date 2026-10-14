@@ -51,7 +51,6 @@
           <button class="mood-trigger" id="moodTrigger" type="button" aria-haspopup="dialog">
             <span id="moodTriggerText">Stimmung · Egal</span>
           </button>
-          <button class="recommend-shortcut" id="recommendShortcut" type="button" aria-haspopup="dialog">✦ Für dich</button>
         </div>
 
         <div class="deck-wrap">
@@ -96,6 +95,29 @@
           <span class="count-pill" id="watchlistCount">0</span>
         </div>
         <div class="list-grid" id="watchlistGrid"></div>
+      </section>
+
+      <section class="view" id="personalizedView" data-view="personalized" aria-label="Persönliche Empfehlungen">
+        <div class="section-head compact for-you-section-head">
+          <div>
+            <p class="eyebrow">Dein Filmgeschmack</p>
+            <h1>Für dich.</h1>
+          </div>
+          <span class="for-you-header-icon" aria-hidden="true">✦</span>
+        </div>
+        <p class="for-you-intro">Keine endlose Suche. Hier findest du Filme und Serien, die zu deinen Entscheidungen passen.</p>
+        <div class="recommendation-modal" id="recommendationModal" aria-hidden="true">
+          <div class="recommendation-sheet">
+            <div class="recommendation-sheet-scroll">
+              <div class="recommend-hero" id="recommendHero"></div>
+              <div class="why-panel">
+                <p class="eyebrow">Warum das passt</p>
+                <div id="reasonChips" class="reason-chips"></div>
+              </div>
+              <div class="recommend-list" id="recommendList"></div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section class="view" id="recommendView" data-view="recommend">
@@ -227,32 +249,26 @@
     </main>
 
     <nav class="bottom-nav" aria-label="Hauptnavigation">
-      <button class="nav-item active" data-target="discover"><span>◉</span><small>Entdecken</small></button>
-      <button class="nav-item" data-target="watchlist"><span>⌑</span><small>Merken</small></button>
-      <button class="nav-item" data-target="recommend"><span>✦</span><small>Heute</small></button>
-      <button class="nav-item" data-target="taste"><span>◎</span><small>Profil</small></button>
+      <button class="nav-item active" data-target="discover"><span aria-hidden="true">◉</span><small>Entdecken</small></button>
+      <button class="nav-item" data-target="watchlist"><span aria-hidden="true">⌑</span><small>Merken</small></button>
+      <button class="nav-item nav-item-for-you" id="recommendShortcut" data-target="personalized" type="button" aria-label="Für dich – persönliche Empfehlungen">
+        <span class="for-you-nav-symbol" aria-hidden="true">✦<i class="for-you-new-indicator" id="forYouNewIndicator" hidden></i></span>
+        <small>Für dich</small>
+      </button>
+      <button class="nav-item" data-target="recommend"><span aria-hidden="true">◷</span><small>Heute</small></button>
+      <button class="nav-item" data-target="taste"><span aria-hidden="true">◎</span><small>Profil</small></button>
     </nav>
   </div>
 
 
-  <div class="recommendation-modal" id="recommendationModal" aria-hidden="true">
-    <div class="recommendation-sheet" role="dialog" aria-modal="true" aria-labelledby="recommendationSheetTitle">
-      <div class="recommendation-sheet-head">
-        <div>
-          <p class="eyebrow">Für dich ausgewählt</p>
-          <h2 id="recommendationSheetTitle">Aus deinem Geschmack</h2>
-        </div>
-        <button class="recommendation-close" id="recommendationClose" type="button" aria-label="Empfehlungen schließen">×</button>
-      </div>
-      <div class="recommendation-sheet-scroll">
-        <div class="recommend-hero" id="recommendHero"></div>
-        <div class="why-panel">
-          <p class="eyebrow">Warum das passt</p>
-          <div id="reasonChips" class="reason-chips"></div>
-        </div>
-        <div class="recommend-list" id="recommendList"></div>
-      </div>
+  <div class="for-you-ready-notice" id="forYouReadyNotice" role="status" aria-live="polite" hidden>
+    <span class="for-you-ready-notice-icon" aria-hidden="true">✦</span>
+    <div class="for-you-ready-notice-copy">
+      <strong>Für dich ist startklar!</strong>
+      <span>Aus deinen Swipes gibt es jetzt erste persönliche Film- und Serientipps.</span>
     </div>
+    <button id="forYouReadyOpen" class="for-you-ready-open" type="button">Ansehen</button>
+    <button id="forYouReadyDismiss" class="for-you-ready-dismiss" type="button" aria-label="Meldung schließen">×</button>
   </div>
 
   <div class="toast" id="toast" role="status"></div>
