@@ -10,6 +10,7 @@
   const READY_VIEWED_KEY = 'frame-for-you-ready-viewed-v1';
   let readyNoticeTimer = null;
   let lastReadinessProbe = 0;
+  let readyProbeAttempts = 0;
 
   function invalidateRecommendations() {
     ++requestSerial;
@@ -230,7 +231,7 @@
     if (!notice) return;
     notice.hidden = false;
     if (readyNoticeTimer) clearTimeout(readyNoticeTimer);
-    readyNoticeTimer = setTimeout(hideReadyNotice, 9000);
+    readyNoticeTimer = setTimeout(hideReadyNotice, 16000);
   }
 
   function renderLearningProgress(stats) {
@@ -262,10 +263,14 @@
 
   function probeReadyInBackground() {
     if (readyFlag(READY_ANNOUNCED_KEY) || recommendationSurfaceVisible() || loading) return;
-    if (!readinessStats().ready) return;
+    if (!readinessStats().ready || readyProbeAttempts >= 3) return;
     const now = Date.now();
-    if (now - lastReadinessProbe < 12000) return;
+    if (now - lastReadinessProbe < 5000) {
+      scheduleReadyProbe(5200 - (now - lastReadinessProbe));
+      return;
+    }
     lastReadinessProbe = now;
+    readyProbeAttempts += 1;
     queueMicrotask(() => refreshRecommendations({background:true}));
   }
 
@@ -646,7 +651,7 @@
 
   async function refreshRecommendations({force=false, background=false} = {}) {
     const payload = buildPayload();
-    const stats = readinessStats(payload);
+    const stats = readinessStats();
     if (!stats.ready) {
       invalidateRecommendations();
       updateReadyIndicator(false);
@@ -666,6 +671,7 @@
 
     const serial = ++requestSerial;
     loading = true;
+    let shouldRetry = Boolean(background);
     const heroHost = document.querySelector('#recommendHero');
     if (!background && recommendationSurfaceVisible() && heroHost && !cachedItems.length) {
       heroHost.innerHTML = '<div class="recommend-loading"><div><b>FRAME rechnet.</b>Dein persönlicher Filmraum wird neu zusammengestellt.</div></div>';
@@ -692,7 +698,11 @@
       const validIds = new Set(cachedItems
         .filter(item => item.tmdbId && ['movie','series'].includes(item.type))
         .map(item => `${item.type}:${item.tmdbId}`));
-      if (validIds.size >= 3) announceReadyIfNeeded();
+      if (validIds.size >= 3) {
+        shouldRetry = false;
+        readyProbeAttempts = 0;
+        announceReadyIfNeeded();
+      }
       return cachedItems;
     } catch (error) {
       console.warn('[FRAME PERSONALIZED]', error.message);
@@ -703,7 +713,12 @@
       }
       return [];
     } finally {
-      if (serial === requestSerial) loading = false;
+      if (serial === requestSerial) {
+        loading = false;
+        if (shouldRetry && !readyFlag(READY_ANNOUNCED_KEY)) {
+          scheduleReadyProbe(6300);
+        }
+      }
     }
   }
 
@@ -711,10 +726,15 @@
   syncHistory();
   updateReadyIndicator();
   let readyProbeTimer = null;
-  const scheduleReadyProbe = () => {
+  function scheduleReadyProbe(delay = 900) {
     if (readyProbeTimer) clearTimeout(readyProbeTimer);
-    readyProbeTimer = setTimeout(probeReadyInBackground, 900);
-  };
+    readyProbeTimer = null;
+    if (readyFlag(READY_ANNOUNCED_KEY) || !readinessStats().ready) return;
+    readyProbeTimer = setTimeout(() => {
+      readyProbeTimer = null;
+      probeReadyInBackground();
+    }, delay);
+  }
 
   const originalRecordSwipe = recordSwipe;
   recordSwipe = function frameRecordSwipeWithHistory(id, action) {
@@ -725,7 +745,13 @@
       saveHistory();
     }
     invalidateRecommendations();
+    const beforeReady = readinessStats().ready;
     originalRecordSwipe(id, action);
+    const afterReady = readinessStats().ready;
+    if (!beforeReady && afterReady && !readyFlag(READY_ANNOUNCED_KEY)) {
+      try { showToast('Für dich: Dein Profil wird ausgewertet …'); } catch {}
+    }
+    readyProbeAttempts = 0;
     updateProfileStrength();
     updateReadyIndicator();
     if (recommendationSurfaceVisible()) {
@@ -749,7 +775,7 @@
   updateProfileStrength();
   // Existing users with a trained profile should be informed after a fresh
   // verification, without requiring an extra swipe.
-  window.addEventListener('load', () => setTimeout(probeReadyInBackground, 850));
+  window.addEventListener('load', () => scheduleReadyProbe(850));
 
   const recommendOpen = document.querySelector('#recommendShortcut');
   const recommendClose = document.querySelector('#recommendationClose');
@@ -806,6 +832,8 @@
     updateProfileStrength();
     if (recommendationSurfaceVisible()) {
       queueMicrotask(() => refreshRecommendations({force:true}));
+    } else {
+      scheduleReadyProbe(1500);
     }
   });
 
@@ -813,6 +841,8 @@
     invalidateRecommendations();
     if (recommendationSurfaceVisible()) {
       queueMicrotask(() => refreshRecommendations({force:true}));
+    } else {
+      scheduleReadyProbe(1500);
     }
   });
 
@@ -834,6 +864,10 @@
     history = {};
     saveHistory();
     invalidateRecommendations();
+    if (readyProbeTimer) clearTimeout(readyProbeTimer);
+    readyProbeTimer = null;
+    lastReadinessProbe = 0;
+    readyProbeAttempts = 0;
     try {
       localStorage.removeItem(READY_ANNOUNCED_KEY);
       localStorage.removeItem(READY_VIEWED_KEY);
