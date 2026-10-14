@@ -324,8 +324,14 @@ export async function handlePersonalizedRecommendations(request, env) {
     )))
   );
 
-  try { await Promise.all(tasks); }
-  catch (error) { console.warn('[FRAME RECOMMENDATIONS]', error.message); }
+  // Individual TMDB endpoints may be unavailable (e.g. one title has no
+  // recommendations). Do not let one failure end the whole discovery early.
+  // In particular wait for both DE discover queries before ranking results.
+  const outcomes = await Promise.allSettled(tasks);
+  const failures = outcomes.filter(outcome => outcome.status === 'rejected');
+  if (failures.length) {
+    console.warn('[FRAME RECOMMENDATIONS] Partial TMDB failures', failures.length);
+  }
 
   function genreWeight(candidate) {
     const map = candidate.type === 'series' ? tvGenreWeights : movieGenreWeights;
