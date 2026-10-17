@@ -244,7 +244,7 @@
         <div class="detail-notes"></div>
         <p class="detail-status"></p>
       </div>
-      <p class="detail-footer">GEDRÜCKT HALTEN = INFO · × = SCHLIESSEN</p>`;
+      <p class="detail-footer">MEHR INFOS · × = SCHLIESSEN</p>`;
 
     const stop = event => event.stopPropagation();
     ['pointerdown','pointerup','pointercancel'].forEach(type => overlay.addEventListener(type, stop));
@@ -342,6 +342,21 @@
     }
   }
 
+  // Long hold on a movie or series opens the shared trailer preview;
+  // person cards and curated cards without a TMDB ID keep their details view.
+  function openLongPress(card) {
+    const item=findItem(card);
+    if (item && ['movie','series'].includes(item.type) && item.tmdbId && window.FrameTrailer?.open) {
+      if (typeof drag !== 'undefined') drag=null;
+      card.classList.remove('dragging','guided-x','guided-y');
+      card.style.transform='';
+      card.querySelectorAll('.swipe-stamp').forEach(stamp=>{stamp.style.opacity=0;});
+      const opened=window.FrameTrailer.open(item,{onDetails:()=>openDetails(card)});
+      if(opened)return;
+    }
+    openDetails(card);
+  }
+
   function toggleImageMode(card) {
     if (!card || card.classList.contains('detail-open')) return;
     const enabled = card.classList.toggle('image-only');
@@ -383,7 +398,7 @@
         timer = null;
         if (!moved) {
           longPressed = true;
-          openDetails(card);
+          openLongPress(card);
         }
       }, HOLD_MS);
     }, { passive:true });
@@ -419,7 +434,7 @@
 
   injectStyles();
   const hint = document.querySelector('.gesture-hint');
-  if (hint) hint.textContent = 'Tippen = Bild · links = Super · hoch = Merken · rechts = Mist · halten = Infos';
+  if (hint) hint.textContent = 'Tippen = Bild · Halten = Trailer/Infos · ← Super · ↑ Merken · → Mist';
 
   bindTopCard();
   const deck = document.querySelector('#cardDeck');
