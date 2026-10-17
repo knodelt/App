@@ -29,6 +29,27 @@ button { font: inherit; color: inherit; }
 button, .swipe-card { -webkit-tap-highlight-color: transparent; }
 button { cursor: pointer; }
 
+/* Safari/iPhone: FRAME is a gesture-based app, not selectable web text.
+   Keep the native editing and copy/paste behavior in form fields. */
+.app-shell, .app-shell * {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
+}
+.app-shell input,
+.app-shell textarea,
+.app-shell [contenteditable]:not([contenteditable="false"]),
+.app-shell [contenteditable]:not([contenteditable="false"]) * {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+  -webkit-touch-callout: default !important;
+}
+.swipe-card, .swipe-card *,
+.hm-card, .hm-card * {
+  -webkit-user-drag: none;
+}
+
+
 .grain {
   position: fixed; inset: 0; pointer-events: none; opacity: .13; z-index: 50;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.22'/%3E%3C/svg%3E");
