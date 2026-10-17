@@ -552,6 +552,23 @@ function showToast(text) {
 }
 
 injectCardV2Styles();
+
+// Suppress iOS native text selection and image dragging on the swipe UI.
+// Preserve selection, paste, and cursor editing inside real input fields.
+const frameShell = document.querySelector('.app-shell');
+if (frameShell) {
+  frameShell.addEventListener('selectstart', event => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (target.closest('input, textarea, [contenteditable]:not([contenteditable="false"])')) return;
+    event.preventDefault();
+  }, true);
+  frameShell.addEventListener('dragstart', event => {
+    if (event.target instanceof Element && event.target.closest('.swipe-card, .hm-card')) {
+      event.preventDefault();
+    }
+  }, true);
+}
 $$('.nav-item').forEach(n=>n.addEventListener('click',()=>switchView(n.dataset.target)));
 $('#profileShortcut').addEventListener('click',()=>switchView('taste'));
 $$('.filter').forEach(btn=>btn.addEventListener('click',()=>{
