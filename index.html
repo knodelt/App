@@ -16,6 +16,7 @@
   <link rel="stylesheet" href="/frame-reboot.css" />
   <link rel="stylesheet" href="/frame-loop.css" />
   <link rel="stylesheet" href="/hidden-match.css" />
+  <link rel="stylesheet" href="/trailer-preview.css" />
   <title>FRAME — Filme & Serien entdecken</title>
 </head>
 <body>
@@ -386,11 +387,41 @@
     </section>
   </div>
 
+  <div class="frame-trailer-overlay" id="frameTrailerOverlay" hidden>
+    <section class="frame-trailer-dialog" role="dialog" aria-modal="true" aria-labelledby="frameTrailerHeading" aria-describedby="frameTrailerIntro">
+      <div class="frame-trailer-header">
+        <div>
+          <span class="frame-trailer-eyebrow">FRAME · TRAILER</span>
+          <h2 id="frameTrailerHeading">Kurz reinschauen.</h2>
+        </div>
+        <button id="frameTrailerClose" class="frame-trailer-close" type="button" aria-label="Trailer schließen">×</button>
+      </div>
+      <div class="frame-trailer-video" id="frameTrailerVideo">
+        <div class="frame-trailer-poster" id="frameTrailerPoster"></div>
+        <div class="frame-trailer-player" id="frameTrailerPlayer" hidden></div>
+        <div class="frame-trailer-status" id="frameTrailerStatus" role="status" aria-live="polite">Trailer wird gesucht …</div>
+      </div>
+      <div class="frame-trailer-copy">
+        <span class="frame-trailer-type" id="frameTrailerType">FILM</span>
+        <h3 id="frameTrailerTitle"></h3>
+        <p class="frame-trailer-intro" id="frameTrailerIntro">Sieh dir den Trailer an und entscheide danach.</p>
+      </div>
+      <div class="frame-trailer-facts" id="frameTrailerFacts" hidden></div>
+      <div class="frame-trailer-actions">
+        <button id="frameTrailerPlay" class="frame-trailer-play" type="button" hidden><span aria-hidden="true">▶</span> Trailer abspielen</button>
+        <button id="frameTrailerDetails" class="frame-trailer-details" type="button">Mehr Infos</button>
+        <button id="frameTrailerBack" class="frame-trailer-back" type="button">Zurück zum Swipen</button>
+      </div>
+      <p class="frame-trailer-credit">Trailer via YouTube · Erst beim Abspielen wird YouTube geladen.</p>
+    </section>
+  </div>
+
   <div class="toast" id="toast" role="status"></div>
   <script src="/viewport-lock.js" defer></script>
   <script src="/app.js" defer></script>
   <script src="/mood-filter.js" defer></script>
   <script src="/tmdb-feed.js" defer></script>
+  <script src="/trailer-preview.js" defer></script>
   <script src="/card-details.js" defer></script>
   <script src="/watchlist-controls.js" defer></script>
   <script src="/taste-dna.js" defer></script>
