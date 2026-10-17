@@ -50,7 +50,7 @@
       target:'#roomPanel',
       kicker:'SCHRITT 6 · 8',
       title:'Hidden Match für zwei.',
-      copy:'Eine zweite Person spielt denselben Daily Drop verdeckt. Erst wenn ihr beide entschieden habt, zeigt FRAME eure gemeinsamen SUPER- oder MERKEN-Treffer.',
+      copy:'Mit Hidden Match erstellt ihr einen echten Online-Room. Dein Gegenüber öffnet den Link oder scannt den QR-Code auf dem eigenen Handy. Beide swipen zehn identische Filme – erst nach dem gemeinsamen Reveal werden Treffer sichtbar.',
       extra:'matches',
       panel:'top',
       scroll:true
@@ -60,7 +60,7 @@
       target:'.bottom-nav',
       kicker:'SCHRITT 7 · 8',
       title:'Und wenn ihr euch nicht entscheiden könnt?',
-      copy:'Just Pick One priorisiert eure Matches und nutzt sonst Watchlist und Geschmack. Unten wartet ✦ Für dich mit persönlichen Tipps, sobald genug Swipes vorliegen. Im Profil siehst du, was FRAME lernt.',
+      copy:'Just Pick One trifft eine Solo-Entscheidung aus Watchlist und Geschmack. Hidden Match findet eure gemeinsamen Favoriten im Online-Room. Unten warten außerdem ✦ Für dich und dein Profil.',
       extra:'pick',
       panel:'top'
     },
@@ -903,7 +903,9 @@
     showWelcome();
   });
 
-  if (!seen()) {
+  // Invited guests need to reach their room immediately. Offer the first-use
+  // tour on a later normal visit instead of covering the invitation with it.
+  if (!seen() && !new URL(location.href).searchParams.has('hm')) {
     window.addEventListener('load', () => {
       setTimeout(showFirstUse,650);
     },{once:true});
