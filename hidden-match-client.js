@@ -198,7 +198,9 @@
       ? 'https://image.tmdb.org/t/p/w780'+item.poster : '';
   }
   function cardForVote() {
-    if (!room || room.status!=='playing') return null;
+    if (!room || (room.status !== 'playing' && !(room.status === 'waiting' && room.role === 'host'))) {
+      return null;
+    }
     return room.items.find(item=>!room.ownVotes[item.id]) || null;
   }
   function paintCard(item) {
@@ -269,11 +271,26 @@
       if(node('hmInviteLink'))node('hmInviteLink').value=link;
       makeQR(link);
     }
-    show('hmWaiting',room.status==='waiting');
     const item=cardForVote();
+    // Host can vote while the invitation is still pending, without exposing
+    // any votes to the guest who joins later.
+    show('hmWaiting',room.status==='waiting' && !item);
+    if (room.status === 'waiting') {
+      const hostDone = room.hostProgress >= total;
+      text('hmWaitingTitle',hostDone ? 'Alle 10 Entscheidungen gespeichert.' : 'Warte auf die zweite Person.');
+      text('hmWaitingCopy',hostDone
+        ? 'Jetzt kann dein Gast denselben Mix bewerten. Deine Stimmen bleiben bis zum Reveal geheim.'
+        : 'Du kannst trotzdem schon deine Hidden-Match-Karten swipen.');
+    }
     show('hmPlaying',Boolean(item));
     show('hmPartnerPending',room.status==='playing' && !item);
     if(item) paintCard(item);
+    text('hmProgressHint',room.status === 'waiting' && host
+      ? 'Du kannst sofort loslegen. Nur diese 10 Hidden-Match-Karten erhöhen die Anzeige, nicht die Swipes unter Entdecken.'
+      : 'Nur die 10 Karten im Hidden Match zählen hier. Der normale Swipe-Feed ist unabhängig davon.');
+    text('hmCardHelper',room.status === 'waiting' && host
+      ? 'Du kannst jetzt schon abstimmen. Die zweite Person holt später auf ihrem Handy auf.'
+      : 'Beide erhalten dieselben zehn Titel. Die Entscheidungen bleiben bis zum Reveal geheim.');
     show('hmReady',room.status==='ready');
     if(room.status==='ready') {
       const button=node('hmReadyButton');
@@ -306,7 +323,8 @@
     }
   }
   async function vote(action) {
-    if(busy || !room || room.status!=='playing') return;
+    if(busy || !room || !['waiting','playing'].includes(room.status)) return;
+    if(room.status==='waiting' && room.role!=='host')return;
     const item=cardForVote();
     if(!item)return;
     await perform('vote',{itemId:item.id,vote:action});
@@ -440,6 +458,11 @@
     node('hmStartOver')?.addEventListener('click',dropLocalSession);
     node('hmCopyLink')?.addEventListener('click',copyInvitation);
     node('hmShareLink')?.addEventListener('click',shareInvitation);
+    node('hmStartSwiping')?.addEventListener('click', () => {
+      const cards=node('hmPlaying');
+      if(!cards || cards.hidden)return;
+      cards.scrollIntoView({behavior:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',block:'start'});
+    });
     node('hmReadyButton')?.addEventListener('click',()=>perform('ready'));
     node('hmPick')?.addEventListener('click',()=>perform('pick'));
     node('hmNext')?.addEventListener('click',()=>perform('next'));
