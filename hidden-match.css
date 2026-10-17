@@ -188,7 +188,8 @@
 /* Same swipe motion and large directional stamps as FRAME Entdecken. */
 .hm-card {
   will-change:transform,opacity;
-  transform-origin:50% 58%;
+  transform-origin:50% 100%;
+  transition:transform .28s cubic-bezier(.2,.8,.2,1),opacity .2s ease;
 }
 .hm-card.dragging {
   transition:none !important;
@@ -201,7 +202,7 @@
   box-shadow:0 26px 62px rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,208,106,.24);
 }
 .hm-card.leaving {
-  transition:transform 310ms cubic-bezier(.2,.77,.26,1),opacity 290ms ease-out !important;
+  transition:transform .28s cubic-bezier(.2,.8,.2,1),opacity .2s ease !important;
   pointer-events:none;
 }
 .hm-card.entering {
