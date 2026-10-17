@@ -418,6 +418,7 @@
     card.addEventListener('pointerup', event => {
       const shouldPreview = !longPressed
         && !tapMoved
+        && Math.hypot(event.clientX - startX, event.clientY - startY) <= TAP_MOVE_TOLERANCE
         && !card.classList.contains('detail-open')
         && !event.target.closest('button,a');
       cancelTimer();
