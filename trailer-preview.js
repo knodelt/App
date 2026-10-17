@@ -2,8 +2,8 @@
   'use strict';
 
   // A single trailer dialog is shared by Discover and Hidden Match.
-  // TMDB metadata is fetched from FRAME's server; YouTube is loaded only
-  // when the viewer explicitly presses the play button (works on iOS).
+  // Autoplay must start muted for mobile browser compatibility. The YouTube
+  // player keeps its controls so viewers can unmute or press play manually.
   const overlay=document.getElementById('frameTrailerOverlay');
   if (!overlay) return;
 
@@ -118,10 +118,12 @@
       }
       if(data.available && /^[a-zA-Z0-9_-]{11}$/.test(key)){
         current.video={key,language:data.video.language,official:data.video.official};
-        playButton.hidden=false;
         const language=data.video.language==='de'?'Deutsch':data.video.language==='en'?'Englisch':'Originalsprache';
-        showStatus('Trailer gefunden · '+language);
-        node('frameTrailerIntro').textContent='Bereit zum Abspielen. Deine Bewertung bleibt unverändert.';
+        node('frameTrailerIntro').textContent='Trailer · '+language+' · startet ohne Ton. Tippe im Player für Ton oder Pause. Deine Bewertung bleibt unverändert.';
+        // TMDB answers asynchronously, after the initial long press. Muted
+        // YouTube autoplay is allowed on most iPhones; audible autoplay isn't.
+        // Built-in YouTube controls remain the fallback if autoplay is blocked.
+        play({muted:true});
       }else{
         showStatus('Für diesen Titel ist derzeit kein Trailer verfügbar.');
         node('frameTrailerIntro').textContent='Du kannst dir stattdessen die Filminfos ansehen.';
@@ -138,13 +140,14 @@
     return true;
   }
 
-  function play() {
+  function play({muted=false}={}) {
     if(!current?.video || overlay.hidden)return;
     const {key}=current.video;
     if(!/^[a-zA-Z0-9_-]{11}$/.test(key))return;
     const iframe=document.createElement('iframe');
     iframe.title='Trailer zu '+current.title;
-    iframe.src='https://www.youtube-nocookie.com/embed/'+key+'?autoplay=1&playsinline=1&rel=0';
+    iframe.src='https://www.youtube-nocookie.com/embed/'+key
+      +'?autoplay=1&playsinline=1&controls=1&rel=0&mute='+(muted?'1':'0');
     iframe.allow='accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share';
     iframe.referrerPolicy='strict-origin-when-cross-origin';
     iframe.setAttribute('allowfullscreen','');
@@ -219,7 +222,7 @@
 
   node('frameTrailerClose').addEventListener('click',()=>close());
   node('frameTrailerBack').addEventListener('click',()=>close());
-  playButton.addEventListener('click',play);
+  playButton.addEventListener('click',()=>play({muted:false}));
   detailsButton.addEventListener('click',showDetails);
 
   overlay.addEventListener('pointerdown',event=>event.stopPropagation());
