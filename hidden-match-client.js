@@ -627,7 +627,9 @@
     } else {
       resetSwipeCard();
       // A stationary short tap opens the trailer; incomplete swipes don't.
-      if(!tapMoved && !axis && window.FrameTrailer?.open) {
+      if(!tapMoved && !axis
+        && Math.hypot(event.clientX-finished.x,event.clientY-finished.y)<=TAP_MOVE_TOLERANCE
+        && window.FrameTrailer?.open) {
         const item=cardForVote();
         if(item)window.FrameTrailer.open({
           type:item.type,tmdbId:item.tmdbId,title:item.title,
