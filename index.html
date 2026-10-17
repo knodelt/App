@@ -158,25 +158,124 @@
             </div>
           </section>
 
-          <section class="loop-panel room-panel" id="roomPanel" aria-labelledby="hiddenMatchHeading">
-            <div class="loop-panel-head">
-              <div class="room-title-wrap">
-                <p class="loop-kicker">HIDDEN MATCH</p>
-                <h2 id="hiddenMatchTitle">Room noch nicht aktiv.</h2>
+          <section class="loop-panel room-panel hm-panel" id="roomPanel" aria-labelledby="hiddenMatchHeading">
+            <div class="hm-intro-head">
+              <div>
+                <p class="loop-kicker">HIDDEN MATCH · LIVE</p>
+                <h2 id="hiddenMatchHeading">Zwei Handys. Ein Filmabend.</h2>
               </div>
-              <span class="hidden-match-badge" id="hiddenMatchBadge">?</span>
+              <span class="hm-intro-icon" aria-hidden="true">♥</span>
             </div>
-            <p class="room-copy" id="hiddenMatchCopy">Eine zweite Person kann denselben Drop verdeckt spielen. Gemeinsame Treffer werden erst danach sichtbar.</p>
+            <p class="room-copy hm-intro-copy">Geheime Swipes, gemeinsames Match: Lad eine zweite Person per Link oder QR-Code ein. Ihr seht dieselben 10 Titel – und erst am Ende eure Treffer.</p>
 
-            <div class="room-controls">
-              <input id="partnerNameInput" type="text" maxlength="24" autocomplete="off" placeholder="Name, z. B. Anna" aria-label="Name der zweiten Person" />
-              <button class="loop-btn primary" id="roomButton" type="button">ROOM STARTEN</button>
+            <div class="hm-error" id="hmError" role="alert" hidden></div>
+
+            <div class="hm-setup" id="hmSetup">
+              <div class="hm-setup-host" id="hmHostSetup">
+                <label for="hmHostName">Wie heißt du?</label>
+                <input id="hmHostName" type="text" maxlength="24" autocomplete="nickname" placeholder="Dein Vorname" />
+                <button class="hm-main-btn" id="hmCreate" type="button">Hidden Match starten <span aria-hidden="true">→</span></button>
+                <small>Kein Konto nötig · Room für genau zwei Personen</small>
+              </div>
+              <div class="hm-setup-guest" id="hmGuestSetup" hidden>
+                <div class="hm-invite-kicker">Du bist eingeladen</div>
+                <h3 id="hmGuestHeading">Dein Hidden Match wartet.</h3>
+                <p>Du spielst unabhängig auf deinem eigenen Smartphone. Niemand sieht deine Swipes vor dem Reveal.</p>
+                <label for="hmGuestName">Wie heißt du?</label>
+                <input id="hmGuestName" type="text" maxlength="24" autocomplete="nickname" placeholder="Dein Vorname" />
+                <button class="hm-main-btn" id="hmJoin" type="button">Room beitreten <span aria-hidden="true">→</span></button>
+                <button class="hm-minor-btn" id="hmCancelInvite" type="button">Abbrechen</button>
+              </div>
             </div>
-            <div class="room-secondary">
-              <button class="loop-btn" id="dropModeButton" type="button" hidden>PARTNER ÜBERNIMMT</button>
-              <button class="loop-btn danger" id="roomEndButton" type="button" hidden>ROOM BEENDEN</button>
+
+            <div class="hm-live" id="hmLive" hidden>
+              <div class="hm-room-status">
+                <div><span class="hm-room-code-label">EUER ROOM</span><strong id="hmRoomCode">--------</strong></div>
+                <span class="hm-connection" id="hmConnection" aria-live="polite">Verbinde …</span>
+              </div>
+
+              <div class="hm-invite-area" id="hmInviteArea" hidden>
+                <h3>Jetzt Partner einladen</h3>
+                <p>Öffnet den Link auf dem zweiten Smartphone oder scannt den QR-Code.</p>
+                <div class="hm-invite-url-row">
+                  <input id="hmInviteLink" type="text" aria-label="Room-Einladungslink" readonly />
+                  <button id="hmCopyLink" type="button">Kopieren</button>
+                </div>
+                <div class="hm-invite-extras">
+                  <div id="hmQrCode" class="hm-qr" aria-label="QR-Code zum Beitreten"><span>QR-Code wird erstellt …</span></div>
+                  <button id="hmShareLink" type="button">Link teilen <span aria-hidden="true">↗</span></button>
+                </div>
+                <small>Der Einladungslink enthält keine Bewertungen oder Zugangsdaten des Hosts.</small>
+              </div>
+
+              <div class="hm-progress" id="hmProgress">
+                <div class="hm-progress-item">
+                  <div class="hm-progress-top"><strong id="hmHostNameLabel">Host</strong><span id="hmHostCount">0/10</span></div>
+                  <div class="hm-meter"><span id="hmHostMeter"></span></div>
+                </div>
+                <div class="hm-progress-item">
+                  <div class="hm-progress-top"><strong id="hmGuestNameLabel">Warte auf Gast</strong><span id="hmGuestCount">0/10</span></div>
+                  <div class="hm-meter"><span id="hmGuestMeter"></span></div>
+                </div>
+              </div>
+
+              <div id="hmWaiting" class="hm-message-panel" hidden>
+                <span class="hm-message-symbol" aria-hidden="true">◌</span>
+                <strong>Warten auf die zweite Person.</strong>
+                <p>Deine Einladung ist bereit. Sobald ihr beide da seid, startet Hidden Match automatisch.</p>
+              </div>
+              <div id="hmPlaying" class="hm-playing" hidden>
+                <p class="hm-phase-label" id="hmCardCount">KARTE 01 / 10</p>
+                <div class="hm-card" id="hmCard" aria-label="Filmkarte zum Bewerten">
+                  <div class="hm-card-art" id="hmCardArt"></div>
+                  <div class="hm-card-info">
+                    <span id="hmCardMeta">FILM</span>
+                    <h3 id="hmCardTitle">Film</h3>
+                    <p id="hmCardBlurb">Deine persönliche Entscheidung.</p>
+                  </div>
+                </div>
+                <div class="hm-vote-actions" id="hmVoteActions">
+                  <button class="hm-vote like" type="button" data-hm-vote="like">← SUPER</button>
+                  <button class="hm-vote save" type="button" data-hm-vote="save">↑ MERKEN</button>
+                  <button class="hm-vote dislike" type="button" data-hm-vote="dislike">MIST →</button>
+                </div>
+                <p class="hm-swipe-hint">Links Super · Hoch Merken · Rechts Mist</p>
+              </div>
+              <div id="hmPartnerPending" class="hm-message-panel" hidden>
+                <span class="hm-message-symbol" aria-hidden="true">◎</span>
+                <strong>Du bist fertig!</strong>
+                <p>Die Entscheidungen bleiben verborgen. Sobald dein Gegenüber fertig ist, könnt ihr den Reveal starten.</p>
+              </div>
+              <div id="hmReady" class="hm-reveal-pending" hidden>
+                <span class="hm-reveal-pulse" aria-hidden="true">♥</span>
+                <h3>Bereit für eure Matches?</h3>
+                <p id="hmReadyCopy">Ihr seid beide fertig. Jetzt wird es spannend.</p>
+                <button id="hmReadyButton" class="hm-main-btn" type="button">Reveal starten <span aria-hidden="true">→</span></button>
+              </div>
+              <div id="hmReveal" class="hm-reveal" hidden>
+                <div class="hm-reveal-heading">
+                  <span aria-hidden="true">✦</span>
+                  <p>IT’S A FRAME</p>
+                  <h3 id="hmRevealTitle">Eure Matches</h3>
+                  <p id="hmRevealDescription"></p>
+                </div>
+                <div id="hmMatchCards" class="hm-match-cards"></div>
+                <div id="hmPicked" class="hm-picked" hidden></div>
+                <button class="hm-main-btn" id="hmPick" type="button" hidden>FRAME entscheidet <span aria-hidden="true">→</span></button>
+                <button class="hm-second-btn" id="hmNext" type="button" hidden>Nächste gemeinsame Runde</button>
+              </div>
+              <div id="hmClosed" class="hm-message-panel" hidden>
+                <strong>Dieser Room wurde beendet.</strong>
+                <p>Starte einen neuen Room, um wieder gemeinsam zu swipen.</p>
+                <button id="hmStartOver" class="hm-second-btn" type="button">Neuen Room starten</button>
+              </div>
+
+              <div class="hm-room-footer">
+                <span id="hmRoomFooter">Deine Bewertungen bleiben bis zum Reveal geheim.</span>
+                <button id="hmExit" type="button">Room verlassen</button>
+                <button id="hmCloseRoom" type="button" hidden>Room beenden</button>
+              </div>
             </div>
-            <div class="match-list" id="matchList" aria-live="polite"></div>
           </section>
 
           <section class="loop-panel pick-panel" id="pickPanel" aria-labelledby="pickHeading" hidden>
@@ -187,7 +286,7 @@
               </div>
               <span class="loop-mini">Keine Diskussion</span>
             </div>
-            <p class="pick-intro">Gemeinsame Matches zuerst. Sonst nimmt FRAME deine Watchlist und deinen Geschmack.</p>
+            <p class="pick-intro">Für deine Solo-Entscheidung nutzt FRAME deine Watchlist und deinen Geschmack. Hidden Match läuft unabhängig davon.</p>
 
             <div class="pick-result" id="pickResult" hidden>
               <div class="pick-art" id="pickArt"></div>
@@ -289,5 +388,6 @@
   <script src="/swipe-guidance.js" defer></script>
   <script src="/onboarding-tutorial.js" defer></script>
   <script src="/frame-loop.js" defer></script>
+  <script src="/hidden-match-client.js" defer></script>
 </body>
 </html>
