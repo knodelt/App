@@ -284,6 +284,8 @@
 .hm-card-info {
   position:absolute;z-index:1;left:18px;right:18px;bottom:18px;pointer-events:none;
 }
+.hm-card.image-only .hm-card-info {opacity:0;visibility:hidden;}
+.hm-card.image-only::after {background:none;}
 .hm-card-info > span {color:#e7c5cb;font:800 10px var(--font-ui);letter-spacing:.08em;}
 .hm-card-info h3 {color:#fff;margin:6px 0 0;font:700 clamp(27px,7vw,38px)/1.02 var(--font-display);letter-spacing:-.035em;}
 .hm-card-info p {
