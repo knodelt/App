@@ -64,8 +64,8 @@
 
   // A concise plot summary, sourced from the card or the German TMDB detail response.
   function renderDescription(value,{loading=false}={}) {
-    const raw=String(value||'').replace(/\\s+/g,' ').trim();
-    const isFallback=/^(?:Noch keine (?:ausführliche |Kurz)?Beschreibung verfügbar\\.?|Keine (?:ausführliche |Kurz)?Beschreibung verfügbar\\.?)$/i.test(raw);
+    const raw=String(value||'').replace(/\s+/g,' ').trim();
+    const isFallback=/^(?:Noch keine (?:ausführliche |Kurz)?Beschreibung verfügbar\.?|Keine (?:ausführliche |Kurz)?Beschreibung verfügbar\.?)$/i.test(raw);
     const valid=isFallback?'':raw;
     const maxLength=400;
     let text=valid;
