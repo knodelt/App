@@ -346,7 +346,7 @@
   // person cards and curated cards without a TMDB ID keep their details view.
   function openLongPress(card) {
     const item=findItem(card);
-    if (item && ['movie','series'].includes(item.type) && item.tmdbId && window.FrameTrailer?.open) {
+    if (item && ['movie','series'].includes(item.type) && window.FrameTrailer?.open) {
       if (typeof drag !== 'undefined') drag=null;
       card.classList.remove('dragging','guided-x','guided-y');
       card.style.transform='';
