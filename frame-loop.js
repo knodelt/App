@@ -5,7 +5,16 @@
   const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
 
   let loop = loadLoop();
-  let mode = safeGet(MODE_KEY) === 'partner' ? 'partner' : 'user';
+  // Local hand-off rooms were replaced with authenticated online Hidden Match.
+  // FRAME Daily is always a solo feature from here on.
+  let mode = 'user';
+  loop.room = {active:false,partnerName:''};
+  if (loop.daily) {
+    loop.daily.partnerVotes = {};
+    loop.daily.completedByPartner = false;
+  }
+  safeSet(MODE_KEY,mode);
+  saveLoop();
 
   function safeGet(key) {
     try { return localStorage.getItem(key); } catch { return null; }
@@ -340,13 +349,7 @@
       dropPanel.classList.toggle('flow-primary', (mode === 'user' && !userDone) || mode === 'partner');
     }
 
-    if (roomPanel) {
-      roomPanel.hidden = false;
-      roomPanel.classList.toggle('flow-primary', roomActive && mode === 'user' && userDone && !partnerDone);
-      roomPanel.classList.toggle('flow-compact', !roomActive && !userDone);
-      roomPanel.classList.toggle('flow-complete', roomActive && partnerDone && mode === 'user');
-      roomPanel.classList.toggle('flow-after-pick', !roomActive && mode === 'user' && userDone);
-    }
+    // Room panel belongs to hidden-match-client.js; don't apply Daily's flow states.
 
     const canPick = mode === 'user' && userDone && (!roomActive || partnerDone);
     if (pickPanel) {
@@ -514,9 +517,6 @@
     document.querySelector('#dropSaveButton')?.addEventListener('click', () => vote('save'));
     document.querySelector('#dropDislikeButton')?.addEventListener('click', () => vote('dislike'));
 
-    document.querySelector('#roomButton')?.addEventListener('click', activateRoom);
-    document.querySelector('#dropModeButton')?.addEventListener('click', () => setMode(mode === 'partner' ? 'user' : 'partner'));
-    document.querySelector('#roomEndButton')?.addEventListener('click', deactivateRoom);
     document.querySelector('#pickButton')?.addEventListener('click', choosePick);
 
     document.addEventListener('frame:swipe-recorded', event => syncSwipe(event.detail));
