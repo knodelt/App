@@ -11,6 +11,24 @@
   "assets": {
     "directory": ".",
     "binding": "ASSETS",
-    "run_worker_first": ["/api/*"]
-  }
+    "run_worker_first": [
+      "/api/*"
+    ]
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "HIDDEN_MATCH_ROOMS",
+        "class_name": "HiddenMatchRoom"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "hidden_match_v1",
+      "new_sqlite_classes": [
+        "HiddenMatchRoom"
+      ]
+    }
+  ]
 }
