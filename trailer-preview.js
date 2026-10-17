@@ -10,12 +10,10 @@
   const node=id=>document.getElementById(id);
   const player=node('frameTrailerPlayer');
   const status=node('frameTrailerStatus');
-  const playButton=node('frameTrailerPlay');
-  const detailsButton=node('frameTrailerDetails');
-  const facts=node('frameTrailerFacts');
+  const meta=node('frameTrailerMeta');
   let current=null;
   let previewRequest=null;
-  let detailsRequest=null;
+  let metaRequest=null;
   let lastFocus=null;
   let seq=0;
 
@@ -41,9 +39,9 @@
   }
   function cleanupRequests() {
     if(previewRequest)previewRequest.abort();
-    if(detailsRequest)detailsRequest.abort();
+    if(metaRequest)metaRequest.abort();
     previewRequest=null;
-    detailsRequest=null;
+    metaRequest=null;
   }
 
   function close({restoreFocus=true}={}) {
@@ -54,15 +52,48 @@
     overlay.hidden=true;
     document.body.classList.remove('frame-trailer-open');
     current=null;
-    facts.hidden=true;
-    facts.replaceChildren();
     if(restoreFocus && wasOpen && lastFocus?.isConnected){
       try {lastFocus.focus({preventScroll:true});}catch{}
     }
     lastFocus=null;
   }
 
-  function open(item,{onDetails}={}) {
+  function renderMeta(details={}) {
+    if(!current)return;
+    const pieces=[current.type==='movie'?'Film':'Serie'];
+    const genre=(details.facts||[]).find(x=>x && x.label==='Genres');
+    const genres=String((genre && genre.value)||current.genreHint||'').split(/[·,/]/).map(s=>s.trim()).filter(Boolean).slice(0,2);
+    if(genres.length)pieces.push(genres.join(' / '));
+    const primary=String(details.primaryMeta||'').trim();
+    if(current.type==='movie'){
+      const x=/^([0-9]{1,3}) *min$/i.exec(primary);
+      if(x){
+        const m=Number(x[1]),h=Math.floor(m/60);
+        if(m>0)pieces.push(h?h+'h'+(m%60?' '+m%60+'min':''):m+'min');
+      }
+    }else if(/^[0-9]{1,3} +Staffel(n)?$/i.test(primary))pieces.push(primary);
+    if(/^[0-9]{4}$/.test(String(current.year||'')))pieces.push(String(current.year));
+    meta.textContent=pieces.join(' · ');
+  }
+
+  function loadMeta(token){
+    if(!current?.tmdbId || metaRequest)return;
+    metaRequest=new AbortController();
+    fetch('/api/details?type='+encodeURIComponent(current.type)+'&id='+current.tmdbId,{
+      headers:{accept:'application/json'},signal:metaRequest.signal
+    }).then(async response=>{
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok || !data.details)throw new Error('Filmdaten nicht erreichbar.');
+      return data.details;
+    }).then(details=>{
+      if(token!==seq || overlay.hidden)return;
+      renderMeta(details);
+    }).catch(error=>{
+      if(error.name!=='AbortError' && token===seq)console.warn('[FRAME TRAILER]',error.message);
+    }).finally(()=>{if(token===seq)metaRequest=null;});
+  }
+
+  function open(item) {
     if(!isMedia(item))return false;
 
     close({restoreFocus:false});
@@ -73,26 +104,21 @@
       tmdbId:Number.isSafeInteger(Number(item.tmdbId))&&Number(item.tmdbId)>0?Number(item.tmdbId):null,
       poster:item.poster||null,
       year:item.year||null,
-      video:null,
-      onDetails:typeof onDetails==='function'?onDetails:null
+      genreHint:typeof item.subtitle==='string' && !/^(film|serie)$/i.test(item.subtitle.trim())?item.subtitle.trim():'',
+      video:null
     };
     lastFocus=document.activeElement;
     stopPlayer();
-    facts.hidden=true;
-    facts.replaceChildren();
-    playButton.hidden=true;
-    detailsButton.hidden=false;
-    detailsButton.disabled=false;
-    detailsButton.textContent='Mehr Infos';
     node('frameTrailerType').textContent=item.type==='movie'?'FILM · TRAILER':'SERIE · TRAILER';
     node('frameTrailerTitle').textContent=title;
-    node('frameTrailerIntro').textContent='Schau kurz rein und entscheide anschließend in Ruhe.';
+    renderMeta();
     const poster=posterUrl(current.poster);
     node('frameTrailerPoster').style.backgroundImage=poster?'url("'+poster+'")':'';
     showStatus('Trailer wird gesucht …');
     overlay.hidden=false;
     document.body.classList.add('frame-trailer-open');
     node('frameTrailerClose').focus({preventScroll:true});
+    if(current.tmdbId)loadMeta(token);
     try {navigator.vibrate?.(10);}catch{}
 
     previewRequest=new AbortController();
@@ -115,23 +141,20 @@
       const key=String(data.video?.key||'');
       if(Number.isSafeInteger(Number(data.tmdbId))&&Number(data.tmdbId)>0) {
         current.tmdbId=Number(data.tmdbId);
+        if(!metaRequest)loadMeta(token);
       }
       if(data.available && /^[a-zA-Z0-9_-]{11}$/.test(key)){
         current.video={key,language:data.video.language,official:data.video.official};
-        const language=data.video.language==='de'?'Deutsch':data.video.language==='en'?'Englisch':'Originalsprache';
-        node('frameTrailerIntro').textContent='Trailer · '+language+' · startet ohne Ton. Tippe im Player für Ton oder Pause. Deine Bewertung bleibt unverändert.';
         // TMDB answers asynchronously, after the initial long press. Muted
         // YouTube autoplay is allowed on most iPhones; audible autoplay isn't.
         // Built-in YouTube controls remain the fallback if autoplay is blocked.
         play({muted:true});
       }else{
         showStatus('Für diesen Titel ist derzeit kein Trailer verfügbar.');
-        node('frameTrailerIntro').textContent='Du kannst dir stattdessen die Filminfos ansehen.';
       }
     }).catch(error=>{
       if(error.name==='AbortError' || token!==seq)return;
       showStatus('Trailer sind gerade nicht erreichbar.');
-      node('frameTrailerIntro').textContent='Du kannst weiterhin die Filminfos öffnen.';
       console.warn('[FRAME TRAILER]',error.message);
     }).finally(()=>{
       if(token===seq)previewRequest=null;
@@ -154,76 +177,10 @@
     player.replaceChildren(iframe);
     player.hidden=false;
     status.hidden=true;
-    playButton.hidden=true;
-  }
-
-  function showDetails() {
-    if(!current || overlay.hidden)return;
-    if(current.onDetails){
-      const callback=current.onDetails;
-      close();
-      try{callback();}catch(error){console.warn('[FRAME TRAILER]',error);}
-      return;
-    }
-    if(detailsRequest)return;
-    if(!current.tmdbId){
-      facts.replaceChildren();
-      const p=document.createElement('p');
-      p.className='frame-trailer-description';
-      p.textContent='Für diesen Titel sind gerade keine zusätzlichen Informationen verfügbar.';
-      facts.appendChild(p);
-      facts.hidden=false;
-      detailsButton.hidden=true;
-      return;
-    }
-    const token=seq;
-    detailsRequest=new AbortController();
-    detailsButton.disabled=true;
-    detailsButton.textContent='Infos werden geladen …';
-    fetch('/api/details?type='+encodeURIComponent(current.type)+'&id='+current.tmdbId,{
-      headers:{accept:'application/json'},
-      signal:detailsRequest.signal
-    }).then(async response=>{
-      const data=await response.json().catch(()=>({}));
-      if(!response.ok||!data.details)throw new Error('Keine zusätzlichen Infos.');
-      return data.details;
-    }).then(data=>{
-      if(token!==seq || overlay.hidden)return;
-      facts.replaceChildren();
-      const desc=document.createElement('p');
-      desc.className='frame-trailer-description';
-      desc.textContent=data.description||'Keine ausführliche Beschreibung verfügbar.';
-      facts.appendChild(desc);
-      for(const fact of (data.facts||[]).slice(0,5)){
-        if(!fact?.value)continue;
-        const row=document.createElement('div');
-        row.className='frame-trailer-fact-row';
-        const label=document.createElement('strong');
-        label.textContent=fact.label||'Info';
-        const value=document.createElement('span');
-        value.textContent=fact.value;
-        row.append(label,value);
-        facts.appendChild(row);
-      }
-      facts.hidden=false;
-      detailsButton.hidden=true;
-    }).catch(error=>{
-      if(error.name==='AbortError' || token!==seq)return;
-      facts.replaceChildren();
-      const paragraph=document.createElement('p');
-      paragraph.className='frame-trailer-description';
-      paragraph.textContent='Mehr Infos sind gerade nicht verfügbar.';
-      facts.appendChild(paragraph);
-      facts.hidden=false;
-      detailsButton.disabled=false;
-      detailsButton.textContent='Nochmal versuchen';
-    }).finally(()=>{if(token===seq)detailsRequest=null;});
   }
 
   node('frameTrailerClose').addEventListener('click',()=>close());
   node('frameTrailerBack').addEventListener('click',()=>close());
-  playButton.addEventListener('click',()=>play({muted:false}));
-  detailsButton.addEventListener('click',showDetails);
 
   overlay.addEventListener('pointerdown',event=>event.stopPropagation());
   overlay.addEventListener('pointerup',event=>event.stopPropagation());
