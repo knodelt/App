@@ -261,14 +261,18 @@
   </div>
 
 
-  <div class="for-you-ready-notice" id="forYouReadyNotice" role="status" aria-live="polite" hidden>
-    <span class="for-you-ready-notice-icon" aria-hidden="true">✦</span>
-    <div class="for-you-ready-notice-copy">
-      <strong>Für dich ist startklar!</strong>
-      <span>Aus deinen Swipes gibt es jetzt erste persönliche Film- und Serientipps.</span>
-    </div>
-    <button id="forYouReadyOpen" class="for-you-ready-open" type="button">Ansehen</button>
-    <button id="forYouReadyDismiss" class="for-you-ready-dismiss" type="button" aria-label="Meldung schließen">×</button>
+  <div class="for-you-ready-notice" id="forYouReadyNotice" hidden>
+    <section class="for-you-ready-dialog" role="dialog" aria-modal="true" aria-labelledby="forYouReadyTitle" aria-describedby="forYouReadyDescription">
+      <button id="forYouReadyDismiss" class="for-you-ready-dismiss" type="button" aria-label="Meldung schließen">×</button>
+      <span class="for-you-ready-notice-icon" aria-hidden="true">✦</span>
+      <p class="for-you-ready-eyebrow">DEIN GESCHMACK · DEINE FILME</p>
+      <div class="for-you-ready-notice-copy">
+        <h2 id="forYouReadyTitle">Für dich ist startklar!</h2>
+        <p id="forYouReadyDescription">FRAME hat aus deinen Swipes erste persönliche Film- und Serientipps zusammengestellt.</p>
+      </div>
+      <button id="forYouReadyOpen" class="for-you-ready-open" type="button">Empfehlungen ansehen <span aria-hidden="true">→</span></button>
+      <p class="for-you-ready-later">Deine Tipps findest du jederzeit unten unter <strong>✦ Für dich</strong>.</p>
+    </section>
   </div>
 
   <div class="toast" id="toast" role="status"></div>
