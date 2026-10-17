@@ -25,8 +25,10 @@
       ? 'https://image.tmdb.org/t/p/w780'+path : null;
   };
   const getTitle=(item)=>String(item?.title||'Film oder Serie').slice(0,160);
-  const isMedia=item=>['movie','series'].includes(item?.type)&&
-    Number.isSafeInteger(Number(item?.tmdbId))&&Number(item.tmdbId)>0;
+  const isMedia=item=>['movie','series'].includes(item?.type) && (
+    (Number.isSafeInteger(Number(item?.tmdbId)) && Number(item.tmdbId)>0) ||
+    (typeof item?.title==='string' && item.title.trim().length>0)
+  );
 
   function showStatus(message) {
     status.textContent=message;
@@ -67,7 +69,8 @@
     const token=++seq;
     const title=getTitle(item);
     current={
-      title, type:item.type, tmdbId:Number(item.tmdbId),
+      title, type:item.type,
+      tmdbId:Number.isSafeInteger(Number(item.tmdbId))&&Number(item.tmdbId)>0?Number(item.tmdbId):null,
       poster:item.poster||null,
       year:item.year||null,
       video:null,
@@ -93,7 +96,14 @@
     try {navigator.vibrate?.(10);}catch{}
 
     previewRequest=new AbortController();
-    fetch('/api/trailer?type='+encodeURIComponent(item.type)+'&id='+encodeURIComponent(item.tmdbId),{
+    const params=new URLSearchParams({type:item.type});
+    if(current.tmdbId) {
+      params.set('id',String(current.tmdbId));
+    } else {
+      params.set('title',title);
+      if(/^\d{4}$/.test(String(item.year||'')))params.set('year',String(item.year));
+    }
+    fetch('/api/trailer?'+params.toString(),{
       headers:{accept:'application/json'},
       signal:previewRequest.signal
     }).then(async response=>{
@@ -103,6 +113,9 @@
     }).then(data=>{
       if(token!==seq || overlay.hidden)return;
       const key=String(data.video?.key||'');
+      if(Number.isSafeInteger(Number(data.tmdbId))&&Number(data.tmdbId)>0) {
+        current.tmdbId=Number(data.tmdbId);
+      }
       if(data.available && /^[a-zA-Z0-9_-]{11}$/.test(key)){
         current.video={key,language:data.video.language,official:data.video.official};
         playButton.hidden=false;
@@ -150,6 +163,16 @@
       return;
     }
     if(detailsRequest)return;
+    if(!current.tmdbId){
+      facts.replaceChildren();
+      const p=document.createElement('p');
+      p.className='frame-trailer-description';
+      p.textContent='Für diesen Titel sind gerade keine zusätzlichen Informationen verfügbar.';
+      facts.appendChild(p);
+      facts.hidden=false;
+      detailsButton.hidden=true;
+      return;
+    }
     const token=seq;
     detailsRequest=new AbortController();
     detailsButton.disabled=true;
