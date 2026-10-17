@@ -279,3 +279,43 @@
 @media(prefers-reduced-motion:reduce){
   .hm-reveal-pulse,.hm-match-card{animation:none !important;}
 }
+
+/* Hidden Match waiting room: the host can start immediately. */
+.hm-start-swipe {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:11px;
+  width:100%;
+  min-height:48px;
+  margin:0 0 8px;
+  border:0;
+  border-radius:14px;
+  background:#ff526d;
+  color:#fff;
+  font:800 12px/1.2 var(--font-ui);
+  box-shadow:0 7px 20px rgba(255,77,95,.15);
+  cursor:pointer;
+}
+.hm-start-swipe span:first-child {font-size:20px;}
+.hm-start-swipe span:last-child {font-size:18px;}
+.hm-swipe-early-explain {
+  margin:0 0 17px !important;
+  color:#ead4d8 !important;
+  font:600 11px/1.45 var(--font-ui) !important;
+}
+.hm-progress-hint {
+  margin:0 0 13px;
+  color:#a99da6;
+  font:600 10px/1.5 var(--font-ui);
+}
+.hm-phase-helper {
+  margin:0 0 11px;
+  color:#c2b4bd;
+  font:600 11px/1.5 var(--font-ui);
+}
+.hm-start-swipe[hidden],
+.hm-swipe-early-explain[hidden] {display:none !important;}
+@media (prefers-reduced-motion:reduce) {
+  .hm-meter span {transition:none;}
+}
