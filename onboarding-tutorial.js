@@ -16,7 +16,7 @@
       target:'#discoverView .actions',
       kicker:'SCHRITT 2 · 8',
       title:'Drei schnelle Entscheidungen.',
-      copy:'Links = SUPER · hoch = MERKEN · rechts = MIST. Du kannst auch die Buttons antippen. Tippen zeigt das Bild. Langes Halten öffnet bei Filmen und Serien den Trailer (bei People die Infos).',
+      copy:'Links = SUPER · hoch = MERKEN · rechts = MIST. Du kannst auch die Buttons antippen. Tippen öffnet bei Filmen und Serien den Trailer mit Infos (bei Personen die Details). Langes Halten zeigt nur das Bild.',
       panel:'top'
     },
     {
