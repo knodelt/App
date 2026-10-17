@@ -14,7 +14,7 @@
       .swipe-card .card-copy,
       .swipe-card .card-top { transition: opacity .2s ease, filter .28s ease, transform .28s ease; }
 
-      /* Short tap = clean artwork mode. Keep swipe feedback available. */
+      /* Long hold = clean artwork mode. Keep swipe feedback available. */
       .swipe-card.image-only > .card-copy,
       .swipe-card.image-only > .card-top {
         opacity:0 !important;
@@ -342,16 +342,15 @@
     }
   }
 
-  // Long hold on a movie or series opens the shared trailer preview;
-  // person cards and curated cards without a TMDB ID keep their details view.
-  function openLongPress(card) {
+  // Short tap opens the shared trailer preview; person cards retain details.
+  function openCardPreview(card) {
     const item=findItem(card);
     if (item && ['movie','series'].includes(item.type) && window.FrameTrailer?.open) {
       if (typeof drag !== 'undefined') drag=null;
       card.classList.remove('dragging','guided-x','guided-y');
       card.style.transform='';
       card.querySelectorAll('.swipe-stamp').forEach(stamp=>{stamp.style.opacity=0;});
-      const opened=window.FrameTrailer.open(item,{onDetails:()=>openDetails(card)});
+      const opened=window.FrameTrailer.open(item);
       if(opened)return;
     }
     openDetails(card);
@@ -359,13 +358,17 @@
 
   function toggleImageMode(card) {
     if (!card || card.classList.contains('detail-open')) return;
+    // Holding is not a swipe: drop the active drag before showing the image.
+    if (typeof drag !== 'undefined') drag=null;
+    card.classList.remove('dragging','guided-x','guided-y');
+    card.style.transform='';
     const enabled = card.classList.toggle('image-only');
     card.querySelectorAll('.swipe-stamp').forEach(stamp => { stamp.style.opacity = 0; });
     try { navigator.vibrate?.(enabled ? 5 : 3); } catch {}
 
     if (enabled && !sessionStorage.getItem('frame-image-mode-seen')) {
       sessionStorage.setItem('frame-image-mode-seen', '1');
-      try { showToast('Bildmodus · nochmal tippen für Infos'); } catch {}
+      try { showToast('Bildmodus · halten für Normalansicht'); } catch {}
     }
   }
 
@@ -398,7 +401,7 @@
         timer = null;
         if (!moved) {
           longPressed = true;
-          openLongPress(card);
+          toggleImageMode(card);
         }
       }, HOLD_MS);
     }, { passive:true });
@@ -413,12 +416,12 @@
     }, { passive:true });
 
     card.addEventListener('pointerup', event => {
-      const shouldToggle = !longPressed
+      const shouldPreview = !longPressed
         && !tapMoved
         && !card.classList.contains('detail-open')
         && !event.target.closest('button,a');
       cancelTimer();
-      if (shouldToggle) queueMicrotask(() => toggleImageMode(card));
+      if (shouldPreview) queueMicrotask(() => openCardPreview(card));
     }, { passive:true });
 
     ['pointercancel','pointerleave'].forEach(type => card.addEventListener(type, () => {
@@ -434,7 +437,7 @@
 
   injectStyles();
   const hint = document.querySelector('.gesture-hint');
-  if (hint) hint.textContent = 'Tippen = Bild · Halten = Trailer/Infos · ← Super · ↑ Merken · → Mist';
+  if (hint) hint.textContent = 'Tippen = Trailer/Infos · Halten = Bild · ← Super · ↑ Merken · → Mist';
 
   bindTopCard();
   const deck = document.querySelector('#cardDeck');
