@@ -5,6 +5,12 @@
   const NAME_KEY = 'frame-hidden-match-name-v1';
   const CODE_RE = /^[A-HJ-NP-Z2-9]{8}$/;
   const API = '/api/hidden-match/';
+  // Mirror the exact intention locks and release thresholds from swipe-guidance.js.
+  const LOCK_X_AT = 12;
+  const LOCK_Y_AT = 28;
+  const X_RELEASE = 88;
+  const Y_RELEASE = 120;
+  const Y_INTENT_RATIO = 1.8;
   const node = id => document.getElementById(id);
   const show = (id,visible) => { const el=node(id); if(el) el.hidden=!visible; };
   const text = (id,value) => { const el=node(id); if(el) el.textContent=value == null ? '' : String(value); };
@@ -23,6 +29,7 @@
   let revealShown = '';
   let initialResume = false;
   let pointer = null;
+  let swipeAnimating = false;
   let qrLastLink = '';
 
   function getStoredSession() {
@@ -53,9 +60,9 @@
     busy=Boolean(working);
     for(const id of ['hmCreate','hmJoin','hmReadyButton','hmPick','hmNext','hmCloseRoom','hmExit']) {
       const button=node(id);
-      if(button) button.disabled=busy;
+      if(button) button.disabled=busy || swipeAnimating;
     }
-    for(const button of document.querySelectorAll('[data-hm-vote]')) button.disabled=busy;
+    for(const button of document.querySelectorAll('[data-hm-vote]')) button.disabled=busy || swipeAnimating;
   }
   async function post(endpoint,body,credentials=session) {
     const details=credentials ? {code:credentials.code,token:credentials.token} : {};
@@ -115,6 +122,8 @@
     clearConnection();
     try {localStorage.removeItem(SESSION_KEY);}catch{}
     session=null;room=null;cardShown='';revealShown='';qrLastLink='';
+    pointer=null;swipeAnimating=false;
+    resetSwipeCard();
     clearInviteParameter();
     showSetup();
     clearError();
@@ -191,7 +200,9 @@
       cardShown='';revealShown='';
     }
     room=newRoom;
-    paint();
+    // Online status can arrive while the old card is flying away. Don't
+    // repaint it until the animation (and vote persistence) has finished.
+    if (!swipeAnimating) paint();
   }
   function posterUrl(item) {
     return item?.poster && /^\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp)$/.test(item.poster)
@@ -219,7 +230,13 @@
     text('hmCardMeta',(item.type==='movie'?'FILM':'SERIE')+' · '+(item.year||'—'));
     text('hmCardBlurb',item.blurb || 'Wie passt dieser Titel zu deinem Filmeabend?');
     const card=node('hmCard');
-    if(card)card.style.transform='';
+    if(card) {
+      resetSwipeCard();
+      card.classList.remove('entering');
+      // Re-trigger the same small incoming-card animation on every new title.
+      void card.offsetWidth;
+      card.classList.add('entering');
+    }
   }
   function paintReveal() {
     if(!room) return;
@@ -320,15 +337,78 @@
       if(e.code==='ROOM_CLOSED' || e.code==='UNAUTHORIZED') dropLocalSession();
     } finally {
       setWorking(false);
-      if(room)paint();
+      if(room && !swipeAnimating)paint();
     }
   }
+
+  function setStamps(like = 0, dislike = 0, save = 0) {
+    const values = [
+      ['hmStampLike',like],
+      ['hmStampDislike',dislike],
+      ['hmStampSave',save]
+    ];
+    for (const [id,value] of values) {
+      const stamp=node(id);
+      if (stamp) stamp.style.opacity=String(value);
+    }
+  }
+
+  function resetSwipeCard() {
+    const card=node('hmCard');
+    if(!card)return;
+    card.classList.remove('dragging','guided-x','guided-y','leaving');
+    card.style.transform='';
+    card.style.opacity='';
+    setStamps();
+  }
+
+  function animateVoteExit(action) {
+    const card=node('hmCard');
+    if(!card)return Promise.resolve();
+    const reduceMotion=Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches);
+    const distanceX=Math.max((card.getBoundingClientRect?.().width || 0)*1.65,(Number(window.innerWidth)||360)*1.15,420);
+    const distanceY=Math.max((card.getBoundingClientRect?.().height || 0)*1.4,(Number(window.innerHeight)||700)*.8,480);
+    card.classList.remove('dragging','guided-x','guided-y','entering');
+    card.classList.add('leaving');
+    setStamps(action==='like'?1:0,action==='dislike'?1:0,action==='save'?1:0);
+
+    const target=action==='like'
+      ? `translate3d(-${distanceX}px,-42px,0) rotate(-23deg)`
+      : action==='dislike'
+        ? `translate3d(${distanceX}px,-42px,0) rotate(23deg)`
+        : `translate3d(0,-${distanceY}px,0) rotate(-2deg) scale(.96)`;
+
+    if(!reduceMotion) {
+      requestAnimationFrame(() => {
+        if(!swipeAnimating)return;
+        card.style.transform=target;
+        card.style.opacity='0';
+      });
+    }
+    return new Promise(resolve=>setTimeout(resolve,reduceMotion?0:335));
+  }
+
   async function vote(action) {
-    if(busy || !room || !['waiting','playing'].includes(room.status)) return;
+    if(busy || swipeAnimating || !room || !['waiting','playing'].includes(room.status))return;
     if(room.status==='waiting' && room.role!=='host')return;
     const item=cardForVote();
-    if(!item)return;
-    await perform('vote',{itemId:item.id,vote:action});
+    if(!item || !['like','save','dislike'].includes(action))return;
+    swipeAnimating=true;
+    setWorking(true);
+    try {
+      // Wait for BOTH the swipe animation and the server-confirmed decision.
+      // A failed API call brings the same card back instead of skipping it.
+      await Promise.all([
+        perform('vote',{itemId:item.id,vote:action}),
+        animateVoteExit(action)
+      ]);
+    } finally {
+      swipeAnimating=false;
+      resetSwipeCard();
+      cardShown='';
+      setWorking(false);
+      if(room)paint();
+    }
   }
   async function refreshState() {
     if(!session || busy) return;
