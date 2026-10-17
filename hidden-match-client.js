@@ -11,6 +11,7 @@
   const X_RELEASE = 88;
   const Y_RELEASE = 120;
   const Y_INTENT_RATIO = 1.8;
+  const TAP_MOVE_TOLERANCE = 8;
   const node = id => document.getElementById(id);
   const show = (id,visible) => { const el=node(id); if(el) el.hidden=!visible; };
   const text = (id,value) => { const el=node(id); if(el) el.textContent=value == null ? '' : String(value); };
@@ -236,7 +237,7 @@
     const card=node('hmCard');
     if(card) {
       resetSwipeCard();
-      card.classList.remove('entering');
+      card.classList.remove('image-only','entering');
       // Re-trigger the same small incoming-card animation on every new title.
       void card.offsetWidth;
       card.classList.add('entering');
@@ -534,7 +535,7 @@
     setStamps();
     pointer={
       id:event.pointerId,x:event.clientX,y:event.clientY,
-      rawDx:0,rawDy:0,axis:null
+      rawDx:0,rawDy:0,axis:null,tapMoved:false
     };
     cancelCardHold();
     const heldId=event.pointerId;
@@ -546,11 +547,9 @@
       pointer=null;
       try{card.releasePointerCapture(heldId);}catch{}
       resetSwipeCard();
-      // The shared preview never casts a Hidden Match vote.
-      window.FrameTrailer?.open({
-        type:item.type,tmdbId:item.tmdbId,title:item.title,
-        year:item.year,poster:item.poster,blurb:item.blurb
-      });
+      // Hold toggles clean poster view, never a vote or trailer.
+      const imageOnly=card.classList.toggle('image-only');
+      try {navigator.vibrate?.(imageOnly?5:3);}catch{}
     },520);
   }
 
@@ -562,7 +561,9 @@
     const rawDy=event.clientY-pointer.y;
     const absX=Math.abs(rawDx);
     const absY=Math.abs(rawDy);
-    if(Math.hypot(rawDx,rawDy)>12)cancelCardHold();
+    const distance=Math.hypot(rawDx,rawDy);
+    if(distance>TAP_MOVE_TOLERANCE)pointer.tapMoved=true;
+    if(distance>12)cancelCardHold();
     pointer.rawDx=rawDx;
     pointer.rawDy=rawDy;
 
@@ -608,7 +609,7 @@
     pointer=null;
     try { node('hmCard')?.releasePointerCapture(event.pointerId); } catch {}
 
-    const {axis,rawDx,rawDy}=finished;
+    const {axis,rawDx,rawDy,tapMoved}=finished;
     let action=null;
     if(axis==='x') {
       if(rawDx<=-X_RELEASE) action='like';
@@ -625,6 +626,14 @@
       void vote(action);
     } else {
       resetSwipeCard();
+      // A stationary short tap opens the trailer; incomplete swipes don't.
+      if(!tapMoved && !axis && window.FrameTrailer?.open) {
+        const item=cardForVote();
+        if(item)window.FrameTrailer.open({
+          type:item.type,tmdbId:item.tmdbId,title:item.title,
+          year:item.year,poster:item.poster,blurb:item.blurb
+        });
+      }
     }
   }
 
