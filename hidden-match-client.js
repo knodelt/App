@@ -549,7 +549,7 @@
       // The shared preview never casts a Hidden Match vote.
       window.FrameTrailer?.open({
         type:item.type,tmdbId:item.tmdbId,title:item.title,
-        year:item.year,poster:item.poster
+        year:item.year,poster:item.poster,blurb:item.blurb
       });
     },520);
   }
