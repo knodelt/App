@@ -366,26 +366,25 @@
     const card=node('hmCard');
     if(!card)return Promise.resolve();
     const reduceMotion=Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches);
-    const distanceX=Math.max((card.getBoundingClientRect?.().width || 0)*1.65,(Number(window.innerWidth)||360)*1.15,420);
-    const distanceY=Math.max((card.getBoundingClientRect?.().height || 0)*1.4,(Number(window.innerHeight)||700)*.8,480);
     card.classList.remove('dragging','guided-x','guided-y','entering');
     card.classList.add('leaving');
     setStamps(action==='like'?1:0,action==='dislike'?1:0,action==='save'?1:0);
 
+    // Match the exit destinations used by Entdecken/animateSwipe().
     const target=action==='like'
-      ? `translate3d(-${distanceX}px,-42px,0) rotate(-23deg)`
+      ? 'translate3d(-125vw,20px,0) rotate(-19deg)'
       : action==='dislike'
-        ? `translate3d(${distanceX}px,-42px,0) rotate(23deg)`
-        : `translate3d(0,-${distanceY}px,0) rotate(-2deg) scale(.96)`;
+        ? 'translate3d(125vw,20px,0) rotate(19deg)'
+        : 'translate3d(0,-115vh,0) scale(.9)';
 
     if(!reduceMotion) {
       requestAnimationFrame(() => {
         if(!swipeAnimating)return;
         card.style.transform=target;
-        card.style.opacity='0';
+        card.style.opacity='.2';
       });
     }
-    return new Promise(resolve=>setTimeout(resolve,reduceMotion?0:335));
+    return new Promise(resolve=>setTimeout(resolve,reduceMotion?0:290));
   }
 
   async function vote(action) {
