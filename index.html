@@ -207,6 +207,12 @@
                   <button id="hmShareLink" type="button">Link teilen <span aria-hidden="true">↗</span></button>
                 </div>
                 <small>Der Einladungslink enthält keine Bewertungen oder Zugangsdaten des Hosts.</small>
+                <button class="hm-start-swipe" id="hmStartSwiping" type="button">
+                  <span aria-hidden="true">↔</span>
+                  Jetzt schon swipen
+                  <span aria-hidden="true">↓</span>
+                </button>
+                <p class="hm-swipe-early-explain">Du musst nicht auf den Gast warten. Deine Entscheidungen werden sofort im Room gespeichert.</p>
               </div>
 
               <div class="hm-progress" id="hmProgress">
@@ -220,13 +226,15 @@
                 </div>
               </div>
 
+              <p id="hmProgressHint" class="hm-progress-hint">Nur Swipes auf den Karten in diesem Room zählen für den gemeinsamen Filmeabend.</p>
               <div id="hmWaiting" class="hm-message-panel" hidden>
                 <span class="hm-message-symbol" aria-hidden="true">◌</span>
-                <strong>Warten auf die zweite Person.</strong>
-                <p>Deine Einladung ist bereit. Sobald ihr beide da seid, startet Hidden Match automatisch.</p>
+                <strong id="hmWaitingTitle">Deine Entscheidungen sind gespeichert.</strong>
+                <p id="hmWaitingCopy">Jetzt fehlt nur noch die zweite Person. Teile den Einladungslink.</p>
               </div>
               <div id="hmPlaying" class="hm-playing" hidden>
                 <p class="hm-phase-label" id="hmCardCount">KARTE 01 / 10</p>
+                <p class="hm-phase-helper" id="hmCardHelper">Diese Karten zählen für Hidden Match, unabhängig vom normalen Entdecken-Feed.</p>
                 <div class="hm-card" id="hmCard" aria-label="Filmkarte zum Bewerten">
                   <div class="hm-card-art" id="hmCardArt"></div>
                   <div class="hm-card-info">
