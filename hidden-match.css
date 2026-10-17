@@ -185,6 +185,91 @@
   -webkit-user-select:none;
   transition:transform .2s ease;
 }
+/* Same swipe motion and large directional stamps as FRAME Entdecken. */
+.hm-card {
+  will-change:transform,opacity;
+  transform-origin:50% 58%;
+}
+.hm-card.dragging {
+  transition:none !important;
+  cursor:grabbing;
+}
+.hm-card.guided-x {
+  box-shadow:0 26px 62px rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,255,255,.06);
+}
+.hm-card.guided-y {
+  box-shadow:0 26px 62px rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,208,106,.24);
+}
+.hm-card.leaving {
+  transition:transform 310ms cubic-bezier(.2,.77,.26,1),opacity 290ms ease-out !important;
+  pointer-events:none;
+}
+.hm-card.entering {
+  animation:hm-card-enter .25s ease-out both;
+}
+.hm-card .hm-stamp {
+  position:absolute;
+  top:26%;
+  left:50%;
+  z-index:5;
+  min-width:150px;
+  box-sizing:border-box;
+  padding:14px 20px;
+  border:2px solid;
+  border-radius:16px;
+  background:rgba(6,6,9,.48);
+  color:#fff;
+  -webkit-backdrop-filter:blur(12px) saturate(1.15);
+  backdrop-filter:blur(12px) saturate(1.15);
+  box-shadow:0 18px 48px rgba(0,0,0,.42);
+  text-align:center;
+  font-family:Manrope,system-ui,sans-serif;
+  font-size:26px;
+  font-weight:800;
+  line-height:1;
+  letter-spacing:.08em;
+  opacity:0;
+  pointer-events:none;
+  user-select:none;
+  transform:translate(-50%,-50%) scale(.94);
+}
+.hm-card .hm-stamp.like {
+  color:#a7e96f;
+  border-color:rgba(167,233,111,.92);
+  transform:translate(-50%,-50%) scale(.94) rotate(-4deg);
+}
+.hm-card .hm-stamp.dislike {
+  color:#ff6f87;
+  border-color:rgba(255,111,135,.92);
+  transform:translate(-50%,-50%) scale(.94) rotate(4deg);
+}
+.hm-card .hm-stamp.save {
+  color:#ffd06a;
+  border-color:rgba(255,208,106,.88);
+  font-size:22px;
+}
+.hm-card.guided-x .hm-stamp.save,
+.hm-card.guided-y .hm-stamp.like,
+.hm-card.guided-y .hm-stamp.dislike {
+  opacity:0 !important;
+}
+@keyframes hm-card-enter {
+  from {opacity:0;transform:translate3d(0,13px,0) scale(.98);}
+  to {opacity:1;transform:translate3d(0,0,0) scale(1);}
+}
+@media (max-width:380px) {
+  .hm-card .hm-stamp {
+    top:24%;
+    min-width:132px;
+    padding:12px 16px;
+    font-size:23px;
+  }
+}
+@media (prefers-reduced-motion:reduce) {
+  .hm-card.leaving {transition:none !important;}
+  .hm-card.entering {animation:none !important;}
+}
+
 .hm-card-art {
   position:absolute;inset:0;
   background-position:center 30%;background-size:cover;
