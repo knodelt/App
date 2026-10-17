@@ -534,6 +534,57 @@ async function handleDetails(request, env) {
   }
 }
 
+// Trailer lookup for both Entdecken and Hidden Match. Only return public
+// YouTube identifiers; the client loads the player only after a user gesture.
+function chooseFrameTrailer(items) {
+  const candidates=(items||[]).filter(video=>
+    video && video.site === 'YouTube' &&
+    /^[a-zA-Z0-9_-]{11}$/.test(String(video.key || '')) &&
+    ['Trailer','Teaser'].includes(video.type)
+  );
+  const priority=video=>{
+    const lang=String(video.iso_639_1 || '').toLowerCase();
+    const german=lang==='de';
+    const trailer=video.type==='Trailer';
+    return (trailer?100:0)+(german?50:0)+(video.official?15:0);
+  };
+  return candidates.sort((a,b)=>priority(b)-priority(a))[0] || null;
+}
+
+async function handleTrailer(request,env) {
+  if (request.method !== 'GET') return json({ok:false,code:'METHOD_NOT_ALLOWED',message:'Nur GET erlaubt.'},405);
+  if (!env.TMDB_API_TOKEN) return json({ok:false,code:'TMDB_NOT_CONFIGURED',message:'Trailer-Dienst ist nicht konfiguriert.'},503);
+  const url=new URL(request.url);
+  const type=url.searchParams.get('type');
+  const rawId=url.searchParams.get('id')||'';
+  if (!['movie','series'].includes(type)|| !/^[1-9][0-9]{0,9}$/.test(rawId)) {
+    return json({ok:false,code:'BAD_TRAILER_REQUEST',message:'Ungültige Trailer-Anfrage.'},400);
+  }
+  const media=type==='movie'?'movie':'tv';
+  try {
+    const de=await tmdb(`/${media}/${rawId}/videos`,env,{language:'de-DE'});
+    let selected=chooseFrameTrailer(de.results);
+    // Prefer any German official trailer, then fall back to English.
+    if(!selected || selected.type!=='Trailer' || selected.iso_639_1!=='de'){
+      const en=await tmdb(`/${media}/${rawId}/videos`,env,{language:'en-US'});
+      selected=chooseFrameTrailer([...(de.results||[]),...(en.results||[])]);
+    }
+    return json({
+      ok:true,
+      available:Boolean(selected),
+      video:selected?{
+        key:selected.key,
+        name:String(selected.name||'Trailer').slice(0,140),
+        language:String(selected.iso_639_1||'').toLowerCase(),
+        official:Boolean(selected.official)
+      }:null
+    },200,{'cache-control':'public, max-age=3600'});
+  } catch(error) {
+    console.error('[FRAME TRAILER]',error);
+    return json({ok:false,code:'TMDB_TRAILER_ERROR',message:'Trailer sind gerade nicht erreichbar.'},502);
+  }
+}
+
 const RECOMMENDATION_LOOKUPS = [
   { key:'Prisoners', query:'Prisoners', year:'2013', mediaType:'movie' },
   { key:'Enemy', query:'Enemy', year:'2013', mediaType:'movie' },
@@ -587,6 +638,7 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === '/api/feed') return handleFeed(request, env);
     if (url.pathname === '/api/details') return handleDetails(request, env);
+    if (url.pathname === '/api/trailer') return handleTrailer(request, env);
     if (url.pathname === '/api/taste-features') return handleTasteFeatures(request, env);
     if (url.pathname === '/api/recommendation-art') return handleRecommendationArt(env);
     return env.ASSETS.fetch(request);
