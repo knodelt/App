@@ -218,14 +218,23 @@ export class HiddenMatchRoom {
     } else if (action === 'next') {
       if (role !== 'host') return fail('Nur der Host kann eine neue Runde starten.',403,'HOST_ONLY');
       if (!['reveal','finished'].includes(room.status)) return fail('Beendet zunächst die Runde.',409,'WRONG_PHASE');
-      if (!Array.isArray(payload.items) || payload.items.length !== 10) return fail('Neue Karten fehlen.');
-      room.seen.push(...payload.items.map(item=>item.id));
-      room.items=payload.items;
+      let freshItems;
+      try { freshItems=await getTitles(this.env,room.seen); }
+      catch(error) { return fail(error.message||'Keine neuen Karten verfügbar.',503,'NO_TITLES'); }
+      room.seen.push(...freshItems.map(item=>item.id));
+      room.items=freshItems;
       room.round+=1;
       room.votes={host:{},guest:{}};
       room.ready={host:false,guest:false};
       room.picked=null;
       room.status='playing';
+    } else if (action === 'leave') {
+      if (role !== 'guest') return fail('Der Host muss den Room beenden.',403,'HOST_ONLY');
+      room.guest=null;
+      room.votes={host:{},guest:{}};
+      room.ready={host:false,guest:false};
+      room.picked=null;
+      room.status='waiting';
     } else if (action === 'close') {
       if (role !== 'host') return fail('Nur der Host kann den Room beenden.',403,'HOST_ONLY');
       room.status='closed';
@@ -279,14 +288,7 @@ export async function handleHiddenMatch(request,env) {
   if (!CODE_RE.test(code)) return fail('Ungültiger Room-Code.');
   const payload={...body};
   if (action === 'join') payload.token=secret();
-  if (action === 'next') {
-    const obj=env.HIDDEN_MATCH_ROOMS.get(env.HIDDEN_MATCH_ROOMS.idFromName(code));
-    // The DO validates host permission and round phase before accepting these.
-    try { payload.items=await getTitles(env,Array.isArray(body.seen)?body.seen:[]); }
-    catch(error) {return fail(error.message||'Keine neuen Karten verfügbar.',503,'NO_TITLES');}
-    return obj.fetch(new Request('https://room.internal/next',{method:'POST',body:JSON.stringify(payload)}));
-  }
-  if (!['join','state','vote','ready','pick','close'].includes(action)) return fail('Aktion nicht gefunden.',404);
+  if (!['join','state','vote','ready','pick','next','leave','close'].includes(action)) return fail('Aktion nicht gefunden.',404);
   return env.HIDDEN_MATCH_ROOMS.get(env.HIDDEN_MATCH_ROOMS.idFromName(code))
     .fetch(new Request('https://room.internal/'+action,{method:'POST',body:JSON.stringify(payload)}));
 }
