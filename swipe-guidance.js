@@ -203,7 +203,7 @@
   injectStyles();
 
   const hint = document.querySelector('.gesture-hint');
-  if (hint) hint.innerHTML = 'Tippen = Bild · <strong>← Super · → Mist</strong> · ↑ Merken · halten = Infos';
+  if (hint) hint.innerHTML = 'Tippen = Bild · <strong>← Super · → Mist</strong> · ↑ Merken · halten = Trailer/Infos';
 
   // Rebuild once so the current top card receives the new handlers too.
   if (typeof renderDeck === 'function') renderDeck();
