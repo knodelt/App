@@ -196,12 +196,18 @@ export class HiddenMatchRoom {
     if (!role) return fail('Deine Room-Sitzung ist ungültig.',401,'UNAUTHORIZED');
     if (action === 'state') return reply({ok:true,room:publicRoom(room,role)});
     if (action === 'vote') {
-      if (room.status !== 'playing') return fail('Abstimmung derzeit nicht möglich.',409,'WRONG_PHASE');
+      // The host may rate titles while the invite is still pending.
+      // A guest can vote only after joining. Neither side sees the other's votes.
+      if (room.status !== 'playing' && !(room.status === 'waiting' && role === 'host')) {
+        return fail('Abstimmung derzeit nicht möglich.',409,'WRONG_PHASE');
+      }
       const itemId = String(payload.itemId || '');
       if (!room.items.some(item=>item.id === itemId) || !VOTES.has(payload.vote)) return fail('Ungültige Karte oder Stimme.');
       if (room.votes[role][itemId]) return fail('Diese Karte ist bereits bewertet.',409,'ALREADY_VOTED');
       room.votes[role][itemId]=payload.vote;
-      if (progress(room,'host')===room.items.length && progress(room,'guest')===room.items.length) room.status='ready';
+      if (room.guest && progress(room,'host')===room.items.length && progress(room,'guest')===room.items.length) {
+        room.status='ready';
+      }
     } else if (action === 'ready') {
       if (room.status !== 'ready') return fail('Warte, bis beide alle Karten bewertet haben.',409,'NOT_READY');
       if (progress(room,role)!==room.items.length) return fail('Bitte alle Karten bewerten.');
@@ -231,7 +237,8 @@ export class HiddenMatchRoom {
     } else if (action === 'leave') {
       if (role !== 'guest') return fail('Der Host muss den Room beenden.',403,'HOST_ONLY');
       room.guest=null;
-      room.votes={host:{},guest:{}};
+      // Preserve already completed host swipes when a guest leaves.
+      room.votes.guest={};
       room.ready={host:false,guest:false};
       room.picked=null;
       room.status='waiting';
