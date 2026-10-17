@@ -140,8 +140,9 @@
       if(token!==seq || overlay.hidden)return;
       const key=String(data.video?.key||'');
       if(Number.isSafeInteger(Number(data.tmdbId))&&Number(data.tmdbId)>0) {
+        const previousId=current.tmdbId;
         current.tmdbId=Number(data.tmdbId);
-        if(!metaRequest)loadMeta(token);
+        if(!metaRequest && previousId!==current.tmdbId)loadMeta(token);
       }
       if(data.available && /^[a-zA-Z0-9_-]{11}$/.test(key)){
         current.video={key,language:data.video.language,official:data.video.official};
