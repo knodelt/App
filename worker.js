@@ -557,21 +557,52 @@ async function handleTrailer(request,env) {
   const url=new URL(request.url);
   const type=url.searchParams.get('type');
   const rawId=url.searchParams.get('id')||'';
-  if (!['movie','series'].includes(type)|| !/^[1-9][0-9]{0,9}$/.test(rawId)) {
+  const requestedTitle=(url.searchParams.get('title')||'').trim();
+  const requestedYear=url.searchParams.get('year')||'';
+  const hasId=/^[1-9][0-9]{0,9}$/.test(rawId);
+  const canSearch=!rawId && requestedTitle.length>0 && requestedTitle.length<=140 && (
+    !requestedYear || /^(19|20)[0-9]{2}$/.test(requestedYear)
+  );
+  if (!['movie','series'].includes(type) || (!hasId && !canSearch)) {
     return json({ok:false,code:'BAD_TRAILER_REQUEST',message:'Ungültige Trailer-Anfrage.'},400);
   }
   const media=type==='movie'?'movie':'tv';
   try {
-    const de=await tmdb(`/${media}/${rawId}/videos`,env,{language:'de-DE'});
+    let id=hasId?Number(rawId):null;
+    if(!id) {
+      // Resolve the curated first-run cards without hardcoding uncertain TMDB IDs.
+      // Accept only exact title + optional year matches to avoid wrong trailers.
+      const search=await tmdb(`/search/${media}`,env,{
+        query:requestedTitle,language:'de-DE',include_adult:false,page:1
+      });
+      const normalize=value=>String(value||'').normalize('NFKD')
+        .toLocaleLowerCase('de-DE')
+        .replace(/[\u0300-\u036f]/g,'')
+        .replace(/[^\p{Letter}\p{Number}]+/gu,'');
+      const wanted=normalize(requestedTitle);
+      const results=(search.results||[]).filter(item=>{
+        const titleMatches=[item.title,item.original_title,item.name,item.original_name]
+          .some(name=>normalize(name)===wanted);
+        const year=String(item.release_date||item.first_air_date||'').slice(0,4);
+        return titleMatches && (!requestedYear || year===requestedYear);
+      });
+      results.sort((a,b)=>Number(b.vote_count||0)-Number(a.vote_count||0));
+      id=Number(results[0]?.id||0);
+      if(!id)return json({
+        ok:true,available:false,tmdbId:null,video:null
+      },200,{'cache-control':'public, max-age=3600'});
+    }
+    const de=await tmdb(`/${media}/${id}/videos`,env,{language:'de-DE'});
     let selected=chooseFrameTrailer(de.results);
     // Prefer any German official trailer, then fall back to English.
     if(!selected || selected.type!=='Trailer' || selected.iso_639_1!=='de'){
-      const en=await tmdb(`/${media}/${rawId}/videos`,env,{language:'en-US'});
+      const en=await tmdb(`/${media}/${id}/videos`,env,{language:'en-US'});
       selected=chooseFrameTrailer([...(de.results||[]),...(en.results||[])]);
     }
     return json({
       ok:true,
       available:Boolean(selected),
+      tmdbId:id,
       video:selected?{
         key:selected.key,
         name:String(selected.name||'Trailer').slice(0,140),
