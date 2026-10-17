@@ -29,6 +29,7 @@
   let revealShown = '';
   let initialResume = false;
   let pointer = null;
+  let holdTimer = null;
   let swipeAnimating = false;
   let qrLastLink = '';
 
@@ -122,6 +123,7 @@
     clearConnection();
     try {localStorage.removeItem(SESSION_KEY);}catch{}
     session=null;room=null;cardShown='';revealShown='';qrLastLink='';
+    cancelCardHold();
     pointer=null;swipeAnimating=false;
     resetSwipeCard();
     clearInviteParameter();
@@ -219,6 +221,8 @@
     const identity=room.code+':'+room.round+':'+item.id;
     if(identity===cardShown) return;
     cardShown=identity;
+    cancelCardHold();
+    pointer=null;
     const art=node('hmCardArt');
     if(art) {
       const poster=posterUrl(item);
@@ -513,6 +517,11 @@
       await perform('leave');
     }
   }
+  function cancelCardHold() {
+    if(holdTimer!==null)clearTimeout(holdTimer);
+    holdTimer=null;
+  }
+
   function onPointerDown(event) {
     if (pointer || swipeAnimating || busy || !cardForVote()) return;
     if (typeof event.button === 'number' && event.button !== 0) return;
@@ -527,6 +536,22 @@
       id:event.pointerId,x:event.clientX,y:event.clientY,
       rawDx:0,rawDy:0,axis:null
     };
+    cancelCardHold();
+    const heldId=event.pointerId;
+    holdTimer=setTimeout(()=>{
+      holdTimer=null;
+      if(!pointer || pointer.id!==heldId || pointer.axis || busy || swipeAnimating)return;
+      const item=cardForVote();
+      if(!item)return;
+      pointer=null;
+      try{card.releasePointerCapture(heldId);}catch{}
+      resetSwipeCard();
+      // The shared preview never casts a Hidden Match vote.
+      window.FrameTrailer?.open({
+        type:item.type,tmdbId:item.tmdbId,title:item.title,
+        year:item.year,poster:item.poster
+      });
+    },520);
   }
 
   function onPointerMove(event) {
@@ -537,6 +562,7 @@
     const rawDy=event.clientY-pointer.y;
     const absX=Math.abs(rawDx);
     const absY=Math.abs(rawDy);
+    if(Math.hypot(rawDx,rawDy)>12)cancelCardHold();
     pointer.rawDx=rawDx;
     pointer.rawDy=rawDy;
 
@@ -577,6 +603,7 @@
 
   function onPointerEnd(event) {
     if (!pointer || pointer.id !== event.pointerId) return;
+    cancelCardHold();
     const finished=pointer;
     pointer=null;
     try { node('hmCard')?.releasePointerCapture(event.pointerId); } catch {}
@@ -603,6 +630,7 @@
 
   function onPointerCancel(event) {
     if(!pointer || pointer.id!==event.pointerId)return;
+    cancelCardHold();
     pointer=null;
     resetSwipeCard();
   }
@@ -633,6 +661,7 @@
     card?.addEventListener('pointerup',onPointerEnd);
     card?.addEventListener('pointercancel',onPointerCancel);
     card?.addEventListener('lostpointercapture',onPointerCancel);
+    card?.addEventListener('contextmenu',event=>event.preventDefault());
     document.addEventListener('visibilitychange',()=>{
       if(!document.hidden && session){refreshState();connectSocket();}
     });
