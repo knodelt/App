@@ -11,6 +11,7 @@
   const player=node('frameTrailerPlayer');
   const status=node('frameTrailerStatus');
   const meta=node('frameTrailerMeta');
+  const description=node('frameTrailerDescription');
   let current=null;
   let previewRequest=null;
   let metaRequest=null;
@@ -52,10 +53,28 @@
     overlay.hidden=true;
     document.body.classList.remove('frame-trailer-open');
     current=null;
+    description.hidden=true;
+    description.textContent='';
     if(restoreFocus && wasOpen && lastFocus?.isConnected){
       try {lastFocus.focus({preventScroll:true});}catch{}
     }
     lastFocus=null;
+  }
+
+
+  // A concise plot summary, sourced from the card or the German TMDB detail response.
+  function renderDescription(value,{loading=false}={}) {
+    const raw=String(value||'').replace(/\\s+/g,' ').trim();
+    const isFallback=/^(?:Noch keine (?:ausführliche |Kurz)?Beschreibung verfügbar\\.?|Keine (?:ausführliche |Kurz)?Beschreibung verfügbar\\.?)$/i.test(raw);
+    const valid=isFallback?'':raw;
+    const maxLength=400;
+    let text=valid;
+    if(text.length>maxLength){
+      const breakAt=text.lastIndexOf(' ',maxLength);
+      text=text.slice(0,breakAt>maxLength*0.75?breakAt:maxLength).trimEnd()+'…';
+    }
+    description.textContent=text || (loading?'Kurzbeschreibung wird geladen …':'Keine Kurzbeschreibung verfügbar.');
+    description.hidden=false;
   }
 
   function renderMeta(details={}) {
@@ -88,8 +107,12 @@
     }).then(details=>{
       if(token!==seq || overlay.hidden)return;
       renderMeta(details);
+      renderDescription(details.description || current.descriptionHint);
     }).catch(error=>{
-      if(error.name!=='AbortError' && token===seq)console.warn('[FRAME TRAILER]',error.message);
+      if(error.name!=='AbortError' && token===seq){
+        renderDescription(current?.descriptionHint);
+        console.warn('[FRAME TRAILER]',error.message);
+      }
     }).finally(()=>{if(token===seq)metaRequest=null;});
   }
 
@@ -105,6 +128,7 @@
       poster:item.poster||null,
       year:item.year||null,
       genreHint:typeof item.subtitle==='string' && !/^(film|serie)$/i.test(item.subtitle.trim())?item.subtitle.trim():'',
+      descriptionHint:typeof (item.blurb||item.description)==='string'?(item.blurb||item.description):'',
       video:null
     };
     lastFocus=document.activeElement;
@@ -112,6 +136,7 @@
     node('frameTrailerType').textContent=item.type==='movie'?'FILM · TRAILER':'SERIE · TRAILER';
     node('frameTrailerTitle').textContent=title;
     renderMeta();
+    renderDescription(current.descriptionHint,{loading:Boolean(current.tmdbId)});
     const poster=posterUrl(current.poster);
     node('frameTrailerPoster').style.backgroundImage=poster?'url("'+poster+'")':'';
     showStatus('Trailer wird gesucht …');
