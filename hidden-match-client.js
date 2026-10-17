@@ -272,6 +272,7 @@
       makeQR(link);
     }
     const item=cardForVote();
+    show('hmStartSwiping',host && room.status==='waiting' && Boolean(item));
     // Host can vote while the invitation is still pending, without exposing
     // any votes to the guest who joins later.
     show('hmWaiting',room.status==='waiting' && !item);
