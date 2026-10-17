@@ -394,7 +394,9 @@
     const item=cardForVote();
     if(!item || !['like','save','dislike'].includes(action))return;
     swipeAnimating=true;
-    setWorking(true);
+    // This disables repeated input without occupying the network-request
+    // guard inside perform(), which must still be allowed to submit the vote.
+    setWorking(false);
     try {
       // Wait for BOTH the swipe animation and the server-confirmed decision.
       // A failed API call brings the same card back instead of skipping it.
@@ -513,25 +515,99 @@
     }
   }
   function onPointerDown(event) {
-    if(event.button!==0 || event.target.closest('button') || busy || !cardForVote())return;
-    pointer={x:event.clientX,y:event.clientY,id:event.pointerId};
+    if (pointer || swipeAnimating || busy || !cardForVote()) return;
+    if (typeof event.button === 'number' && event.button !== 0) return;
+    if (event.isPrimary === false) return;
+    const card=node('hmCard');
+    if (!card) return;
+    try { card.setPointerCapture(event.pointerId); } catch {}
+    card.classList.remove('entering','guided-x','guided-y','leaving');
+    card.classList.add('dragging');
+    setStamps();
+    pointer={
+      id:event.pointerId,x:event.clientX,y:event.clientY,
+      rawDx:0,rawDy:0,axis:null
+    };
   }
+
   function onPointerMove(event) {
-    if(!pointer || pointer.id!==event.pointerId || busy)return;
-    const dx=event.clientX-pointer.x;
-    const dy=event.clientY-pointer.y;
-    const element=node('hmCard');
-    if(element)element.style.transform='translate('+Math.max(-72,Math.min(72,dx*.3))+'px,'+Math.max(-46,Math.min(20,dy*.18))+'px) rotate('+dx*.014+'deg)';
+    if (!pointer || pointer.id !== event.pointerId || busy || swipeAnimating) return;
+    const card=node('hmCard');
+    if(!card)return;
+    const rawDx=event.clientX-pointer.x;
+    const rawDy=event.clientY-pointer.y;
+    const absX=Math.abs(rawDx);
+    const absY=Math.abs(rawDy);
+    pointer.rawDx=rawDx;
+    pointer.rawDy=rawDy;
+
+    if (!pointer.axis) {
+      // Exactly as in Entdecken: horizontal wins early, upward MERKEN
+      // needs a stronger and very clearly vertical movement.
+      if (absX>=LOCK_X_AT && absX>=absY*.85) {
+        pointer.axis='x';
+      } else if (rawDy<0 && absY>=LOCK_Y_AT && absY>=absX*Y_INTENT_RATIO) {
+        pointer.axis='y';
+      }
+      if(pointer.axis) {
+        card.classList.toggle('guided-x',pointer.axis==='x');
+        card.classList.toggle('guided-y',pointer.axis==='y');
+        try { navigator.vibrate?.(7); } catch {}
+      }
+    }
+
+    if (pointer.axis==='x') {
+      card.style.transform=`translate3d(${rawDx}px,0,0) rotate(${rawDx*.045}deg)`;
+      const strength=Math.min(1,Math.max(0,(absX-4)/30));
+      setStamps(rawDx<0?.24+strength*.76:0,rawDx>0?.24+strength*.76:0,0);
+      return;
+    }
+    if(pointer.axis==='y') {
+      const guidedY=Math.min(0,rawDy);
+      card.style.transform=`translate3d(0,${guidedY}px,0) scale(${Math.max(.965,1-Math.abs(guidedY)/2600)})`;
+      setStamps(0,0,Math.min(1,Math.max(0,(Math.abs(guidedY)-20)/90)));
+      return;
+    }
+
+    const previewX=rawDx*.72;
+    const resistedY=rawDy<0?Math.max(rawDy*.16,-8):0;
+    card.style.transform=`translate3d(${previewX}px,${resistedY}px,0) rotate(${previewX*.025}deg)`;
+    const previewStrength=Math.min(.72,Math.max(0,(absX-4)/28));
+    setStamps(rawDx< -5?.18+previewStrength:0,rawDx>5?.18+previewStrength:0,0);
   }
+
   function onPointerEnd(event) {
-    if(!pointer || pointer.id!==event.pointerId)return;
-    const dx=event.clientX-pointer.x,dy=event.clientY-pointer.y;
+    if (!pointer || pointer.id !== event.pointerId) return;
+    const finished=pointer;
     pointer=null;
-    const element=node('hmCard');
-    if(element)element.style.transform='';
-    if(Math.abs(dx)>85 && Math.abs(dx)>Math.abs(dy)*.85)vote(dx<0?'like':'dislike');
-    else if(dy<-90 && Math.abs(dy)>Math.abs(dx)*.85)vote('save');
+    try { node('hmCard')?.releasePointerCapture(event.pointerId); } catch {}
+
+    const {axis,rawDx,rawDy}=finished;
+    let action=null;
+    if(axis==='x') {
+      if(rawDx<=-X_RELEASE) action='like';
+      else if(rawDx>=X_RELEASE) action='dislike';
+    } else if(axis==='y') {
+      if(rawDy<=-Y_RELEASE) action='save';
+    } else {
+      if(rawDx<=-X_RELEASE && Math.abs(rawDx)>Math.abs(rawDy)) action='like';
+      else if(rawDx>=X_RELEASE && Math.abs(rawDx)>Math.abs(rawDy)) action='dislike';
+      else if(rawDy<=-135 && Math.abs(rawDy)>=Math.abs(rawDx)*2) action='save';
+    }
+
+    if(action) {
+      void vote(action);
+    } else {
+      resetSwipeCard();
+    }
   }
+
+  function onPointerCancel(event) {
+    if(!pointer || pointer.id!==event.pointerId)return;
+    pointer=null;
+    resetSwipeCard();
+  }
+
   function bind() {
     node('hmCreate')?.addEventListener('click',createRoom);
     node('hmJoin')?.addEventListener('click',joinRoom);
@@ -556,7 +632,8 @@
     card?.addEventListener('pointerdown',onPointerDown);
     card?.addEventListener('pointermove',onPointerMove);
     card?.addEventListener('pointerup',onPointerEnd);
-    card?.addEventListener('pointercancel',()=>{pointer=null;card.style.transform='';});
+    card?.addEventListener('pointercancel',onPointerCancel);
+    card?.addEventListener('lostpointercapture',onPointerCancel);
     document.addEventListener('visibilitychange',()=>{
       if(!document.hidden && session){refreshState();connectSocket();}
     });
