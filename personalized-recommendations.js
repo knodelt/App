@@ -8,7 +8,7 @@
   let loading = false;
   const READY_ANNOUNCED_KEY = 'frame-for-you-ready-announced-v1';
   const READY_VIEWED_KEY = 'frame-for-you-ready-viewed-v1';
-  let readyNoticeTimer = null;
+  let readyNoticeReturnFocus = null;
   let lastReadinessProbe = 0;
   let readyProbeAttempts = 0;
 
@@ -191,11 +191,14 @@
     if (dot) dot.hidden = !(ready && readyFlag(READY_ANNOUNCED_KEY) && !readyFlag(READY_VIEWED_KEY));
   }
 
-  function hideReadyNotice() {
-    if (readyNoticeTimer) clearTimeout(readyNoticeTimer);
-    readyNoticeTimer = null;
+  function hideReadyNotice({restoreFocus = false} = {}) {
     const notice = document.querySelector('#forYouReadyNotice');
+    const wasVisible = Boolean(notice && !notice.hidden);
     if (notice) notice.hidden = true;
+    if (restoreFocus && wasVisible && readyNoticeReturnFocus?.isConnected) {
+      readyNoticeReturnFocus.focus({preventScroll:true});
+    }
+    readyNoticeReturnFocus = null;
   }
 
   function markRecommendationsViewed() {
@@ -229,9 +232,9 @@
     updateReadyIndicator(true);
     const notice = document.querySelector('#forYouReadyNotice');
     if (!notice) return;
+    readyNoticeReturnFocus = document.activeElement?.focus ? document.activeElement : null;
     notice.hidden = false;
-    if (readyNoticeTimer) clearTimeout(readyNoticeTimer);
-    readyNoticeTimer = setTimeout(hideReadyNotice, 16000);
+    queueMicrotask(() => notice.querySelector('#forYouReadyOpen')?.focus({preventScroll:true}));
   }
 
   function renderLearningProgress(stats) {
@@ -784,7 +787,31 @@
   recommendOpen?.addEventListener('click', () => setRecommendationModal(true));
   recommendClose?.addEventListener('click', () => setRecommendationModal(false));
   document.querySelector('#forYouReadyOpen')?.addEventListener('click', () => setRecommendationModal(true));
-  document.querySelector('#forYouReadyDismiss')?.addEventListener('click', hideReadyNotice);
+  document.querySelector('#forYouReadyDismiss')?.addEventListener('click', () => hideReadyNotice({restoreFocus:true}));
+  document.querySelector('#forYouReadyNotice')?.addEventListener('click', event => {
+    if (event.target === event.currentTarget) hideReadyNotice({restoreFocus:true});
+  });
+  document.querySelector('#forYouReadyNotice')?.addEventListener('keydown', event => {
+    const popup = document.querySelector('#forYouReadyNotice');
+    if (!popup || popup.hidden) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      hideReadyNotice({restoreFocus:true});
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    const focusable = [...popup.querySelectorAll('button:not([disabled])')];
+    if (focusable.length < 2) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  });
   document.addEventListener('frame:view-changed', event => {
     const visible = event.detail?.target === 'personalized';
     recommendSurface?.classList.toggle('open', visible);
