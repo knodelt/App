@@ -36,11 +36,11 @@
       panel:'bottom'
     },
     {
-      view:'recommend',
+      view:'daily',
       target:'#dailyDropPanel',
       kicker:'SCHRITT 5 · 8',
-      title:'Dein FRAME Daily Drop.',
-      copy:'Unter Heute bekommst du jeden Tag sieben Titel. Ein kurzer Drop statt endloser Suche: SUPER, MERKEN oder MIST – danach ist für heute Schluss.',
+      title:'Dein Daily Frame.',
+      copy:'Unter Daily Frame bekommst du jeden Tag sieben Titel. Ein kurzer Drop statt endloser Suche: SUPER, MERKEN oder MIST – danach ist für heute Schluss.',
       extra:'daily',
       panel:'top',
       scroll:true
@@ -49,8 +49,8 @@
       view:'recommend',
       target:'#roomPanel',
       kicker:'SCHRITT 6 · 8',
-      title:'Hidden Match für zwei.',
-      copy:'Mit Hidden Match erstellt ihr einen echten Online-Room. Dein Gegenüber öffnet den Link oder scannt den QR-Code auf dem eigenen Handy. Beide swipen zehn identische Filme – erst nach dem gemeinsamen Reveal werden Treffer sichtbar.',
+      title:'Frame Match für zwei.',
+      copy:'Mit Frame Match erstellt ihr einen echten Online-Room. Dein Gegenüber öffnet den Link oder scannt den QR-Code auf dem eigenen Handy. Beide swipen zehn identische Filme – erst nach dem gemeinsamen Reveal werden Treffer sichtbar.',
       extra:'matches',
       panel:'top',
       scroll:true
@@ -60,7 +60,7 @@
       target:'.bottom-nav',
       kicker:'SCHRITT 7 · 8',
       title:'Und wenn ihr euch nicht entscheiden könnt?',
-      copy:'Just Pick One trifft eine Solo-Entscheidung aus Watchlist und Geschmack. Hidden Match findet eure gemeinsamen Favoriten im Online-Room. Unten warten außerdem ✦ Für dich und dein Profil.',
+      copy:'Frame Match findet eure gemeinsamen Favoriten im Online-Room. Daily Frame liefert jeden Tag sieben Vorschläge. Deine Merkliste findest du unter Mein Frame.',
       extra:'pick',
       panel:'top'
     },
