@@ -38,28 +38,9 @@
     return Object.values(watched()).filter(x=>x?.item?.id && RATINGS.has(x.rating))
       .sort((a,b)=>Number(b.watchedAt||0)-Number(a.watchedAt||0));
   }
+  // The old separate watched screen has moved into FRAMELOG.
   function render() {
-    const all=entries();
-    const list=document.querySelector('#watchedList');
-    const count=document.querySelector('#watchedCount');
-    const profileCount=document.querySelector('#frameWatchedCount');
-    if(count)count.textContent=String(all.length);
-    if(profileCount)profileCount.textContent=String(all.length);
-    if(!list)return;
-    list.innerHTML=all.length?all.map(entry=>{
-      const item=entry.item,poster=posterUrl(item.poster);
-      return '<article class="frame-watched-card">'+
-        '<div class="frame-watched-poster"'+(poster?' style="background-image:url(\''+poster+'\')"':'')+'></div>'+
-        '<div class="frame-watched-card-content"><span class="frame-watched-meta">'+
-        (item.type==='series'?'SERIE':'FILM')+' · '+escapeHtml(item.year||'—')+'</span>'+
-        '<strong>'+escapeHtml(item.title||'Film')+'</strong>'+
-        '<span class="frame-watched-rating '+(entry.rating==='like'?'positive':'negative')+'">'+
-        (entry.rating==='like'?'♥ Hat gefallen':'✕ Hat nicht gefallen')+'</span>'+
-        '<div class="frame-watched-card-actions">'+
-        '<button type="button" data-watched-action="edit" data-watched-id="'+escapeHtml(item.id)+'">Ändern</button>'+
-        '<button type="button" data-watched-action="undo" data-watched-id="'+escapeHtml(item.id)+'">Entfernen</button></div>'+
-        '</div></article>';
-    }).join(''):'<div class="frame-watched-empty"><strong>Dein Filmgedächtnis beginnt hier.</strong><p>Markiere einen Titel in „Für dich“ oder deiner Merkliste als gesehen und sag FRAME, wie er dir gefallen hat.</p></div>';
+    window.FrameLog?.render?.();
   }
 
   function ensureModal() {
@@ -178,19 +159,6 @@
     showToast('Gesehen zurückgenommen.');
   }
   window.FrameWatched={open,rate,remove,get,entries,normalizeItem};
-  document.querySelector('#openWatchedFromFrame')?.addEventListener('click',()=>{
-    render();switchView('watched');
-  });
-  document.querySelector('#watchedBack')?.addEventListener('click',()=>switchView('taste'));
-  document.querySelector('#watchedList')?.addEventListener('click',event=>{
-    const b=event.target.closest('[data-watched-action]');
-    if(!b)return;
-    const id=b.dataset.watchedId;
-    const entry=get(id);
-    if(!entry)return;
-    if(b.dataset.watchedAction==='edit')open(entry.item);
-    if(b.dataset.watchedAction==='undo' && confirm('Gesehen-Eintrag und Bewertung entfernen?'))remove(id);
-  });
   document.addEventListener('frame:recommendations-rendered',render);
   document.addEventListener('frame:taste-reset',render);
   render();
