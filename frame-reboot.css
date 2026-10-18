@@ -1572,3 +1572,32 @@ h1 em {
   font:750 12px/1.1 var(--font-ui,system-ui);
   cursor:pointer;
 }
+
+
+/* Save personal taste signals before switching FRAME to a new origin. */
+.frame-data-transfer {
+  margin:18px 0;
+  padding:16px;
+  border:1px solid rgba(255,255,255,.13);
+  border-radius:19px;
+  background:linear-gradient(145deg,rgba(255,120,144,.12),rgba(131,88,161,.08) 55%,rgba(255,255,255,.02));
+}
+.frame-transfer-heading {display:flex;align-items:center;gap:12px;}
+.frame-transfer-symbol {
+  display:grid;place-items:center;flex:0 0 40px;height:40px;
+  border-radius:13px;color:#ffd4dc;background:rgba(255,125,147,.14);
+  font-size:24px;
+}
+.frame-transfer-heading strong {display:block;color:#f5eef1;font:800 14px/1.35 Manrope,system-ui,sans-serif;}
+.frame-transfer-heading small {display:block;color:#c6b7c1;font:500 10px/1.5 Manrope,system-ui,sans-serif;}
+.frame-data-transfer > p {color:#c5b9c4;font:500 11px/1.55 Manrope,system-ui,sans-serif;}
+.frame-transfer-actions {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:12px;}
+.frame-transfer-actions button {
+  min-height:45px;padding:10px 8px;border-radius:13px;
+  font:800 11px/1.3 Manrope,system-ui,sans-serif;cursor:pointer;
+}
+#frameExportData {background:#f6ebed;border:1px solid #f6ebed;color:#23191e;}
+#frameImportData {background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.18);color:#f4e8ee;}
+.frame-transfer-message {margin:10px 0 0!important;min-height:14px;color:#b7edc6!important;}
+.frame-transfer-message.error {color:#ff9caa!important;}
+@media(max-width:355px) {.frame-transfer-actions{grid-template-columns:1fr;}}
