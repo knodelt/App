@@ -88,29 +88,31 @@
         <p class="gesture-hint">Tippen = Trailer/Infos · Halten = Bild · links Super · hoch Merken · rechts Mist</p>
       </section>
 
-      <section class="view" id="watchlistView" data-view="watchlist">
-        <button class="frame-watchlist-back" id="watchlistBack" type="button">← Mein Frame</button>
-        <div class="section-head compact">
-          <div>
-            <p class="eyebrow">Gespeichert</p>
-            <h1>Deine Watchlist</h1>
-          </div>
-          <span class="count-pill" id="watchlistCount">0</span>
+      <section class="view frame-log-view" id="frameLogView" data-view="framelog" aria-label="FRAMELOG Filmtagebuch">
+        <button class="frame-log-back" id="frameLogBack" type="button">← Mein Frame</button>
+        <header class="frame-log-header">
+          <div class="frame-log-overline"><span class="frame-log-spark">✦</span> DEINE FILMGESCHICHTE</div>
+          <h1>FRAMELOG<span>.</span></h1>
+          <p>Alles, was du gesehen, geliebt und vorgemerkt hast.</p>
+        </header>
+        <div class="frame-log-stats" aria-label="Dein Filmüberblick">
+          <div><strong id="frameLogSeenCount">0</strong><span>Gesehen</span></div>
+          <div><strong id="frameLogLikedCount">0</strong><span>Gefallen</span></div>
+          <div><strong id="frameLogSavedCount">0</strong><span>Merkliste</span></div>
         </div>
-        <div class="list-grid" id="watchlistGrid"></div>
-      </section>
-
-      <section class="view" id="watchedView" data-view="watched" aria-label="Gesehene Filme und Serien">
-        <button class="frame-watchlist-back" id="watchedBack" type="button">← Mein Frame</button>
-        <div class="section-head compact">
-          <div>
-            <p class="eyebrow">DEINE FILMGESCHICHTE</p>
-            <h1>Schon gesehen.</h1>
+        <div class="frame-log-toolbar">
+          <div class="frame-log-toolbar-copy">
+            <span>DEIN ARCHIV</span><span id="frameLogResultCount">0 Titel</span>
           </div>
-          <span class="count-pill" id="watchedCount">0</span>
+          <div class="frame-log-tabs" id="frameLogTabs" role="group" aria-label="Filmtagebuch filtern">
+            <button type="button" class="active" data-frame-log-tab="all" aria-pressed="true">Alle</button>
+            <button type="button" data-frame-log-tab="watched" aria-pressed="false">Gesehen</button>
+            <button type="button" data-frame-log-tab="saved" aria-pressed="false">Merkliste</button>
+            <button type="button" data-frame-log-tab="like" aria-pressed="false">SUPER</button>
+            <button type="button" data-frame-log-tab="dislike" aria-pressed="false">MIST</button>
+          </div>
         </div>
-        <p class="frame-watched-intro">Hier zählt, was du wirklich geschaut hast. Deine Bewertungen helfen FRAME mehr als ein spontaner Swipe.</p>
-        <div class="frame-watched-list" id="watchedList"></div>
+        <div class="frame-log-list" id="frameLogList" aria-live="polite"></div>
       </section>
 
       <section class="view" id="personalizedView" data-view="personalized" aria-label="Persönliche Empfehlungen">
@@ -405,23 +407,17 @@
           <article><strong id="dislikedStat">0</strong><span>Mist</span></article>
         </div>
 
-        <button class="frame-watchlist-entry" id="openWatchlistFromFrame" type="button">
-          <span class="frame-watchlist-entry-icon" aria-hidden="true">⌑</span>
-          <span class="frame-watchlist-entry-copy">
-            <strong>Meine Merkliste</strong>
-            <small>Deine nach oben gewischten Filme und Serien</small>
+        <button class="frame-log-entry" id="openFrameLog" type="button" aria-label="FRAMELOG persönliches Filmtagebuch öffnen">
+          <span class="frame-log-entry-symbol" aria-hidden="true">F<span>✦</span></span>
+          <span class="frame-log-entry-copy">
+            <span class="frame-log-entry-kicker">DEINE GESAMTE FILMGESCHICHTE</span>
+            <strong>FRAMELOG<span>.</span></strong>
+            <small>Gesehen · Merkliste · SUPER · MIST</small>
           </span>
-          <span class="frame-watchlist-entry-count" id="frameWatchlistCount" aria-label="Gemerkte Titel">0</span>
-          <span class="frame-watchlist-entry-arrow" aria-hidden="true">→</span>
-        </button>
-        <button class="frame-watchlist-entry frame-watched-entry" id="openWatchedFromFrame" type="button">
-          <span class="frame-watchlist-entry-icon" aria-hidden="true">✓</span>
-          <span class="frame-watchlist-entry-copy">
-            <strong>Schon gesehen</strong>
-            <small>Deine gesehenen Filme, Serien und echten Bewertungen</small>
+          <span class="frame-log-entry-end">
+            <span id="frameLogProfileCount">0 Titel</span>
+            <span aria-hidden="true">↗</span>
           </span>
-          <span class="frame-watchlist-entry-count" id="frameWatchedCount" aria-label="Gesehene Titel">0</span>
-          <span class="frame-watchlist-entry-arrow" aria-hidden="true">→</span>
         </button>
         <button class="ghost-btn" id="tutorialReplayButton" type="button">Kurzes Tutorial ansehen</button>
         <button class="ghost-btn" id="resetButton">Geschmack zurücksetzen</button>
@@ -497,6 +493,7 @@
   <script src="/personalized-recommendations.js" defer></script>
   <script src="/taste-learning.js" defer></script>
   <script src="/frame-watched.js" defer></script>
+  <script src="/frame-log.js" defer></script>
   <script src="/streaming-availability.js" defer></script>
   <script src="/swipe-guidance.js" defer></script>
   <script src="/onboarding-tutorial.js" defer></script>
