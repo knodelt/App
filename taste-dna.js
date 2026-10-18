@@ -143,10 +143,17 @@
   }
 
   function syncItemsToSwipes() {
-    const active = state?.swipes || {};
-    Object.keys(data.items || {}).forEach(id => {
-      if (!active[id]) delete data.items[id];
-      else data.items[id].action = active[id];
+    const active=state?.swipes||{};
+    const watched=state?.watched||{};
+    Object.keys(data.items||{}).forEach(id=>{
+      const actual=watched[id];
+      if(actual && ['like','dislike'].includes(actual.rating)){
+        data.items[id].action=actual.rating;
+        data.items[id].watched=true;
+      }else if(active[id]){
+        data.items[id].action=active[id];
+        data.items[id].watched=false;
+      }else delete data.items[id];
     });
   }
 
@@ -157,11 +164,11 @@
     const pairs = new Map();
 
     Object.values(data.items || {}).forEach(item => {
-      const delta = actionWeight(item.action);
-      if (!delta) return;
+      const delta=actionWeight(item.action)*(item.watched?2.5:1);
+      if(!delta)return;
       const itemFeatures = Array.isArray(item.features) ? item.features : [];
 
-      itemFeatures.forEach(feature => addWeight(features, feature, delta));
+      itemFeatures.forEach(feature => addWeight(features,feature,delta,item.watched?2:1));
 
       const pairable = itemFeatures
         .filter(feature => PAIRABLE_GROUPS.has(feature.group))
@@ -184,7 +191,7 @@
             count:0
           };
           current.weight += delta * .58;
-          current.count += 1;
+          current.count += item.watched?2:1;
           pairs.set(key,current);
         }
       }
@@ -291,6 +298,7 @@
       ...current,
       id,
       action,
+      watched:Boolean(state?.watched?.[id]),
       title:item.title || current.title || '',
       type:item.type || current.type || '',
       tmdbId:Number(item.tmdbId || current.tmdbId) || null,
@@ -567,6 +575,12 @@
 
   document.addEventListener('frame:swipe-undone', () => recompute());
   document.addEventListener('frame:taste-reset', resetTasteDna);
+  document.addEventListener('frame:watched-rated',event=>{
+    const {id,item,rating}=event.detail||{};
+    if(id&&item&&['like','dislike'].includes(rating))rememberSwipe(id,rating,item);
+  });
+  document.addEventListener('frame:watched-removed',()=>recompute());
+
   document.addEventListener('frame:recommendation-saved', event => {
     const item=event.detail?.item;
     if(item?.id && item.tmdbId)rememberSwipe(item.id,'save',item);
