@@ -145,7 +145,7 @@ h1 em { color:var(--cream); font-weight:600; }
 
 .bottom-nav {
   position:fixed; z-index:40; left:50%; transform:translateX(-50%); bottom:0; width:min(100%,520px);
-  display:grid; grid-template-columns:repeat(4,1fr); padding:9px 12px calc(9px + env(safe-area-inset-bottom));
+  display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); padding:9px 12px calc(9px + env(safe-area-inset-bottom));
   background:rgba(10,10,12,.88); border-top:1px solid var(--line); backdrop-filter:blur(22px);
 }
 .nav-item { border:0; background:none; color:#5f5d5a; display:grid; place-items:center; gap:3px; padding:4px; }
