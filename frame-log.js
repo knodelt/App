@@ -421,11 +421,6 @@
   root.addEventListener('click',event=>{
     if(event.target?.id==='frameLogMore'){displayed+=35;render();}
   });
-  document.querySelector('#openFrameLog')?.addEventListener('click',()=>{
-    setTab('all');switchView('framelog');
-  });
-  root.querySelector('#frameLogBack')?.addEventListener('click',()=>switchView('taste'));
-
   document.addEventListener('frame:swipe-recorded',event=>{
     const item=event.detail?.item;if(item)remember(item);
     render();
