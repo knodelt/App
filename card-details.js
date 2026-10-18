@@ -1,7 +1,7 @@
 (() => {
   const HOLD_MS = 520;
   const MOVE_TOLERANCE = 12;
-  const TAP_MOVE_TOLERANCE = 8;
+  const TAP_MOVE_TOLERANCE = 22; // Allow normal Android touch jitter.
   const boundCards = new WeakSet();
   let activeRequest = null;
 
@@ -376,60 +376,116 @@
     if (!card || boundCards.has(card)) return;
     boundCards.add(card);
 
-    let timer = null;
-    let startX = 0;
-    let startY = 0;
-    let moved = false;
-    let tapMoved = false;
-    let longPressed = false;
+    let holdTimer=null;
+    let tapFallback=null;
+    let pointerActive=false;
+    let activePointer=null;
+    let startX=0,startY=0;
+    let tapMoved=false;
+    let longPressed=false;
+    let canceled=false;
+    let tapReady=false;
+    let lastOpened=0;
 
-    const cancelTimer = () => {
-      if (timer) clearTimeout(timer);
-      timer = null;
-    };
+    function cancelHold() {
+      if(holdTimer!==null)clearTimeout(holdTimer);
+      holdTimer=null;
+    }
+    function clearFallback() {
+      if(tapFallback!==null)clearTimeout(tapFallback);
+      tapFallback=null;
+      tapReady=false;
+    }
+    function launchTrailer() {
+      if(!card.isConnected || !card.classList.contains('top-card') ||
+         card.classList.contains('detail-open'))return;
+      // Some Android browsers emit both a click and a delayed touch completion.
+      if(Date.now()-lastOpened<650)return;
+      lastOpened=Date.now();
+      openCardPreview(card);
+    }
 
-    card.addEventListener('pointerdown', event => {
-      if (card.classList.contains('detail-open')) return;
-      if (typeof event.button === 'number' && event.button !== 0) return;
-      startX = event.clientX;
-      startY = event.clientY;
-      moved = false;
-      tapMoved = false;
-      longPressed = false;
-      cancelTimer();
-      timer = setTimeout(() => {
-        timer = null;
-        if (!moved) {
-          longPressed = true;
-          toggleImageMode(card);
-        }
-      }, HOLD_MS);
-    }, { passive:true });
+    card.addEventListener('pointerdown',event=>{
+      if(card.classList.contains('detail-open'))return;
+      if(typeof event.button==='number' && event.button!==0)return;
+      if(event.isPrimary===false)return;
+      clearFallback();
+      cancelHold();
+      pointerActive=true;
+      activePointer=event.pointerId;
+      startX=event.clientX;startY=event.clientY;
+      tapMoved=false;longPressed=false;canceled=false;
+      holdTimer=setTimeout(()=>{
+        holdTimer=null;
+        if(!pointerActive || tapMoved || card.classList.contains('detail-open'))return;
+        longPressed=true;
+        toggleImageMode(card);
+      },HOLD_MS);
+    },{passive:true});
 
-    card.addEventListener('pointermove', event => {
-      const distance = Math.hypot(event.clientX - startX, event.clientY - startY);
-      if (distance > TAP_MOVE_TOLERANCE) tapMoved = true;
-      if (timer && distance > MOVE_TOLERANCE) {
-        moved = true;
-        cancelTimer();
+    card.addEventListener('pointermove',event=>{
+      if(!pointerActive || activePointer!==event.pointerId)return;
+      const distance=Math.hypot(event.clientX-startX,event.clientY-startY);
+      if(distance>TAP_MOVE_TOLERANCE)tapMoved=true;
+      if(distance>MOVE_TOLERANCE)cancelHold();
+    },{passive:true});
+
+    card.addEventListener('pointerup',event=>{
+      if(!pointerActive || activePointer!==event.pointerId)return;
+      pointerActive=false;
+      activePointer=null;
+      cancelHold();
+      const distance=Math.hypot(event.clientX-startX,event.clientY-startY);
+      if(longPressed || tapMoved || distance>TAP_MOVE_TOLERANCE ||
+         card.classList.contains('detail-open') ||
+         event.target.closest?.('button,a'))return;
+
+      // Click is dispatched AFTER pointerup on Android Chrome. Don't open the
+      // overlay in a microtask here: the same tap may close the newly shown
+      // backdrop immediately. Use click; fall back when a browser omits it.
+      tapReady=true;
+      tapFallback=setTimeout(()=>{
+        tapFallback=null;
+        if(!tapReady)return;
+        tapReady=false;
+        launchTrailer();
+      },350);
+    },{passive:true});
+
+    card.addEventListener('click',event=>{
+      if(event.target.closest?.('button,a'))return;
+      if(longPressed || tapMoved || canceled || pointerActive)return;
+      if(tapReady){
+        clearFallback();
+        launchTrailer();
+      }else if(event.detail===0){
+        // Keyboard / accessibility activation.
+        launchTrailer();
       }
-    }, { passive:true });
+    });
 
-    card.addEventListener('pointerup', event => {
-      const shouldPreview = !longPressed
-        && !tapMoved
-        && Math.hypot(event.clientX - startX, event.clientY - startY) <= TAP_MOVE_TOLERANCE
-        && !card.classList.contains('detail-open')
-        && !event.target.closest('button,a');
-      cancelTimer();
-      if (shouldPreview) queueMicrotask(() => openCardPreview(card));
-    }, { passive:true });
+    card.addEventListener('pointercancel',event=>{
+      if(!pointerActive || activePointer!==event.pointerId)return;
+      pointerActive=false;
+      activePointer=null;
+      canceled=true;
+      tapMoved=true;
+      cancelHold();
+      clearFallback();
+    },{passive:true});
+    // On touch screens pointerleave can fire automatically as capture ends.
+    // It must not invalidate an otherwise valid tap.
+    card.addEventListener('pointerleave',event=>{
+      if(event.pointerType==='touch' || event.pointerType==='pen')return;
+      if(!pointerActive || activePointer!==event.pointerId)return;
+      pointerActive=false;
+      activePointer=null;
+      canceled=true;
+      tapMoved=true;
+      cancelHold();
+    },{passive:true});
 
-    ['pointercancel','pointerleave'].forEach(type => card.addEventListener(type, () => {
-      tapMoved = true;
-      cancelTimer();
-    }, { passive:true }));
-    card.addEventListener('contextmenu', event => event.preventDefault());
+    card.addEventListener('contextmenu',event=>event.preventDefault());
   }
 
   function bindTopCard() {
