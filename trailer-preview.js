@@ -124,6 +124,7 @@
     const token=++seq;
     const title=getTitle(item);
     current={
+      id:item.id||null,
       title, type:item.type,
       tmdbId:Number.isSafeInteger(Number(item.tmdbId))&&Number(item.tmdbId)>0?Number(item.tmdbId):null,
       poster:item.poster||null,
