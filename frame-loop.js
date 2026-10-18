@@ -228,7 +228,7 @@
     if (isMatch) {
       showToast('IT’S A FRAME — ihr wollt beide ' + item.title + '.');
     } else if (daily.completedByUser) {
-      showToast('Daily Drop abgeschlossen.');
+      showToast('Daily Frame abgeschlossen.');
     }
   }
 
@@ -522,7 +522,7 @@
     document.addEventListener('frame:swipe-recorded', event => syncSwipe(event.detail));
     document.addEventListener('frame:swipe-undone', event => undoSwipe(event.detail));
     document.addEventListener('frame:view-changed', event => {
-      if (event.detail && event.detail.target === 'recommend') renderAll();
+      if (event.detail && (event.detail.target === 'daily' || event.detail.target === 'recommend')) renderAll();
     });
     document.addEventListener('frame:feed-loaded', event => {
       const daily = ensureDaily();
@@ -546,8 +546,6 @@
       if (pickButton) pickButton.textContent = 'FRAME ENTSCHEIDET';
     });
 
-    const nav = document.querySelector('.nav-item[data-target="recommend"] small');
-    if (nav) nav.textContent = 'Heute';
   }
 
   ensureDaily();
