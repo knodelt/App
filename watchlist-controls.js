@@ -141,6 +141,18 @@
         removeFromWatchlist(id);
       });
       card.appendChild(remove);
+      if(['movie','series'].includes(item.type)) {
+        const seen=document.createElement('button');
+        seen.type='button';
+        seen.className='frame-watchlist-seen';
+        seen.textContent='✓ Gesehen?';
+        seen.setAttribute('aria-label',item.title+' als gesehen bewerten');
+        seen.addEventListener('click',event=>{
+          event.preventDefault();event.stopPropagation();
+          window.FrameWatched?.open(item);
+        });
+        card.appendChild(seen);
+      }
 
       const copy = card.querySelector('.mini-copy');
       if (copy && !copy.querySelector('.watch-hold-hint')) {
@@ -173,6 +185,7 @@
           <p class="watch-detail-description"></p>
           <div class="watch-detail-facts"></div>
           <p class="watch-detail-status"></p>
+          <button class="frame-watch-detail-seen" type="button">✓ GESEHEN · JETZT BEWERTEN</button>
           <button class="watch-detail-remove" type="button">AUS WATCHLIST ENTFERNEN</button>
         </div>
       </article>`;
@@ -228,6 +241,12 @@
     });
 
     shell.querySelector('.watch-detail-status').textContent = loading ? 'Zusatzinfos werden geladen …' : (item.source === 'tmdb' ? 'DETAILS · TMDB' : 'DETAILS · FRAME');
+    const seen = shell.querySelector('.frame-watch-detail-seen');
+    seen.hidden=!['movie','series'].includes(item.type);
+    seen.onclick=()=>{
+      closeModal();
+      window.FrameWatched?.open(item);
+    };
     const remove = shell.querySelector('.watch-detail-remove');
     remove.onclick = () => {
       removeFromWatchlist(item.id);
