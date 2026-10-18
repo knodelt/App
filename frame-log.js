@@ -6,7 +6,7 @@
 
   const $=selector=>root.querySelector(selector);
   const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,c=>({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&gt;','"':'&quot;',"'":'&#39;'
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
   }[c]));
   // Use an allowlist for image paths and never put arbitrary content in a CSS URL.
   const safePoster=value=>/^\/[a-zA-Z0-9_-]+\.(?:jpe?g|png|webp)$/i.test(String(value||''))?value:'';
@@ -28,6 +28,9 @@
   let selectedId=null;
   let focusBeforeDetail=null;
   let historyCache={};
+  // Older saved films can have a title but no poster or TMDB identifier.
+  const artAttempts=new Set(),artQueue=[],artQueued=new Set();
+  let artRunning=0;
 
   function history() {
     try {
@@ -138,6 +141,77 @@
     if(entry.swipe==='dislike')return {cls:'skip',label:'✕ MIST · Kein Interesse'};
     return {cls:'saved',label:'⌑ MERKEN'};
   }
+
+  function scheduleMissingArtwork(items){
+    if(!root.classList.contains('active'))return;
+    for(const entry of items){
+      if(!['movie','series','person'].includes(entry.item.type)||
+          entry.item.poster || artAttempts.has(entry.id)||artQueued.has(entry.id))continue;
+      if(!entry.item.title || entry.item.title==='Titel ohne Namen')continue;
+      artQueued.add(entry.id);
+      artQueue.push({id:entry.id,item:entry.item});
+    }
+    pumpArtwork();
+  }
+  function pumpArtwork(){
+    while(artRunning<2 && artQueue.length){
+      const entry=artQueue.shift();
+      artQueued.delete(entry.id);
+      if(artAttempts.has(entry.id))continue;
+      artAttempts.add(entry.id);
+      artRunning++;
+      void resolveArtwork(entry).finally(()=>{
+        artRunning--;
+        pumpArtwork();
+      });
+    }
+  }
+  async function resolveArtwork(entry){
+    const {id,item}=entry;
+    try{
+      const query=new URLSearchParams({
+        type:item.type,title:item.title.slice(0,120),savedId:id
+      });
+      if(Number.isSafeInteger(Number(item.tmdbId)) && Number(item.tmdbId)>0){
+        query.set('id',String(item.tmdbId));
+      }
+      if(/^(18|19|20|21)\d{2}$/.test(String(item.year||'')))query.set('year',String(item.year));
+      const controller=new AbortController();
+      const timeout=setTimeout(()=>controller.abort(),12000);
+      let payload;
+      try{
+        const response=await fetch('/api/framelog-art?'+query.toString(),{
+          signal:controller.signal,headers:{accept:'application/json'}
+        });
+        if(!response.ok)return;
+        payload=await response.json();
+      }finally{
+        clearTimeout(timeout);
+      }
+      if(!payload?.found || !safePoster(payload.poster))return;
+      ensureObjects();
+      const current=getItem(id);
+      if(!current || current.poster)return;
+      const old=state.frameLogItems[id];
+      const restored={
+        ...current,
+        poster:payload.poster,
+        year:/^\d{4}$/.test(String(current.year||''))?current.year:
+          (/^\d{4}$/.test(String(payload.year||''))?String(payload.year):current.year),
+        tmdbId:current.tmdbId||(
+          Number.isSafeInteger(Number(payload.tmdbId))?Number(payload.tmdbId):null)
+      };
+      state.frameLogItems[id]={
+        item:{...old?.item,...restored},
+        addedAt:Number(old?.addedAt)||Date.now()
+      };
+      try{persist();}catch(error){console.warn('[FRAMELOG ART] Could not cache artwork',error);}
+      render();
+    }catch(error){
+      if(error?.name!=='AbortError')console.warn('[FRAMELOG ART]',error);
+    }
+  }
+
   function render(){
     const all=records(),found=all.filter(inTab);
     const seen=all.filter(entry=>entry.watched);
@@ -191,6 +265,7 @@
       }
       more.hidden=false;more.textContent='Weitere Filme anzeigen · '+(found.length-displayed);
     }else if(more)more.hidden=true;
+    scheduleMissingArtwork(list);
   }
 
   function ensureDetail(){
