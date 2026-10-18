@@ -13,43 +13,27 @@
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
   <link rel="stylesheet" href="/app-layout.css" />
-  <link rel="stylesheet" href="/frame-reboot.css?v=104" />
+  <link rel="stylesheet" href="/frame-reboot.css?v=105" />
   <link rel="stylesheet" href="/frame-loop.css" />
   <link rel="stylesheet" href="/hidden-match.css" />
   <link rel="stylesheet" href="/trailer-preview.css" />
   <!-- Mobile navigation invariant: all six destinations belong in ONE row.
        Inlined so an older service-worker CSS cache cannot revert to 5 columns. -->
   <style id="frame-nav-six-columns">
+    /* Keep all six destinations on one row, even with older offline CSS. */
     .app-shell > nav.bottom-nav {
-      display: grid !important;
-      grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
-      grid-template-rows: minmax(0, 1fr) !important;
-      grid-auto-flow: column !important;
-      gap: 0 !important;
-      width: 100% !important;
-      min-width: 0 !important;
-      flex-wrap: nowrap !important;
+      display:grid !important;
+      grid-template-columns:repeat(6,minmax(0,1fr)) !important;
+      grid-template-rows:minmax(0,1fr) !important;
+      grid-auto-flow:column !important;
+      gap:0 !important;
+      width:100% !important;
+      min-width:0 !important;
     }
     .app-shell > nav.bottom-nav > button.nav-item {
-      min-width: 0 !important;
-      width: 100% !important;
-      max-width: 100% !important;
-      padding-left: 0 !important;
-      padding-right: 0 !important;
-      grid-row: 1 !important;
-    }
-    .app-shell > nav.bottom-nav > button.nav-item small {
-      min-width: 0;
-      max-width: 100%;
-      font-size: clamp(7.5px, 2.15vw, 9px) !important;
-      white-space: nowrap !important;
-      line-height: 1.15 !important;
-      letter-spacing: -.03em !important;
-    }
-    @media (max-width: 365px) {
-      .app-shell > nav.bottom-nav > button.nav-item small {
-        font-size: 7.4px !important;
-      }
+      grid-row:1 !important;
+      min-width:0 !important;
+      width:100% !important;
     }
   </style>
   <title>FRAME — Filme & Serien entdecken</title>
@@ -449,15 +433,15 @@
     </main>
 
     <nav class="bottom-nav" aria-label="Hauptnavigation">
-      <button class="nav-item active" data-target="discover" type="button" aria-label="Framing: Filme und Serien entdecken"><span aria-hidden="true">◉</span><small>Framing</small></button>
+      <button class="nav-item active" data-target="discover" type="button" aria-label="Framing: Filme und Serien entdecken"><span class="nav-symbol" aria-hidden="true">◉</span><small>Framing</small></button>
       <button class="nav-item nav-item-for-you" id="recommendShortcut" data-target="personalized" type="button" aria-label="Für dich – persönliche Empfehlungen">
-        <span class="for-you-nav-symbol" aria-hidden="true">✦<i class="for-you-new-indicator" id="forYouNewIndicator" hidden></i></span>
+        <span class="nav-symbol for-you-nav-symbol" aria-hidden="true">✦<i class="for-you-new-indicator" id="forYouNewIndicator" hidden></i></span>
         <small>Für dich</small>
       </button>
-      <button class="nav-item nav-item-daily" data-target="daily" type="button" aria-label="Daily Frame: sieben tägliche Filmvorschläge"><span aria-hidden="true">▣</span><small>Daily Frame</small></button>
-      <button class="nav-item" data-target="recommend" type="button" aria-label="Frame Match: gemeinsam Filme finden"><span aria-hidden="true">♡</span><small>Frame Match</small></button>
-      <button class="nav-item nav-item-framelog" data-target="framelog" type="button" aria-label="FRAMELOG: dein persönliches Filmtagebuch"><span class="frame-log-nav-symbol" aria-hidden="true">F</span><small>FRAMELOG</small></button>
-      <button class="nav-item" data-target="taste" type="button" aria-label="Mein Frame: Geschmacksprofil und Einstellungen"><span aria-hidden="true">◎</span><small>Mein Frame</small></button>
+      <button class="nav-item nav-item-daily" data-target="daily" type="button" aria-label="Daily Frame: sieben tägliche Filmvorschläge"><span class="nav-symbol" aria-hidden="true">▣</span><small>Daily Frame</small></button>
+      <button class="nav-item" data-target="recommend" type="button" aria-label="Frame Match: gemeinsam Filme finden"><span class="nav-symbol" aria-hidden="true">♡</span><small>Frame Match</small></button>
+      <button class="nav-item nav-item-framelog" data-target="framelog" type="button" aria-label="FRAMELOG: dein persönliches Filmtagebuch"><span class="nav-symbol frame-log-nav-symbol" aria-hidden="true">F</span><small>FRAMELOG</small></button>
+      <button class="nav-item" data-target="taste" type="button" aria-label="Mein Frame: Geschmacksprofil und Einstellungen"><span class="nav-symbol" aria-hidden="true">◎</span><small>Mein Frame</small></button>
     </nav>
   </div>
 
