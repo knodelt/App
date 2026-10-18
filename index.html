@@ -185,6 +185,12 @@
             <div class="hm-error" id="hmError" role="alert" hidden></div>
 
             <div class="hm-setup" id="hmSetup">
+              <section class="hm-partners-home" id="hmPartnersHome" hidden>
+                <span class="hm-partner-eyebrow">EURE VERBINDUNGEN</span>
+                <h3>Deine Filmpartner</h3>
+                <p>Setzt euren gemeinsamen Filmabend fort – ohne eine neue Einladung.</p>
+                <div id="hmPartnersList" class="hm-partners-list"></div>
+              </section>
               <div class="hm-setup-host" id="hmHostSetup">
                 <label for="hmHostName">Wie heißt du?</label>
                 <input id="hmHostName" type="text" maxlength="24" autocomplete="nickname" placeholder="Dein Vorname" />
@@ -206,6 +212,16 @@
               <div class="hm-room-status">
                 <div><span class="hm-room-code-label">EUER ROOM</span><strong id="hmRoomCode">--------</strong></div>
                 <span class="hm-connection" id="hmConnection" aria-live="polite">Verbinde …</span>
+              </div>
+
+              <div class="hm-partner-box" id="hmPartnerBox" hidden>
+                <div class="hm-partner-box-head">
+                  <span class="hm-partner-eyebrow">EUER FRAME · ZU ZWEIT</span>
+                  <strong id="hmPartnerStatus">Eure Verbindung</strong>
+                </div>
+                <p id="hmPartnerExplain">Nur wenn beide zustimmen, bleibt diese Verbindung erhalten.</p>
+                <button type="button" class="hm-second-btn" id="hmSavePartner">Filmpartner speichern</button>
+                <button type="button" class="hm-partner-switch" id="hmSwitchPartner" hidden>Anderen Partner wählen</button>
               </div>
 
               <div class="hm-invite-area" id="hmInviteArea" hidden>
@@ -289,6 +305,17 @@
                 <button class="hm-main-btn" id="hmPick" type="button" hidden>FRAME entscheidet <span aria-hidden="true">→</span></button>
                 <button class="hm-second-btn" id="hmNext" type="button" hidden>Nächste gemeinsame Runde</button>
               </div>
+              <section class="hm-shared" id="hmShared" hidden>
+                <div class="hm-shared-head">
+                  <div>
+                    <span class="hm-partner-eyebrow">EURE GEMEINSAME LISTE</span>
+                    <h3>Für euren nächsten Filmabend.</h3>
+                  </div>
+                  <span class="hm-shared-count" id="hmSharedCount">0</span>
+                </div>
+                <p class="hm-shared-copy">Nur Treffer, die ihr beide gut fandet, lassen sich gemeinsam speichern.</p>
+                <div id="hmSharedItems" class="hm-shared-items"></div>
+              </section>
               <div id="hmClosed" class="hm-message-panel" hidden>
                 <strong>Dieser Room wurde beendet.</strong>
                 <p>Starte einen neuen Room, um wieder gemeinsam zu swipen.</p>
