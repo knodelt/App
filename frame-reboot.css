@@ -1937,3 +1937,17 @@ h1 em {
   .bottom-nav .nav-item-for-you .for-you-nav-symbol,
   .bottom-nav .nav-item-daily span {width:32px !important;height:32px !important;}
 }
+
+/* Enforce a single horizontal row on iPhone, even after earlier CSS overrides. */
+.app-shell > nav.bottom-nav {
+  display: grid !important;
+  grid-template-columns: repeat(6, minmax(0,1fr)) !important;
+  grid-template-rows: minmax(0,1fr) !important;
+  grid-auto-flow: column !important;
+  gap: 0 !important;
+}
+.app-shell > nav.bottom-nav > .nav-item {
+  grid-row: 1 !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
