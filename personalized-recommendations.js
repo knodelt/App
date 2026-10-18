@@ -455,11 +455,13 @@
 
   function saveButtonMarkup(item) {
     const key=recommendationKey(item);
-    const saved=state.saved?.includes(recommendationStateId(item));
-    return '<button class="rec-action save'+(saved?' is-saved':'')+'" type="button" '+
+    const id=recommendationStateId(item);
+    const seen=Boolean(state.watched?.[id]);
+    const saved=Boolean(state.saved?.includes(id));
+    return '<button class="rec-action save'+(saved||seen?' is-saved':'')+'" type="button" '+
       'data-rec-action="save" data-rec-key="'+escapeHtml(key)+'"'+
-      (saved?' disabled aria-pressed="true"':' aria-pressed="false"')+'>'+
-      (saved?'✓ Gemerkt':'+ Merken')+'</button>';
+      (saved||seen?' disabled aria-pressed="true"':' aria-pressed="false"')+'>'+
+      (seen?'✓ Gesehen':saved?'✓ Gemerkt':'+ Merken')+'</button>';
   }
 
   function watchedButtonMarkup(item) {
@@ -476,11 +478,13 @@
         const key=modal?.dataset.recKey||button.dataset.recKey||'';
         const item=findRecommendation(key);
         if(!item)return;
-        const saved=Boolean(state.saved?.includes(recommendationStateId(item)));
-        button.disabled=saved;
-        button.classList.toggle('is-saved',saved);
-        button.setAttribute('aria-pressed',String(saved));
-        button.textContent=saved?'✓ Gemerkt':'+ Merken';
+        const id=recommendationStateId(item);
+        const saved=Boolean(state.saved?.includes(id));
+        const seen=Boolean(state.watched?.[id]);
+        button.disabled=saved||seen;
+        button.classList.toggle('is-saved',saved||seen);
+        button.setAttribute('aria-pressed',String(saved||seen));
+        button.textContent=seen?'✓ Gesehen':saved?'✓ Gemerkt':'+ Merken';
       });
     document.querySelectorAll('#personalizedView [data-rec-action="watched"], #recommendDetailModal [data-detail-action="watched"]')
       .forEach(button=>{
@@ -597,6 +601,11 @@
     const idNumber=Number(item.tmdbId);
     if(!Number.isSafeInteger(idNumber)||idNumber<=0)return;
     const id=recommendationStateId(item);
+    if(state.watched?.[id]){
+      updateSaveButtons();
+      showToast('Schon gesehen. Deine Bewertung findest du in FRAMELOG.');
+      return;
+    }
     if(state.saved?.includes(id)){
       updateSaveButtons();
       showToast('Dieser Titel ist bereits in deiner Merkliste.');
