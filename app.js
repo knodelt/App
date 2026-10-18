@@ -278,7 +278,7 @@ function loadState() {
   try { return { ...defaultState, ...JSON.parse(localStorage.getItem('frame-state') || '{}') }; }
   catch { return structuredClone(defaultState); }
 }
-function persist() { localStorage.setItem('frame-state', JSON.stringify(state)); }
+function persist() { localStorage.setItem('frame-state', JSON.stringify(state)); window.FrameCloud?.changed?.(); }
 
 function loadLastSwipe() {
   try {
