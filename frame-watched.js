@@ -17,7 +17,8 @@
   function normalizeItem(original) {
     if(!original || !['movie','series'].includes(original.type))return null;
     const tmdbId=Number(original.tmdbId||0);
-    const id=original.id || (Number.isSafeInteger(tmdbId)&&tmdbId>0?'tmdb-'+original.type+'-'+tmdbId:'');
+    const id=Number.isSafeInteger(tmdbId)&&tmdbId>0
+      ? 'tmdb-'+original.type+'-'+tmdbId : (original.id||'');
     if(!id || !/^[a-zA-Z0-9:_-]{1,100}$/.test(String(id)))return null;
     return {
       id:String(id),tmdbId:Number.isSafeInteger(tmdbId)&&tmdbId>0?tmdbId:null,
