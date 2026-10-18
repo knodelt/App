@@ -55,7 +55,7 @@
 
   function save() {
     model.updatedAt = Date.now();
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(model)); } catch {}
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(model)); window.FrameCloud?.changed?.(); } catch {}
   }
 
   function clamp(value,min,max) { return Math.min(max,Math.max(min,value)); }
