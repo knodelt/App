@@ -115,33 +115,43 @@
 
   function buildPayload() {
     syncHistory();
-    const entries = Object.values(history)
-      .filter(entry => state.swipes?.[entry.id])
-      .sort((a,b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0));
-
-    const tagMap = new Map();
-    entries.forEach(entry => {
-      const weight = actionWeight(state.swipes[entry.id]);
-      (entry.tags || []).forEach(tag => {
-        if (!tag || String(tag).length > 60) return;
-        tagMap.set(tag, (tagMap.get(tag) || 0) + weight);
+    const watchedItems=Object.values(state.watched||{})
+      .filter(entry=>entry?.item?.id && ['like','dislike'].includes(entry.rating));
+    const byId=new Map();
+    Object.values(history).filter(entry=>state.swipes?.[entry.id]).forEach(entry=>{
+      byId.set(entry.id,{
+        ...entry,action:state.swipes[entry.id],watched:false,
+        updatedAt:Number(entry.updatedAt||0)
       });
     });
-
-    const tagWeights = [...tagMap.entries()]
-      .filter(([,weight]) => weight !== 0)
-      .sort((a,b) => Math.abs(b[1]) - Math.abs(a[1]))
-      .slice(0,30)
-      .map(([tag,weight]) => ({tag,weight}));
-
-    const signals = entries
-      .filter(entry => entry.tmdbId && ['movie','series','person'].includes(entry.type))
-      .slice(0,100)
-      .map(entry => ({
-        tmdbId:entry.tmdbId,
-        type:entry.type,
-        title:entry.title,
-        action:state.swipes[entry.id]
+    for(const entry of watchedItems){
+      const item=entry.item,previous=byId.get(item.id)||{};
+      byId.set(item.id,{
+        ...previous,id:item.id,type:item.type,tmdbId:item.tmdbId||previous.tmdbId,
+        title:item.title||previous.title,
+        tags:item.tags?.length?item.tags:(previous.tags||[]),
+        action:entry.rating,watched:true,
+        updatedAt:Number(entry.watchedAt||Date.now())
+      });
+    }
+    const entries=[...byId.values()].sort((a,b)=>b.updatedAt-a.updatedAt);
+    const tagMap=new Map();
+    for(const entry of entries){
+      const weight=actionWeight(entry.action)*(entry.watched?2.5:1);
+      for(const tag of entry.tags||[]){
+        if(!tag||String(tag).length>60)continue;
+        tagMap.set(tag,(tagMap.get(tag)||0)+weight);
+      }
+    }
+    const tagWeights=[...tagMap.entries()]
+      .filter(([,weight])=>weight!==0)
+      .sort((a,b)=>Math.abs(b[1])-Math.abs(a[1]))
+      .slice(0,30).map(([tag,weight])=>({tag,weight}));
+    const signals=entries
+      .filter(entry=>entry.tmdbId&&['movie','series','person'].includes(entry.type))
+      .slice(0,100).map(entry=>({
+        tmdbId:entry.tmdbId,type:entry.type,title:entry.title,
+        action:entry.action,watched:entry.watched
       }));
 
     return {
