@@ -399,6 +399,7 @@
       : 'Nur die 10 Karten im Hidden Match zählen hier. Der normale Swipe-Feed ist unabhängig davon.');
     text('hmCardHelper',room.status === 'waiting' && host
       ? 'Du kannst jetzt schon abstimmen. Die zweite Person holt später auf ihrem Handy auf.'
+      : room.tailored ? 'Neue Vorschläge aus euren gemeinsamen Treffern. Eure Stimmen bleiben bis zum Reveal geheim.'
       : 'Beide erhalten dieselben zehn Titel. Die Entscheidungen bleiben bis zum Reveal geheim.');
     show('hmReady',room.status==='ready');
     if(room.status==='ready') {
@@ -420,7 +421,7 @@
     try {
       const result=await post(endpoint,payload);
       if(session?.code===before) setRoom(result.room);
-      if(endpoint==='close') {forgetPartner(before);clearConnection();}
+      if(endpoint==='close') {forgetPartner(before);dropLocalSession();}
       if(endpoint==='leave') {forgetPartner(before);dropLocalSession();}
       if(options.announce && typeof showToast==='function') showToast(options.announce);
     } catch(e) {
@@ -598,8 +599,8 @@
     if(!session || busy)return;
     if(session.role==='host') {
       if(!confirm(room?.partnership?.active?'Filmpartnerschaft für beide endgültig beenden? Eure gemeinsame Liste wird gelöscht.':'Möchtest du den gemeinsamen Room wirklich beenden?'))return;
+      // perform() clears the session only after the server confirms closing.
       await perform('close');
-      dropLocalSession();
     }else {
       if(!confirm(room?.partnership?.active?'Filmpartnerschaft endgültig beenden? Eure gemeinsame Liste wird für beide gelöscht.':'Room verlassen? Deine Stimmen dieser Runde gehen verloren.'))return;
       await perform('leave');
