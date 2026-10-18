@@ -567,6 +567,18 @@
 
   document.addEventListener('frame:swipe-undone', () => recompute());
   document.addEventListener('frame:taste-reset', resetTasteDna);
+  document.addEventListener('frame:recommendation-saved', event => {
+    const item=event.detail?.item;
+    if(item?.id && item.tmdbId)rememberSwipe(item.id,'save',item);
+  });
+
+  document.addEventListener('frame:watchlist-updated', event => {
+    const id=event.detail?.id;
+    if(event.detail?.saved!==false || !id || state.swipes[id] || !data.items[id])return;
+    delete data.items[id];
+    recompute();
+  });
+
   document.addEventListener('frame:recommendation-rejected', event => {
     const item = event.detail?.item;
     if (!item?.tmdbId) return;
