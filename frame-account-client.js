@@ -214,7 +214,18 @@
       'Von FRAME abmelden? Die Cloud-Daten bleiben gespeichert. Die lokale Kopie auf diesem Gerät wird aus Datenschutzgründen entfernt.';
     if(!confirm(warn))return;
     try{
-      ready=false;clearTimeout(timer);
+      clearTimeout(timer);
+      if(!deleteAccount && ready && !paused){
+        await push();
+        const current=await fingerprint(snapshot());
+        if(current!==lastHash){
+          syncStatus('Noch nicht alle Änderungen gespeichert. Bitte später erneut abmelden.',true);
+          return;
+        }
+      }
+      if(!deleteAccount && (paused || !ready) &&
+         !confirm('Die Cloud ist nicht synchronisiert. Trotzdem abmelden und lokale Änderungen verwerfen?'))return;
+      ready=false;
       await accountFetch(deleteAccount?'delete':'logout',{method:'POST',body:'{}'});
       for(const key of KEYS){try{localStorage.removeItem(key)}catch{}}
       clearCloudMarks();
