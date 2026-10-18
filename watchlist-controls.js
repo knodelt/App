@@ -105,16 +105,18 @@
   }
 
   function getItem(id) {
-    try { return catalog.find(item => item.id === id) || null; }
+    try { return typeof getWatchlistItem==='function' ? getWatchlistItem(id) : catalog.find(item=>item.id===id) || null; }
     catch { return null; }
   }
 
   function removeFromWatchlist(id) {
     state.saved = state.saved.filter(savedId => savedId !== id);
     if (state.swipes[id] === 'save') delete state.swipes[id];
+    if (state.savedItems) delete state.savedItems[id];
     persist();
     renderWatchlist();
     renderTaste();
+    document.dispatchEvent(new CustomEvent('frame:watchlist-updated',{detail:{id,saved:false}}));
     showToast('Aus der Watchlist entfernt.');
   }
 
