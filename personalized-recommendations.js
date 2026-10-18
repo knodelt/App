@@ -358,6 +358,12 @@
       .rec-action.save {color:#c2edc8;border-color:rgba(151,227,166,.35);background:rgba(18,60,39,.8);}
       .rec-action.save.is-saved {color:#a7dfa8;background:rgba(33,87,49,.52);}
       .rec-action.save:disabled {cursor:default;opacity:1;}
+      .rec-action.watched {color:#ffd4ab;border-color:rgba(255,193,131,.3);background:rgba(76,45,25,.34);}
+      .rec-action.watched.is-watched {color:#c8e9cc;border-color:rgba(157,225,178,.3);}
+      .rec-detail-bottom-actions .rec-detail-watched {
+        grid-column:1 / -1;min-height:43px;border:1px solid rgba(255,190,126,.24);
+        border-radius:13px;background:rgba(255,180,110,.11);color:#ffe4c4;font-weight:800;
+      }
       .rec-detail-bottom-actions .rec-detail-save {
         grid-column:1 / -1;min-height:44px;border-radius:13px;
         border:1px solid rgba(151,227,166,.32);background:rgba(31,76,48,.25);
@@ -446,6 +452,13 @@
       (saved?'✓ Gemerkt':'+ Merken')+'</button>';
   }
 
+  function watchedButtonMarkup(item) {
+    const checked=Boolean(state.watched?.[recommendationStateId(item)]);
+    return '<button class="rec-action watched'+(checked?' is-watched':'')+
+      '" type="button" data-rec-action="watched" data-rec-key="'+escapeHtml(recommendationKey(item))+'">'+
+      (checked?'✓ Gesehen · Ändern':'✓ Gesehen?')+'</button>';
+  }
+
   function updateSaveButtons() {
     document.querySelectorAll('#personalizedView [data-rec-action="save"], #recommendDetailModal [data-detail-action="save"]')
       .forEach(button=>{
@@ -458,6 +471,16 @@
         button.classList.toggle('is-saved',saved);
         button.setAttribute('aria-pressed',String(saved));
         button.textContent=saved?'✓ Gemerkt':'+ Merken';
+      });
+    document.querySelectorAll('#personalizedView [data-rec-action="watched"], #recommendDetailModal [data-detail-action="watched"]')
+      .forEach(button=>{
+        const modal=button.closest('#recommendDetailModal');
+        const key=modal?.dataset.recKey||button.dataset.recKey||'';
+        const item=findRecommendation(key);
+        if(!item)return;
+        const seen=Boolean(state.watched?.[recommendationStateId(item)]);
+        button.classList.toggle('is-watched',seen);
+        button.textContent=seen?'✓ Gesehen · Ändern':'✓ Gesehen?';
       });
   }
 
@@ -488,6 +511,7 @@
         <p class="rec-hero-description">${escapeHtml(hero.description || '')}</p>
         <div class="rec-actions">
           ${saveButtonMarkup(hero)}
+          ${watchedButtonMarkup(hero)}
           <button class="rec-action details" type="button" data-rec-action="details" data-rec-key="${hero.type}:${hero.tmdbId}">Details</button>
           <button class="rec-action remove" type="button" data-rec-action="remove" data-rec-key="${hero.type}:${hero.tmdbId}">Nicht für mich</button>
         </div>
@@ -514,6 +538,7 @@
           <span class="rec-description-mini">${escapeHtml(item.description || '')}</span>
           <div class="rec-actions">
             ${saveButtonMarkup(item)}
+            ${watchedButtonMarkup(item)}
             <button class="rec-action details" type="button" data-rec-action="details" data-rec-key="${item.type}:${item.tmdbId}">Details</button>
             <button class="rec-action remove" type="button" data-rec-action="remove" data-rec-key="${item.type}:${item.tmdbId}">Entfernen</button>
           </div>
@@ -661,6 +686,7 @@
           </div>
           <div class="rec-detail-bottom-actions">
             <button class="rec-detail-save" type="button" data-detail-action="save" aria-pressed="false">+ Merken</button>
+            <button class="rec-detail-watched" type="button" data-detail-action="watched">✓ Gesehen?</button>
             <button type="button" data-detail-action="close">Schließen</button>
             <button class="remove" type="button" data-detail-action="remove">Nicht für mich</button>
           </div>
@@ -671,6 +697,10 @@
     modal.addEventListener('click', event => {
       if (event.target === modal || event.target.closest('.rec-detail-close') || event.target.closest('[data-detail-action="close"]')) {
         closeRecommendationDetails();
+        return;
+      }
+      if (event.target.closest('[data-detail-action="watched"]')) {
+        window.FrameWatched?.open(findRecommendation(modal.dataset.recKey || ''));
         return;
       }
       if (event.target.closest('[data-detail-action="save"]')) {
@@ -926,6 +956,7 @@
       event.preventDefault();
       event.stopPropagation();
       const item = findRecommendation(actionButton.dataset.recKey || '');
+      if (actionButton.dataset.recAction === 'watched') window.FrameWatched?.open(item);
       if (actionButton.dataset.recAction === 'save') saveRecommendation(item);
       if (actionButton.dataset.recAction === 'remove') rejectRecommendation(item);
       if (actionButton.dataset.recAction === 'details') openRecommendationDetails(item);
@@ -944,6 +975,16 @@
   });
 
   document.addEventListener('frame:watchlist-updated', () => updateSaveButtons());
+  document.addEventListener('frame:watched-rated', () => {
+    updateSaveButtons();
+    invalidateRecommendations();
+    if(recommendationSurfaceVisible())queueMicrotask(()=>refreshRecommendations({force:true}));
+  });
+  document.addEventListener('frame:watched-removed', () => {
+    updateSaveButtons();
+    invalidateRecommendations();
+    if(recommendationSurfaceVisible())queueMicrotask(()=>refreshRecommendations({force:true}));
+  });
 
   document.addEventListener('frame:mood-changed', () => {
     invalidateRecommendations();
