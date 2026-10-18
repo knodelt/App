@@ -65,7 +65,91 @@ Jeder Participant besitzt einen separaten privaten Sitzungsschlüssel. Die Brows
 
 FRAMELOG zeigt die bereits vorhandenen Einträge aus `frame-state` und – wo vorhanden – ältere Empfehlungseinträge. Die ursprünglichen Entscheidungen und die späteren Gesehen-Urteile bleiben voneinander getrennt. Neue Einträge erhalten einen kleinen Filmdaten-Schnappschuss; zuvor gespeicherte Titel werden nicht dupliziert. Bei alten, unvollständig gespeicherten Einträgen können Poster oder Datum fehlen.
 
-Gesehen-Einträge unterstützen ein frei editierbares Filmabend-Datum und eine Notiz. Die Daten verbleiben im selben Browser und auf derselben Domain; ohne Benutzerkonten werden sie **nicht** zwischen Geräten synchronisiert.
+Gesehen-Einträge unterstützen ein frei editierbares Filmabend-Datum und eine Notiz. Ohne Anmeldung bleiben die Daten lokal. Mit FRAME Cloud können angemeldete Nutzer persönliche Film- und Geschmacksdaten geräteübergreifend speichern. Frame-Match-Sitzungsschlüssel werden bewusst nicht übertragen.
+
+
+## FRAME Cloud einrichten (framingapp.de)
+
+Das Repository enthält die technische Implementierung für eine passwortlose Anmeldung
+mit E-Mail-Code, Google und Apple sowie private Cloud-Speicherung über Cloudflare
+Durable Objects. **Ohne Anbieter-Secrets ist die Anmeldung noch nicht freigeschaltet.**
+Alle Schlüssel gehören ausschließlich in Cloudflare Workers & Pages → app →
+Settings → Variables and Secrets, niemals in das öffentliche GitHub-Repository.
+
+### 1. Cloud-Speicher und Basis-Secret
+
+Die Wrangler-Konfiguration enthält eine zweite SQLite-Durable-Object-Klasse
+**FrameAccount**, Binding **FRAME_ACCOUNTS** und Migration **frame_accounts_v1**.
+Beim nächsten Cloudflare-Build muss die neue Klasse erfolgreich bereitgestellt werden.
+
+Ein verschlüsseltes Worker-Secret **AUTH_SECRET** mit einem zufälligen
+Schlüssel (mindestens 32 Zeichen, empfohlen 64 zufällige Hexzeichen) anlegen.
+Optional kann die öffentliche Textvariable **FRAME_PUBLIC_ORIGIN** auf
+https://framingapp.de gesetzt werden.
+
+**AUTH_SECRET nicht verlieren und nicht verändern!** Der Schlüssel leitet die
+Kontenzuordnung aus einer verifizierten E-Mail-Adresse ab. Ein neuer Schlüssel
+kann die Wiederherstellung älterer Cloud-Konten verhindern.
+
+### 2. E-Mail-Login aktivieren
+
+Bei https://resend.com eine Absenderdomain **framingapp.de** verifizieren,
+dazu die geforderten DNS-Einträge in Cloudflare hinzufügen und einen API-Key
+erstellen. Dann diese beiden Worker-Secrets setzen:
+
+- **RESEND_API_KEY:** privater API-Key
+- **FRAME_EMAIL_FROM:** z. B. FRAME <login@framingapp.de> (muss zur verifizierten Absenderdomain passen)
+
+Die sechsstelligen Codes gelten 10 Minuten und sind einmalig. Häufigkeit pro
+E-Mail-Adresse und Client-IP ist begrenzt; nach fünf Fehlversuchen ist ein
+Code ungültig. Der Versand ist ohne diese Konfiguration nicht verfügbar.
+
+### 3. Google-Login aktivieren
+
+In https://console.cloud.google.com/apis/credentials einen OAuth-2.0-Webclient
+anlegen und den Einwilligungsbildschirm konfigurieren.
+
+- Zugelassener Ursprung: **https://framingapp.de**
+- Autorisierte Weiterleitung: **https://framingapp.de/api/account/oauth/google/callback**
+- Worker-Secrets: **GOOGLE_CLIENT_ID** und **GOOGLE_CLIENT_SECRET**
+
+FRAME verwendet OAuth Authorization Code mit PKCE und prüft signierte ID-Tokens,
+Issuer, Audience, Nonce, Gültigkeit und die verifizierte E-Mail-Adresse.
+
+### 4. Login mit Apple aktivieren
+
+Im Apple Developer-Konto Sign in with Apple aktivieren, eine Services ID für
+die Website einrichten und die Domain **framingapp.de** registrieren.
+
+- Return-URL: **https://framingapp.de/api/account/oauth/apple/callback**
+- **APPLE_CLIENT_ID:** die Services ID
+- **APPLE_TEAM_ID:** Apple Team ID
+- **APPLE_KEY_ID:** Kennung des Sign-in-with-Apple-Schlüssels
+- **APPLE_PRIVATE_KEY:** vollständiger Inhalt des privaten .p8-Schlüssels
+
+Die Werte sind als Worker-Secrets zu speichern. FRAME signiert den
+Apple-Client-Secret-JWT selbst auf dem Server und prüft ID-Tokens gegen Apples
+öffentliche JWK-Schlüssel. Mit Apples Funktion „E-Mail verbergen“ entsteht
+gegebenenfalls ein separates Konto statt einer automatischen Verknüpfung.
+
+### Daten und Konflikte
+
+- Ohne Konto funktioniert FRAME weiterhin lokal.
+- Bei der ersten Anmeldung wird vor dem Hochladen vorhandener Gerätedaten gefragt.
+- Ein neues Gerät ohne Filmverlauf lädt die vorhandenen Cloud-Daten.
+- Parallel bearbeitete Daten werden nicht automatisch überschrieben; FRAME
+  verlangt eine bewusste Entscheidung zwischen Gerät und Cloud.
+- Gespeichert werden FRAME-State (Swipes, Merkliste, Gesehen, FRAMELOG),
+  Taste-DNA, Online-Lernen, Empfehlungshistorie, Daily Frame und Stimmungsfilter.
+- Frame-Match-Raumcodes/Sitzungsschlüssel werden nicht mit Cloud synchronisiert.
+- Abmelden entfernt die private lokale Kopie; die Cloud bleibt erhalten.
+- Die Kontolöschung entfernt den privaten Cloud-Datensatz und alle Sessions.
+- Eine JSON-Sicherung lässt sich über den Konto-Bereich herunterladen.
+
+**Vor einem öffentlichen Start:** E-Mail-Zustellung, Google- und Apple-Login,
+Zwei-Geräte-Synchronisierung, Konflikte und Löschung live prüfen, außerdem
+Impressum, vollständige Datenschutzerklärung/DSGVO und genutzte Filmrechte.
+
 
 ## TMDB aktivieren
 
@@ -112,9 +196,9 @@ Ohne lokales Worker-Runtime-Setup läuft dabei nur der Seed-Katalog. Für das ko
 1. TMDB Secret aktivieren
 2. echte TMDB-basierte Empfehlungen statt statischer Recommendation-Seeds
 3. Detailansicht für Filme/Serien/People
-4. Auth + Profile
-5. Swipe-Daten serverseitig speichern
-6. optional eigene Konten und sichere Wiederherstellung gespeicherter Filmpartner auf anderen Geräten ergänzen
+4. FRAME Cloud-Secrets und OAuth-Anbieter im Cloudflare-Dashboard einrichten
+5. Konten mit zwei Smartphones live testen und bei Bedarf verbessern
+6. optional bestehende Frame-Match-Partnerschaften mit Accounts verknüpfen
 7. Push/Reminder für neue Daily Drops und neue gemeinsame Matches
 8. später optional Capacitor für native iOS-/Android-Builds
 
