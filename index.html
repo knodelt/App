@@ -89,6 +89,7 @@
       </section>
 
       <section class="view" id="watchlistView" data-view="watchlist">
+        <button class="frame-watchlist-back" id="watchlistBack" type="button">← Mein Frame</button>
         <div class="section-head compact">
           <div>
             <p class="eyebrow">Gespeichert</p>
@@ -122,11 +123,11 @@
         </div>
       </section>
 
-      <section class="view" id="recommendView" data-view="recommend">
+      <section class="view" id="dailyFrameView" data-view="daily" aria-label="Daily Frame">
         <div class="section-head compact">
           <div>
-            <p class="eyebrow">FRAME DAILY</p>
-            <h1>Heute bei FRAME</h1>
+            <p class="eyebrow">DEIN TÄGLICHER DROP</p>
+            <h1>Daily Frame.</h1>
           </div>
           <span class="match-orb" id="dropProgress">0/7</span>
         </div>
@@ -135,7 +136,7 @@
           <section class="loop-panel" id="dailyDropPanel" aria-labelledby="dailyDropHeading">
             <div class="loop-panel-inner">
               <div class="loop-kicker-row">
-                <p class="loop-kicker" id="dailyDropHeading">TODAY’S 7 · <span id="dropModeLabel">DEIN DROP</span></p>
+                <p class="loop-kicker" id="dailyDropHeading">DAILY FRAME · <span id="dropModeLabel">DEINE 7</span></p>
                 <span class="loop-date" id="dropDateLabel">Heute</span>
               </div>
               <div class="drop-progress" id="dropProgressBar" aria-label="Fortschritt Daily Drop"></div>
@@ -145,7 +146,7 @@
                   <span class="drop-card-index" id="dropCardIndex">01</span>
                 </div>
                 <div class="drop-copy">
-                  <small id="dropMeta">FRAME DAILY</small>
+                  <small id="dropMeta">DAILY FRAME</small>
                   <h2 id="dropTitle">Dein Drop wird vorbereitet.</h2>
                   <p id="dropSub">Sieben Titel. Keine endlose Suche.</p>
                 </div>
@@ -159,11 +160,22 @@
               <p class="drop-done" id="dropDone" hidden>Drop abgeschlossen.</p>
             </div>
           </section>
+        </div>
+      </section>
 
+      <section class="view" id="recommendView" data-view="recommend" aria-label="Frame Match">
+        <div class="section-head compact">
+          <div>
+            <p class="eyebrow">GEMEINSAM ENTSCHEIDEN</p>
+            <h1>Frame Match.</h1>
+          </div>
+          <span class="frame-match-header-icon" aria-hidden="true">♡</span>
+        </div>
+        <div class="frame-loop-stack">
           <section class="loop-panel room-panel hm-panel" id="roomPanel" aria-labelledby="hiddenMatchHeading">
             <div class="hm-intro-head">
               <div>
-                <p class="loop-kicker">HIDDEN MATCH · LIVE</p>
+                <p class="loop-kicker">FRAME MATCH · LIVE</p>
                 <h2 id="hiddenMatchHeading">Zwei Handys. Ein Filmabend.</h2>
               </div>
               <span class="hm-intro-icon" aria-hidden="true">♥</span>
@@ -176,12 +188,12 @@
               <div class="hm-setup-host" id="hmHostSetup">
                 <label for="hmHostName">Wie heißt du?</label>
                 <input id="hmHostName" type="text" maxlength="24" autocomplete="nickname" placeholder="Dein Vorname" />
-                <button class="hm-main-btn" id="hmCreate" type="button">Hidden Match starten <span aria-hidden="true">→</span></button>
+                <button class="hm-main-btn" id="hmCreate" type="button">Frame Match starten <span aria-hidden="true">→</span></button>
                 <small>Kein Konto nötig · Room für genau zwei Personen</small>
               </div>
               <div class="hm-setup-guest" id="hmGuestSetup" hidden>
                 <div class="hm-invite-kicker">Du bist eingeladen</div>
-                <h3 id="hmGuestHeading">Dein Hidden Match wartet.</h3>
+                <h3 id="hmGuestHeading">Dein Frame Match wartet.</h3>
                 <p>Du spielst unabhängig auf deinem eigenen Smartphone. Niemand sieht deine Swipes vor dem Reveal.</p>
                 <label for="hmGuestName">Wie heißt du?</label>
                 <input id="hmGuestName" type="text" maxlength="24" autocomplete="nickname" placeholder="Dein Vorname" />
@@ -319,8 +331,8 @@
       <section class="view" id="tasteView" data-view="taste">
         <div class="section-head compact">
           <div>
-            <p class="eyebrow">Dein Geschmack</p>
-            <h1>Dein Profil</h1>
+            <p class="eyebrow">DEIN PERSÖNLICHER FILMRAUM</p>
+            <h1>Mein Frame.</h1>
           </div>
           <span class="film-counter"><b id="swipeCount">0</b><small>Swipes</small></span>
         </div>
@@ -353,6 +365,15 @@
           <article><strong id="dislikedStat">0</strong><span>Mist</span></article>
         </div>
 
+        <button class="frame-watchlist-entry" id="openWatchlistFromFrame" type="button">
+          <span class="frame-watchlist-entry-icon" aria-hidden="true">⌑</span>
+          <span class="frame-watchlist-entry-copy">
+            <strong>Meine Merkliste</strong>
+            <small>Deine nach oben gewischten Filme und Serien</small>
+          </span>
+          <span class="frame-watchlist-entry-count" id="frameWatchlistCount" aria-label="Gemerkte Titel">0</span>
+          <span class="frame-watchlist-entry-arrow" aria-hidden="true">→</span>
+        </button>
         <button class="ghost-btn" id="tutorialReplayButton" type="button">Kurzes Tutorial ansehen</button>
         <button class="ghost-btn" id="resetButton">Geschmack zurücksetzen</button>
         <a class="ghost-btn" href="/about.html" style="display:block;text-align:center;text-decoration:none;box-sizing:border-box;">Über FRAME · Datenquellen</a>
@@ -361,14 +382,14 @@
     </main>
 
     <nav class="bottom-nav" aria-label="Hauptnavigation">
-      <button class="nav-item active" data-target="discover"><span aria-hidden="true">◉</span><small>Entdecken</small></button>
-      <button class="nav-item" data-target="watchlist"><span aria-hidden="true">⌑</span><small>Merken</small></button>
+      <button class="nav-item active" data-target="discover" type="button" aria-label="Framing: Filme und Serien entdecken"><span aria-hidden="true">◉</span><small>Framing</small></button>
       <button class="nav-item nav-item-for-you" id="recommendShortcut" data-target="personalized" type="button" aria-label="Für dich – persönliche Empfehlungen">
         <span class="for-you-nav-symbol" aria-hidden="true">✦<i class="for-you-new-indicator" id="forYouNewIndicator" hidden></i></span>
         <small>Für dich</small>
       </button>
-      <button class="nav-item" data-target="recommend"><span aria-hidden="true">◷</span><small>Heute</small></button>
-      <button class="nav-item" data-target="taste"><span aria-hidden="true">◎</span><small>Profil</small></button>
+      <button class="nav-item nav-item-daily" data-target="daily" type="button" aria-label="Daily Frame: sieben tägliche Filmvorschläge"><span aria-hidden="true">▣</span><small>Daily Frame</small></button>
+      <button class="nav-item" data-target="recommend" type="button" aria-label="Frame Match: gemeinsam Filme finden"><span aria-hidden="true">♡</span><small>Frame Match</small></button>
+      <button class="nav-item" data-target="taste" type="button" aria-label="Mein Frame: Profil und Merkliste"><span aria-hidden="true">◎</span><small>Mein Frame</small></button>
     </nav>
   </div>
 
