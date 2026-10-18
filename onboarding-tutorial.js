@@ -70,19 +70,10 @@
     },
     {
       view:'taste',
-      target:'#openWatchlistFromFrame',
-      title:'Deine Merkliste bleibt dabei.',
-      copy:'Nach oben gewischte Karten und gemerkte „Für dich“-Vorschläge landen hier. Tippe bei einem Film auf „Gesehen?“, um ihn nach dem Anschauen wirklich zu bewerten. Gesehene Titel verlassen die Merkliste.',
-      extra:'watchlist',
-      panel:'top',
-      scroll:true
-    },
-    {
-      view:'watched',
-      target:'#watchedView .frame-watched-intro',
-      title:'Schon gesehen? Jetzt zählt dein Urteil.',
-      copy:'Unter „Mein Frame → Schon gesehen“ sammelt FRAME Filme und Serien, die du wirklich angeschaut hast. „Hat gefallen“ oder „Hat nicht gefallen“ beeinflusst künftige Empfehlungen stärker als ein Swipe. Hier kannst du Bewertungen auch ändern oder zurücknehmen.',
-      extra:'watched',
+      target:'#openFrameLog',
+      title:'FRAMELOG: deine ganze Filmgeschichte.',
+      copy:'Ein einziger Ort für deine Merkliste, gesehene Filme, echte Bewertungen und frühere SUPER- oder MIST-Swipes. In FRAMELOG kannst du filtern, ein Filmabend-Datum festhalten und kurze Notizen ergänzen.',
+      extra:'framelog',
       panel:'top',
       scroll:true
     },
@@ -775,17 +766,12 @@
           <div><b>◎</b><span><strong>Mein Frame:</strong> deine Geschmacks-DNA, Statistiken und Einstellungen.</span></div>
         </div>`;
     }
-    if(type==='watched'){
+    if (type === 'framelog') {
       return `
         <div class="frame-tutorial-feature">
-          <div><b>♥</b><span><strong>Hat gefallen:</strong> starke positive Lernerfahrung nach dem Anschauen.</span></div>
-          <div><b>✕</b><span><strong>Hat nicht gefallen:</strong> starke negative Lernerfahrung.</span></div>
-        </div>`;
-    }
-    if (type === 'watchlist') {
-      return `
-        <div class="frame-tutorial-feature">
-          <div><b>⌑</b><span><strong>Meine Merkliste:</strong> alle in Framing nach oben gewischten Titel.</span></div>
+          <div><b>⌑</b><span><strong>Merkliste:</strong> alles, was du später ansehen möchtest.</span></div>
+          <div><b>♥</b><span><strong>Gesehen:</strong> deine echten Bewertungen, Daten und Notizen.</span></div>
+          <div><b>✦</b><span><strong>SUPER / MIST:</strong> deine ursprünglichen Entscheidungen bleiben getrennt.</span></div>
         </div>`;
     }
     if (type === 'start') {
