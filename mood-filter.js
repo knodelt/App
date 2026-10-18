@@ -42,7 +42,7 @@
 
   function saveMood() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ mood:currentMood, date:todayKey() }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ mood:currentMood, date:todayKey() })); window.FrameCloud?.changed?.();
     } catch {}
   }
 
