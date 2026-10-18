@@ -3,6 +3,9 @@
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const CODE_RE = /^[A-HJ-NP-Z2-9]{8}$/;
 const LIFETIME_MS = 24 * 60 * 60 * 1000;
+const PARTNER_LIFETIME_MS = 90 * LIFETIME_MS;
+const MAX_ARCHIVE = 100;
+const MAX_SHARED = 60;
 const VOTES = new Set(['like', 'save', 'dislike']);
 
 const reply = (payload, status = 200) => new Response(JSON.stringify(payload), {
@@ -96,6 +99,20 @@ function matchResults(room) {
     return [{...item,tier,hostVote:first,guestVote:second}];
   }).sort((a,b) => b.tier-a.tier || b.rating-a.rating || a.title.localeCompare(b.title,'de'));
 }
+// Shared matches are archived only AFTER both people agree to reveal.
+function archiveRevealedMatches(room) {
+  const existing=new Map((room.matchArchive||[]).map(item=>[item.id,item]));
+  for(const item of matchResults(room)){
+    if(!existing.has(item.id))existing.set(item.id,{
+      id:item.id,tmdbId:item.tmdbId,type:item.type,title:item.title,
+      poster:item.poster,year:item.year,rating:item.rating
+    });
+  }
+  room.matchArchive=[...existing.values()].slice(-MAX_ARCHIVE);
+}
+function extendPartnership(room) {
+  if(room.partner?.active)room.expiresAt=Date.now()+PARTNER_LIFETIME_MS;
+}
 function progress(room,role) {
   return Object.keys(room.votes[role] || {}).length;
 }
@@ -110,7 +127,14 @@ function publicRoom(room, role) {
     total:room.items.length, items:room.items, ownVotes:room.votes[role],
     ownReady:Boolean(room.ready[role]), partnerReady:completed ? Boolean(room.ready[role === 'host' ? 'guest' : 'host']) : false,
     matches:revealed ? matchResults(room) : null,
-    picked:revealed ? room.picked : null
+    picked:revealed ? room.picked : null,
+    partnership:{
+      active:Boolean(room.partner?.active),
+      ownConsent:Boolean(room.partner?.consent?.[role]),
+      otherConsent:Boolean(room.partner?.consent?.[role==='host'?'guest':'host'])
+    },
+    sharedList:room.partner?.active ? (room.sharedList||[]) : [],
+    nextRequested:Boolean(room.nextRequested)
   };
 }
 
@@ -176,7 +200,9 @@ export class HiddenMatchRoom {
         code:payload.code, round:1, status:'waiting',createdAt:Date.now(),
         expiresAt:Date.now()+LIFETIME_MS, host:{name:safeName(payload.name),token:payload.token},
         guest:null,items:payload.items,votes:{host:{},guest:{}},
-        ready:{host:false,guest:false},picked:null,seen:payload.items.map(item=>item.id)
+        ready:{host:false,guest:false},picked:null,seen:payload.items.map(item=>item.id),
+        partner:{active:false,consent:{host:false,guest:false}},
+        matchArchive:[],sharedList:[],nextRequested:false
       };
       await this.store(room);
       return reply({ok:true,room:publicRoom(room,'host'),token:room.host.token});
@@ -212,7 +238,10 @@ export class HiddenMatchRoom {
       if (room.status !== 'ready') return fail('Warte, bis beide alle Karten bewertet haben.',409,'NOT_READY');
       if (progress(room,role)!==room.items.length) return fail('Bitte alle Karten bewerten.');
       room.ready[role]=true;
-      if (room.ready.host && room.ready.guest) room.status='reveal';
+      if (room.ready.host && room.ready.guest) {
+        room.status='reveal';
+        archiveRevealedMatches(room);
+      }
     } else if (action === 'pick') {
       if (!['reveal','finished'].includes(room.status)) return fail('Der Reveal ist noch nicht freigegeben.',409,'NOT_REVEALED');
       if (!room.picked) {
@@ -221,27 +250,50 @@ export class HiddenMatchRoom {
         room.picked=matches[0];
       }
       room.status='finished';
+    } else if(action === 'savePartner') {
+      if (!room.guest || ['closed'].includes(room.status)) return fail('Es müssen beide Personen verbunden sein.',409,'NO_PARTNER');
+      if(!room.partner)room.partner={active:false,consent:{host:false,guest:false}};
+      if(!room.partner.consent)room.partner.consent={host:false,guest:false};
+      room.partner.consent[role]=true;
+      if(room.partner.consent.host && room.partner.consent.guest)room.partner.active=true;
+    } else if(action === 'toggleSave') {
+      if(!room.partner?.active)return fail('Speichert zuerst eure Partnerschaft.',409,'PARTNER_REQUIRED');
+      const itemId=String(payload.itemId||'');
+      const match=(room.matchArchive||[]).find(item=>item.id===itemId);
+      if(!match)return fail('Nur bereits enthüllte gemeinsame Treffer dürfen gespeichert werden.',409,'NOT_A_MATCH');
+      const saved=room.sharedList||[];
+      room.sharedList=saved.some(item=>item.id===itemId)
+        ? saved.filter(item=>item.id!==itemId)
+        : [...saved,match].slice(-MAX_SHARED);
     } else if (action === 'next') {
-      if (role !== 'host') return fail('Nur der Host kann eine neue Runde starten.',403,'HOST_ONLY');
+      if (role !== 'host' && !room.partner?.active) return fail('Nur der Host kann eine neue Runde starten.',403,'HOST_ONLY');
       if (!['reveal','finished'].includes(room.status)) return fail('Beendet zunächst die Runde.',409,'WRONG_PHASE');
       let freshItems;
-      try { freshItems=await getTitles(this.env,room.seen); }
+      try { freshItems=await getTitles(this.env,(room.seen||[]).slice(-300)); }
       catch(error) { return fail(error.message||'Keine neuen Karten verfügbar.',503,'NO_TITLES'); }
       room.seen.push(...freshItems.map(item=>item.id));
+      room.seen=room.seen.slice(-300);
       room.items=freshItems;
       room.round+=1;
       room.votes={host:{},guest:{}};
       room.ready={host:false,guest:false};
       room.picked=null;
+      room.nextRequested=false;
       room.status='playing';
     } else if (action === 'leave') {
       if (role !== 'guest') return fail('Der Host muss den Room beenden.',403,'HOST_ONLY');
+      if(room.partner?.active) {
+        room.status='closed';
+        room.expiresAt=Date.now()+5*60*1000;
+      } else {
       room.guest=null;
       // Preserve already completed host swipes when a guest leaves.
       room.votes.guest={};
       room.ready={host:false,guest:false};
       room.picked=null;
       room.status='waiting';
+      if(room.partner)room.partner.consent={host:false,guest:false};
+      }
     } else if (action === 'close') {
       if (role !== 'host') return fail('Nur der Host kann den Room beenden.',403,'HOST_ONLY');
       room.status='closed';
@@ -249,6 +301,8 @@ export class HiddenMatchRoom {
     } else {
       return fail('Aktion nicht gefunden.',404);
     }
+    // Polling/state never renews a partnership, only an authenticated action.
+    if(room.status!=='closed' && !['state'].includes(action))extendPartnership(room);
     await this.store(room);
     await this.broadcast(room);
     return reply({ok:true,room:publicRoom(room,role)});
@@ -295,7 +349,7 @@ export async function handleHiddenMatch(request,env) {
   if (!CODE_RE.test(code)) return fail('Ungültiger Room-Code.');
   const payload={...body};
   if (action === 'join') payload.token=secret();
-  if (!['join','state','vote','ready','pick','next','leave','close'].includes(action)) return fail('Aktion nicht gefunden.',404);
+  if (!['join','state','vote','ready','pick','next','leave','close','savePartner','toggleSave'].includes(action)) return fail('Aktion nicht gefunden.',404);
   return env.HIDDEN_MATCH_ROOMS.get(env.HIDDEN_MATCH_ROOMS.idFromName(code))
     .fetch(new Request('https://room.internal/'+action,{method:'POST',body:JSON.stringify(payload)}));
 }
