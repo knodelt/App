@@ -13,9 +13,11 @@ FRAME ist ein Mobile-first-Prototyp für eine Film- und Serien-Discovery-App. St
 - Filter für Filme, Serien und People
 - Poster, Profilbilder und Kurzinfos
 - lokale Watchlist
-- täglicher **Daily Drop** mit 7 stabilen Film-/Serienkarten
-- **Hidden Match** als lokaler Pass-the-phone-Room für zwei Personen
-- **Just Pick One** priorisiert gemeinsame Matches, danach Watchlist und Taste-Signale
+- **Daily Frame** mit sieben täglichen Vorschlägen
+- **Frame Match** mit serverseitig synchronisierten 10er-Runden für zwei Geräte
+- nach Zustimmung beider Seiten: bis zu 90 Tage gespeicherte Filmpartner
+- gemeinsame Filmliste aus enthüllten Matches und neue genregewichtete Vorschläge für beide
+- eine separate **Just Pick One**-Soloentscheidung
 - lokales Geschmacksprofil („Movie DNA“)
 - einfache, nachvollziehbare Empfehlungen aus Tags und Swipe-Signalen
 - installierbare PWA
@@ -33,7 +35,7 @@ FRAME ist bewusst leichtgewichtig gebaut:
 - Vanilla JavaScript
 - localStorage
 - PWA Manifest + Service Worker
-- Cloudflare Workers Static Assets
+- Cloudflare Workers Static Assets und Durable Objects für Frame Match
 - Cloudflare Worker API unter `/api/feed`
 - TMDB API als Film-/Serien-/People-Datenquelle
 
@@ -47,7 +49,13 @@ Das Repository ist als Cloudflare Worker verbunden. `wrangler.jsonc` ist die Sou
 npx wrangler deploy
 ```
 
-Normale App-Dateien werden als Static Assets ausgeliefert. Nur `/api/*` läuft zuerst durch `worker.js`.
+Normale App-Dateien werden als Static Assets ausgeliefert. `/api/*` wird über `main-worker.js` verarbeitet; `/api/hidden-match/*` verwendet `HiddenMatchRoom` Durable Objects.
+
+### Frame Match: Speichern und Privatsphäre
+
+Rooms sind normalerweise 24 Stunden gültig. Bestätigen **beide** Seiten „Filmpartner speichern“, bleibt die Verbindung bei Aktivität bis zu 90 Tage erhalten. Beide Teilnehmer können danach in neuen Runden bewerten und enthüllte gemeinsame Titel in einer geteilten Filmliste speichern.
+
+Jeder Participant besitzt einen separaten privaten Sitzungsschlüssel. Die Browser-App merkt sich auf demselben Gerät bis zu acht Partnerverbindungen. Diese Schlüssel gehören **nicht** in Einladungslinks; ohne Benutzerkonto kann ein Gerätewechsel den Zugriff verlieren. Beenden oder Verlassen einer gespeicherten Partnerschaft schließt den gemeinsamen Raum für beide. Swipes werden erst beim Reveal als Matches offengelegt.
 
 ## TMDB aktivieren
 
@@ -96,7 +104,7 @@ Ohne lokales Worker-Runtime-Setup läuft dabei nur der Seed-Katalog. Für das ko
 3. Detailansicht für Filme/Serien/People
 4. Auth + Profile
 5. Swipe-Daten serverseitig speichern
-6. lokale Room-Abstraktion auf echte Accounts + serverseitige Room-Synchronisation umstellen
+6. optional eigene Konten und sichere Wiederherstellung gespeicherter Filmpartner auf anderen Geräten ergänzen
 7. Push/Reminder für neue Daily Drops und neue gemeinsame Matches
 8. später optional Capacitor für native iOS-/Android-Builds
 
