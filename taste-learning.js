@@ -858,36 +858,41 @@
     if (item) learnSwipe(id,action,item,meta);
   };
 
-  async function syncWatchedExample(id,item,rating) {
+  const watchedRevisions=new Map();
+  async function syncWatchedExample(id,item,rating,expectedWatched) {
     if(!id || !item)return;
-    const current=state.watched?.[id];
-    // Async feature lookups may finish after another rating was selected.
-    if(current && current.rating!==rating)return;
+    const revision=(watchedRevisions.get(id)||0)+1;
+    watchedRevisions.set(id,revision);
+    if(Boolean(state.watched?.[id])!==expectedWatched)return;
     const features=await getFeatures(item);
-    if(state.watched?.[id] && state.watched[id].rating!==rating)return;
+    // Ignore a delayed network response after a newer rating or undo.
+    if(watchedRevisions.get(id)!==revision ||
+      Boolean(state.watched?.[id])!==expectedWatched ||
+      (expectedWatched && state.watched[id].rating!==rating))return;
     model.examples=model.examples.filter(example=>example.id!==id);
     if(features.length && ['like','dislike','save'].includes(rating)){
       model.examples.push(compactExample({
         id,tmdbId:item.tmdbId||null,type:item.type,title:item.title||'',
         action:rating,features,
-        meta:{dwellMs:0,detailsOpened:false,watched:Boolean(state.watched?.[id])},
+        meta:{dwellMs:0,detailsOpened:false,watched:expectedWatched},
         at:Date.now()
       }));
     }
     model.examples=model.examples.slice(-MAX_EXAMPLES);
-    rebuild(); // replacing a prior opinion must remove its old learned weight
+    rebuild(); // old opinions are removed, not trained twice
   }
 
   document.addEventListener('frame:watched-rated',eventObject=>{
     const {id,item,rating}=eventObject.detail||{};
-    if(id && item)void syncWatchedExample(id,item,rating);
+    if(id && item)void syncWatchedExample(id,item,rating,true);
   });
   document.addEventListener('frame:watched-removed',eventObject=>{
     const {id,item}=eventObject.detail||{};
     if(!id)return;
     const original=state.swipes?.[id];
-    if(original && item)void syncWatchedExample(id,item,original);
+    if(original && item)void syncWatchedExample(id,item,original,false);
     else {
+      watchedRevisions.set(id,(watchedRevisions.get(id)||0)+1);
       model.examples=model.examples.filter(example=>example.id!==id);
       rebuild();
     }
