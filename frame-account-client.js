@@ -78,11 +78,22 @@
   };
   const restoreLocal=(items)=>{
     if(!items||typeof items!=='object')throw Error('Ungültiger Cloud-Speicher');
-    for(const key of KEYS){
-      try{
+    // Check total storage before modifying the real keys. Roll back on quota errors.
+    const previous=snapshot(),written=[];
+    try{
+      for(const key of KEYS){
         if(Object.prototype.hasOwnProperty.call(items,key))localStorage.setItem(key,items[key]);
         else localStorage.removeItem(key);
-      }catch{throw Error('Nicht genug Browserspeicher. Cloud-Daten nicht vollständig übernommen.');}
+        written.push(key);
+      }
+    }catch{
+      for(const key of written.reverse()){
+        try{
+          if(Object.prototype.hasOwnProperty.call(previous,key))localStorage.setItem(key,previous[key]);
+          else localStorage.removeItem(key);
+        }catch{}
+      }
+      throw Error('Nicht genug Browserspeicher für die Cloud-Daten. Vorhandene Daten wurden möglichst wiederhergestellt.');
     }
   };
   async function upload(values,rev) {
@@ -106,17 +117,20 @@
       const local=snapshot(),hash=await fingerprint(local);
       if(hash===lastHash){syncStatus('Alle Änderungen synchronisiert');return;}
       await upload(local,revision);
-      if((await fingerprint(snapshot()))!==hash || changedDuring){
-        changedDuring=false;
-        queue();
-      }
+      if((await fingerprint(snapshot()))!==hash)changedDuring=true;
     }catch(e){
       if(e.status===409){
         paused=true;ready=false;
         syncStatus('Änderungen auf zwei Geräten erkannt. Bitte abgleichen.',true);
         show('frameAccountConflict',true);
       }else syncStatus(e.message||'Cloud-Speicherung fehlgeschlagen. Erneut versuchen.',true);
-    }finally{inflight=false;}
+    }finally{
+      inflight=false;
+      if(changedDuring){
+        changedDuring=false;
+        if(ready&&!paused)queue();
+      }
+    }
   }
   async function reconcile(){
     if(!me?.authenticated)return;
