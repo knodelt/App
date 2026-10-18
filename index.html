@@ -374,22 +374,6 @@
           <span class="frame-watchlist-entry-count" id="frameWatchlistCount" aria-label="Gemerkte Titel">0</span>
           <span class="frame-watchlist-entry-arrow" aria-hidden="true">→</span>
         </button>
-        <section class="frame-data-transfer" id="frameDataTransfer" aria-labelledby="frameDataTransferTitle">
-          <div class="frame-transfer-heading">
-            <span class="frame-transfer-symbol" aria-hidden="true">↗</span>
-            <div>
-              <strong id="frameDataTransferTitle">Dein FRAME mitnehmen</strong>
-              <small>Swipes, Merkliste und Geschmacksprofil sichern</small>
-            </div>
-          </div>
-          <p id="frameTransferGuidance"></p>
-          <div class="frame-transfer-actions">
-            <button type="button" id="frameExportData">Daten sichern</button>
-            <button type="button" id="frameImportData">Sicherung einspielen</button>
-          </div>
-          <input id="frameDataFile" type="file" accept=".json,application/json" hidden aria-label="FRAME-Sicherung auswählen"/>
-          <p id="frameTransferMessage" class="frame-transfer-message" role="status" aria-live="polite"></p>
-        </section>
         <button class="ghost-btn" id="tutorialReplayButton" type="button">Kurzes Tutorial ansehen</button>
         <button class="ghost-btn" id="resetButton">Geschmack zurücksetzen</button>
         <a class="ghost-btn" href="/about.html" style="display:block;text-align:center;text-decoration:none;box-sizing:border-box;">Über FRAME · Datenquellen</a>
@@ -468,6 +452,5 @@
   <script src="/frame-loop.js" defer></script>
   <script src="/vendor-qrcode.js" defer></script>
   <script src="/hidden-match-client.js" defer></script>
-  <script src="/frame-data-transfer.js" defer></script>
 </body>
 </html>
