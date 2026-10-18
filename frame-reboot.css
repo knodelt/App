@@ -2091,3 +2091,106 @@ h1 em {
 }
 #frameLogView .frame-log-header {padding-top:0;}
 /* Keep normal title rhythm and a small cushion before subsequent content. */
+
+
+/* FRAME Cloud · user account and sync UI, integrated in Mein Frame */
+.frame-account-card{
+  margin:19px 0 15px;padding:17px 15px 15px;border-radius:21px;
+  background:linear-gradient(130deg,rgba(238,161,192,.105),rgba(255,255,255,.028) 64%);
+  border:1px solid rgba(244,179,200,.23);
+}
+.frame-account-intro{display:flex;align-items:center;gap:12px;}
+.frame-account-mark{
+  flex:0 0 43px;width:43px;height:43px;display:grid;place-items:center;
+  background:rgba(243,181,200,.11);border:1px solid rgba(243,181,200,.23);
+  border-radius:14px;font-size:27px;color:#f1c4d5;
+}
+.frame-account-kicker{
+  display:block;margin-bottom:5px;letter-spacing:.11em;
+  font:800 9px/1.3 var(--font-ui,Manrope,system-ui);color:#e8a6bf;
+}
+.frame-account-intro h2{
+  font:650 23px/1.1 var(--font-display,Fraunces,Georgia,serif);
+  color:#f8f2f5;margin:0;
+}
+.frame-account-card p{
+  font:550 11px/1.55 var(--font-ui,Manrope,system-ui);
+  color:#bcb0b9;margin:10px 0;
+}
+.frame-account-card .frame-account-status{
+  color:#c8d9c9;font-size:10px;min-height:16px;
+}
+.frame-account-status.is-error{color:#ffafb9!important;}
+.frame-account-primary,
+.frame-account-form button {
+  width:100%;min-height:44px;padding:10px 12px;border:0;border-radius:13px;
+  background:#e9cbd7;color:#2b1e28;
+  font:800 12px/1.35 var(--font-ui,Manrope,system-ui);
+}
+.frame-account-email{
+  display:block;color:#f6ebf0;word-break:break-all;
+  font:750 13px/1.4 var(--font-ui,Manrope,system-ui);
+}
+.frame-account-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px;}
+.frame-account-actions button,#frameAccountConflict button{
+  min-height:39px;padding:9px;border-radius:11px;
+  background:rgba(255,255,255,.055);color:#f4e9ed;
+  border:1px solid rgba(255,255,255,.13);
+  font:750 10px/1.3 var(--font-ui,Manrope,system-ui);
+}
+.frame-account-actions button.frame-account-danger{
+  color:#ffabb6;border-color:rgba(255,124,153,.22);
+}
+#frameAccountConflict[hidden],#frameAccountGuest[hidden],#frameAccountSigned[hidden],
+.frame-account-provider-list button[hidden],
+#frameAccountEmailStep[hidden],#frameAccountCodeStep[hidden],
+#frameAccountProvidersDisabled[hidden]{display:none!important;}
+#frameAccountConflict{
+  padding:10px;border:1px solid rgba(255,171,157,.27);
+  background:rgba(160,80,83,.11);border-radius:12px;
+}
+#frameAccountConflict button{width:100%;margin-top:7px;}
+.frame-account-overlay[hidden]{display:none!important;}
+.frame-account-overlay{
+  position:fixed;inset:0;z-index:310;padding:20px 13px;
+  background:rgba(4,3,8,.84);-webkit-backdrop-filter:blur(15px);
+  backdrop-filter:blur(15px);display:grid;place-items:center;
+}
+.frame-account-dialog{
+  width:min(100%,420px);max-height:min(90dvh,760px);
+  position:relative;overflow:auto;border-radius:26px;padding:26px 18px 20px;
+  border:1px solid rgba(255,255,255,.2);
+  background:linear-gradient(155deg,#2c2230,#15141b 73%);
+}
+.frame-account-close{
+  position:absolute;right:12px;top:12px;
+  width:36px;height:36px;border:1px solid rgba(255,255,255,.15);
+  border-radius:50%;color:#f7eaf0;background:rgba(0,0,0,.2);font-size:23px;
+}
+.frame-account-dialog h2{
+  font:650 31px/1.05 var(--font-display,Fraunces,Georgia,serif);
+  margin:10px 25px 8px 0;color:#fff;
+}
+.frame-account-dialog p{
+  font:550 12px/1.6 var(--font-ui,Manrope,system-ui);
+  color:#c7bbc6;
+}
+.frame-account-provider-list{display:grid;gap:8px;margin:16px 0;}
+.frame-account-provider-list button{
+  min-height:46px;border:1px solid rgba(255,255,255,.2);
+  border-radius:13px;color:#f8f2f6;background:rgba(255,255,255,.065);
+  font:750 12px/1.3 var(--font-ui,Manrope,system-ui);
+}
+.frame-account-form{display:grid;gap:9px;padding-top:10px;}
+.frame-account-form label{font:700 12px/1.3 var(--font-ui,Manrope,system-ui);color:#f3e6ee;}
+.frame-account-form input{
+  width:100%;border:1px solid rgba(255,255,255,.23);
+  border-radius:13px;background:#14131a;color:#fff;padding:11px;
+  min-height:44px;font:650 15px/1.3 var(--font-ui,Manrope,system-ui);
+}
+.frame-account-note{color:#ffcad6!important;min-height:17px;}
+.frame-account-privacy{margin-bottom:0;font-size:10px!important;color:#978995!important;}
+@media(max-width:355px){
+  .frame-account-card{padding:13px 11px;}
+  .frame-account-actions{grid-template-columns:1fr;}
+}
