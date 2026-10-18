@@ -20,6 +20,10 @@
       {
         "name": "HIDDEN_MATCH_ROOMS",
         "class_name": "HiddenMatchRoom"
+      },
+      {
+        "name": "FRAME_ACCOUNTS",
+        "class_name": "FrameAccount"
       }
     ]
   },
@@ -28,6 +32,12 @@
       "tag": "hidden_match_v1",
       "new_sqlite_classes": [
         "HiddenMatchRoom"
+      ]
+    },
+    {
+      "tag": "frame_accounts_v1",
+      "new_sqlite_classes": [
+        "FrameAccount"
       ]
     }
   ]
