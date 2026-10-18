@@ -51,7 +51,7 @@ function normalizeMedia(record, type) {
     genres:Array.isArray(record.genre_ids) ? record.genre_ids.slice(0,5) : []
   };
 }
-async function getTitles(env, exclude = []) {
+async function getTitles(env, exclude = [], preferredGenres = []) {
   if (!env.TMDB_API_TOKEN) throw new Error('TMDB_API_TOKEN fehlt');
   const page = 1 + crypto.getRandomValues(new Uint8Array(1))[0] % 3;
   async function discover(type) {
@@ -82,9 +82,16 @@ async function getTitles(env, exclude = []) {
       used.add(item.id);result.push(item);
     }
   };
-  movies.slice(0,7).forEach(add);
-  series.slice(0,5).forEach(add);
-  shuffled([...movies,...series]).forEach(item => { if (result.length < 10) add(item); });
+  // When a pair has previous mutual likes, rank the fresh TMDB discovery
+  // candidates by those common genres. No individual vote is exposed.
+  const preference=new Set(preferredGenres.map(Number));
+  const prioritize=pool=>shuffled(pool).sort((a,b)=>{
+    const score=item=>(item.genres||[]).filter(g=>preference.has(g)).length;
+    return score(b)-score(a);
+  });
+  prioritize(movies).slice(0,7).forEach(add);
+  prioritize(series).slice(0,5).forEach(add);
+  prioritize([...movies,...series]).forEach(item=>{if(result.length<10)add(item);});
   if (result.length < 10) throw new Error('Zu wenige verfügbare Filmtitel. Versuch es bitte erneut.');
   return shuffled(result.slice(0,10));
 }
@@ -105,7 +112,8 @@ function archiveRevealedMatches(room) {
   for(const item of matchResults(room)){
     if(!existing.has(item.id))existing.set(item.id,{
       id:item.id,tmdbId:item.tmdbId,type:item.type,title:item.title,
-      poster:item.poster,year:item.year,rating:item.rating
+      poster:item.poster,year:item.year,rating:item.rating,
+      genres:Array.isArray(item.genres)?item.genres.slice(0,5):[]
     });
   }
   room.matchArchive=[...existing.values()].slice(-MAX_ARCHIVE);
@@ -134,6 +142,7 @@ function publicRoom(room, role) {
       otherConsent:Boolean(room.partner?.consent?.[role==='host'?'guest':'host'])
     },
     sharedList:room.partner?.active ? (room.sharedList||[]) : [],
+    tailored:Boolean(room.tailored && room.partner?.active),
     nextRequested:Boolean(room.nextRequested)
   };
 }
@@ -268,12 +277,24 @@ export class HiddenMatchRoom {
     } else if (action === 'next') {
       if (role !== 'host' && !room.partner?.active) return fail('Nur der Host kann eine neue Runde starten.',403,'HOST_ONLY');
       if (!['reveal','finished'].includes(room.status)) return fail('Beendet zunächst die Runde.',409,'WRONG_PHASE');
+      const genres=new Map();
+      if(room.partner?.active){
+        const savedIds=new Set((room.sharedList||[]).map(item=>item.id));
+        for(const item of room.matchArchive||[]){
+          for(const genre of item.genres||[]){
+            if(!Number.isInteger(genre))continue;
+            genres.set(genre,(genres.get(genre)||0)+(savedIds.has(item.id)?2:1));
+          }
+        }
+      }
+      const preferred=[...genres].sort((a,b)=>b[1]-a[1]).slice(0,4).map(([genre])=>genre);
       let freshItems;
-      try { freshItems=await getTitles(this.env,(room.seen||[]).slice(-300)); }
+      try { freshItems=await getTitles(this.env,(room.seen||[]).slice(-300),preferred); }
       catch(error) { return fail(error.message||'Keine neuen Karten verfügbar.',503,'NO_TITLES'); }
       room.seen.push(...freshItems.map(item=>item.id));
       room.seen=room.seen.slice(-300);
       room.items=freshItems;
+      room.tailored=preferred.length>0;
       room.round+=1;
       room.votes={host:{},guest:{}};
       room.ready={host:false,guest:false};
