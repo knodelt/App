@@ -855,6 +855,22 @@
     if (item) learnSwipe(id,action,item,meta);
   };
 
+  document.addEventListener('frame:recommendation-saved', eventObject => {
+    const item=eventObject.detail?.item;
+    if(!item?.id || !item.tmdbId)return;
+    event('recommendation_saved',{id:item.id,title:item.title||''});
+    void learnSwipe(item.id,'save',item,{dwellMs:0,detailsOpened:false});
+  });
+
+  document.addEventListener('frame:watchlist-updated', eventObject => {
+    const id=eventObject.detail?.id;
+    if(eventObject.detail?.saved!==false || !id || state.swipes[id])return;
+    if(model.examples.some(entry=>entry.id===id)){
+      model.examples=model.examples.filter(entry=>entry.id!==id);
+      rebuild();
+    }
+  });
+
   document.addEventListener('frame:recommendation-rejected', eventObject => {
     const item = eventObject.detail?.item;
     if (!item?.tmdbId) return;
