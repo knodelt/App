@@ -26,7 +26,7 @@ const recommendations = [
   { title:'Sharp Objects', year:'2018', type:'Serie', tags:['Mystery','Drama','Slow Burn','Düster'], art:'linear-gradient(145deg,#625249,#2e2724 48%,#0c0c0d)' }
 ];
 
-const defaultState = { swipes:{}, saved:[], savedItems:{}, filter:'all', secret:0 };
+const defaultState = { swipes:{}, saved:[], savedItems:{}, watched:{}, filter:'all', secret:0 };
 const LAST_SWIPE_KEY = 'frame-last-swipe-v1';
 let state = loadState();
 let activeItems = [];
@@ -544,7 +544,7 @@ function renderTaste() {
   $('#swipeCount').textContent = actions.length;
   $('#frameIndex').textContent = String(actions.length * 24).padStart(3,'0');
   $('#likedStat').textContent = actions.filter(a=>a==='like').length;
-  $('#savedStat').textContent = actions.filter(a=>a==='save').length;
+  $('#savedStat').textContent = (state.saved || []).length;
   $('#dislikedStat').textContent = actions.filter(a=>a==='dislike').length;
 }
 
@@ -552,7 +552,7 @@ function updateUI() { renderWatchlist(); renderRecommendations(); renderTaste();
 
 function switchView(target) {
   $$('.view').forEach(v=>v.classList.toggle('active', v.dataset.view===target));
-  $$('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.target===(target==='watchlist'?'taste':target)));
+  $$('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.target===(['watchlist','watched'].includes(target)?'taste':target)));
   if (target !== 'discover') updateUI();
   document.dispatchEvent(new CustomEvent('frame:view-changed', { detail:{ target } }));
   window.scrollTo({top:0, behavior:'smooth'});
@@ -601,7 +601,7 @@ $('#reshuffleButton').addEventListener('click',()=>{
   showToast('Neuer Mix. Dein Geschmack bleibt erhalten.');
 });
 $('#resetButton').addEventListener('click',()=>{
-  state={...defaultState, swipes:{}, saved:[]};
+  state={...defaultState, swipes:{}, saved:[], savedItems:{}, watched:{}};
   saveLastSwipe(null);
   persist();
   document.dispatchEvent(new CustomEvent('frame:taste-reset'));
