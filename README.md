@@ -12,8 +12,8 @@ FRAME ist ein Mobile-first-Prototyp für eine Film- und Serien-Discovery-App. St
 - Hoch = **Merken / Watchlist**
 - Filter für Filme, Serien und People
 - Poster, Profilbilder und Kurzinfos
-- **FRAMELOG** als zentrales, persönliches Filmtagebuch unter „Mein Frame“
-- Filter: Alle, Gesehen, Merkliste, SUPER und MIST – ohne zusätzlichen Tab in der unteren Navigation
+- **FRAMELOG** als eigenständiger sechster Tab und zentrales persönliches Filmtagebuch
+- Filter: Alle, Gesehen, Merkliste, SUPER und MIST – über einen eigenen FRAMELOG-Tab in der unteren Navigation
 - getrennte Speicherung von Swipe-Interesse und echten Gesehen-Bewertungen
 - realer Überblick über gesehene Titel, Gefallen und Merkliste, mit Datum/Notiz je gesehenem Titel
 - lokale Merkliste (jetzt integriert in FRAMELOG)
