@@ -499,6 +499,7 @@ function renderWatchlist() {
   const grid = $('#watchlistGrid');
   const items = state.saved.map(id=>catalog.find(x=>x.id===id)).filter(Boolean);
   $('#watchlistCount').textContent = items.length;
+  $('#frameWatchlistCount').textContent = items.length;
   if (!items.length) {
     grid.innerHTML = '<div class="empty-list"><b>Noch ist es hier still.</b>Swipe eine Karte nach oben und sie landet hier für später.</div>';
     return;
@@ -540,7 +541,7 @@ function updateUI() { renderWatchlist(); renderRecommendations(); renderTaste();
 
 function switchView(target) {
   $$('.view').forEach(v=>v.classList.toggle('active', v.dataset.view===target));
-  $$('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.target===target));
+  $$('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.target===(target==='watchlist'?'taste':target)));
   if (target !== 'discover') updateUI();
   document.dispatchEvent(new CustomEvent('frame:view-changed', { detail:{ target } }));
   window.scrollTo({top:0, behavior:'smooth'});
@@ -571,6 +572,8 @@ if (frameShell) {
 }
 $$('.nav-item').forEach(n=>n.addEventListener('click',()=>switchView(n.dataset.target)));
 $('#profileShortcut').addEventListener('click',()=>switchView('taste'));
+$('#openWatchlistFromFrame').addEventListener('click',()=>switchView('watchlist'));
+$('#watchlistBack').addEventListener('click',()=>switchView('taste'));
 $$('.filter').forEach(btn=>btn.addEventListener('click',()=>{
   state.filter = btn.dataset.filter; persist();
   $$('.filter').forEach(b=>b.classList.toggle('active',b===btn));
