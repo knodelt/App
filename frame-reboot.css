@@ -1951,3 +1951,114 @@ h1 em {
   min-width: 0 !important;
   max-width: 100% !important;
 }
+
+
+/* FRAME NAV V105: one identical icon tile and one label baseline for all six tabs.
+   Specificity intentionally overrides legacy special cases for Für dich, Daily and FRAMELOG. */
+.app-shell > nav.bottom-nav {
+  display:grid !important;
+  grid-template-columns:repeat(6,minmax(0,1fr)) !important;
+  grid-template-rows:minmax(0,1fr) !important;
+  align-items:stretch !important;
+  justify-items:stretch !important;
+  gap:0 !important;
+  min-height:calc(68px + env(safe-area-inset-bottom)) !important;
+  padding-top:5px !important;
+  padding-bottom:calc(6px + env(safe-area-inset-bottom)) !important;
+}
+.app-shell > nav.bottom-nav > button.nav-item {
+  grid-row:1 !important;
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) !important;
+  grid-template-rows:35px 15px !important;
+  align-content:center !important;
+  justify-content:center !important;
+  justify-items:center !important;
+  align-items:center !important;
+  align-self:stretch !important;
+  row-gap:4px !important;
+  width:100% !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  min-height:57px !important;
+  padding:2px 0 !important;
+  border:0 !important;
+  background:transparent !important;
+  color:#aca5ad !important;
+}
+.app-shell > nav.bottom-nav > button.nav-item.active {
+  color:#fff4f7 !important;
+}
+.app-shell > nav.bottom-nav > button.nav-item > span.nav-symbol {
+  display:grid !important;
+  place-items:center !important;
+  box-sizing:border-box !important;
+  position:relative !important;
+  width:35px !important;
+  min-width:35px !important;
+  max-width:35px !important;
+  height:35px !important;
+  min-height:35px !important;
+  max-height:35px !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:1px solid rgba(220,206,220,.18) !important;
+  border-radius:12px !important;
+  background:rgba(255,255,255,.045) !important;
+  box-shadow:none !important;
+  transform:none !important;
+  color:#d0c8d2 !important;
+  font-family:var(--font-ui,Manrope,system-ui,sans-serif) !important;
+  font-size:20px !important;
+  font-weight:700 !important;
+  font-style:normal !important;
+  line-height:1 !important;
+  text-shadow:none !important;
+}
+.app-shell > nav.bottom-nav > button.nav-item.active > span.nav-symbol {
+  color:#fff !important;
+  border-color:rgba(251,134,168,.65) !important;
+  background:rgba(255,94,133,.20) !important;
+  box-shadow:0 0 0 1px rgba(250,133,164,.07) !important;
+}
+.app-shell > nav.bottom-nav > button.nav-item > small {
+  display:block !important;
+  box-sizing:border-box !important;
+  width:100% !important;
+  max-width:100% !important;
+  height:15px !important;
+  min-height:15px !important;
+  margin:0 !important;
+  padding:0 !important;
+  align-self:center !important;
+  text-align:center !important;
+  color:inherit !important;
+  font-family:var(--font-ui,Manrope,system-ui,sans-serif) !important;
+  font-size:clamp(7.5px,2.15vw,9px) !important;
+  font-weight:700 !important;
+  font-style:normal !important;
+  line-height:15px !important;
+  letter-spacing:-.03em !important;
+  white-space:nowrap !important;
+  text-transform:none !important;
+}
+.app-shell > nav.bottom-nav .for-you-new-indicator[hidden] {
+  display:none !important;
+}
+@media (max-width:365px) {
+  .app-shell > nav.bottom-nav > button.nav-item > small {
+    font-size:7.5px !important;
+    letter-spacing:-.045em !important;
+  }
+  .app-shell > nav.bottom-nav > button.nav-item > span.nav-symbol {
+    width:33px !important;
+    min-width:33px !important;
+    max-width:33px !important;
+    height:33px !important;
+    min-height:33px !important;
+    max-height:33px !important;
+  }
+  .app-shell > nav.bottom-nav > button.nav-item {
+    grid-template-rows:33px 15px !important;
+  }
+}
