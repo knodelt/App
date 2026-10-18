@@ -93,12 +93,14 @@ function normalizeSignal(raw) {
     type,
     action,
     tmdbId,
-    title:String(raw?.title || '').slice(0,100)
+    title:String(raw?.title || '').slice(0,100),
+    watched:raw?.watched===true
   };
 }
 
-function positiveSignalWeight(action) {
-  return action === 'like' ? 3 : action === 'save' ? 1 : -3;
+function positiveSignalWeight(action,watched=false) {
+  const weight=action==='like'?3:action==='save'?1:-3;
+  return weight*(watched?2.5:1);
 }
 
 export async function handlePersonalizedRecommendations(request, env) {
@@ -163,10 +165,10 @@ export async function handlePersonalizedRecommendations(request, env) {
     movie:new Set(signals.filter(s => s.type === 'movie').map(s => s.tmdbId)),
     series:new Set(signals.filter(s => s.type === 'series').map(s => s.tmdbId))
   };
-  const positives = signals.filter(s => positiveSignalWeight(s.action) > 0);
-  const likedMovies = positives.filter(s => s.type === 'movie').sort((a,b)=>positiveSignalWeight(b.action)-positiveSignalWeight(a.action)).slice(0,2);
-  const likedSeries = positives.filter(s => s.type === 'series').sort((a,b)=>positiveSignalWeight(b.action)-positiveSignalWeight(a.action)).slice(0,2);
-  const likedPeople = positives.filter(s => s.type === 'person').sort((a,b)=>positiveSignalWeight(b.action)-positiveSignalWeight(a.action)).slice(0,2);
+  const positives = signals.filter(s => positiveSignalWeight(s.action,s.watched) > 0);
+  const likedMovies = positives.filter(s => s.type === 'movie').sort((a,b)=>positiveSignalWeight(b.action,b.watched)-positiveSignalWeight(a.action,a.watched)).slice(0,2);
+  const likedSeries = positives.filter(s => s.type === 'series').sort((a,b)=>positiveSignalWeight(b.action,b.watched)-positiveSignalWeight(a.action,a.watched)).slice(0,2);
+  const likedPeople = positives.filter(s => s.type === 'person').sort((a,b)=>positiveSignalWeight(b.action,b.watched)-positiveSignalWeight(a.action,a.watched)).slice(0,2);
 
   const movieGenreWeights = new Map();
   const tvGenreWeights = new Map();
