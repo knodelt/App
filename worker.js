@@ -664,6 +664,94 @@ async function handleRecommendationArt(env) {
   }
 }
 
+// Resolve missing artwork for earlier FRAMELOG records without storing an API
+// token or trusting a third-party image URL from browser storage.
+const FRAMELOG_SEED_IDS = {
+  dune2:{type:'movie',id:693134},
+  severance:{type:'series',id:95396},
+  menu:{type:'movie',id:593643},
+  succession:{type:'series',id:76331},
+  oppenheimer:{type:'movie',id:872585},
+  bear:{type:'series',id:136315},
+  hereditary:{type:'movie',id:493922},
+  'white-lotus':{type:'series',id:111803},
+  parasite:{type:'movie',id:496243},
+  dark:{type:'series',id:70523}
+};
+
+function frameLogNormalizeTitle(title) {
+  return String(title||'')
+    .normalize('NFKD').replace(/[\u0300-\u036f]/g,'')
+    .toLocaleLowerCase('en').replace(/&/g,'and')
+    .replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');
+}
+function frameLogImagePath(value) {
+  return /^\/[a-zA-Z0-9_-]+\.(?:jpg|jpeg|png|webp)$/i.test(String(value||'')) ? value : null;
+}
+function frameLogArtFromTMDB(item,type) {
+  const poster=frameLogImagePath(type==='person'?item?.profile_path:item?.poster_path);
+  const tmdbId=Number(item?.id);
+  const year=type==='person'?'':releaseYear(item,type==='series'?'tv':'movie');
+  return {
+    poster,year,tmdbId:Number.isSafeInteger(tmdbId)&&tmdbId>0?tmdbId:null
+  };
+}
+async function handleFrameLogArt(request,env) {
+  if(request.method!=='GET')return json({ok:false,code:'METHOD_NOT_ALLOWED'},405);
+  if(!env.TMDB_API_TOKEN)return json({ok:false,code:'TMDB_NOT_CONFIGURED'},503);
+  const url=new URL(request.url);
+  const type=url.searchParams.get('type');
+  const title=String(url.searchParams.get('title')||'').trim().slice(0,130);
+  const year=String(url.searchParams.get('year')||'').trim();
+  const inputId=Number(url.searchParams.get('id'));
+  const savedId=String(url.searchParams.get('savedId')||'').trim();
+  const seed=Object.prototype.hasOwnProperty.call(FRAMELOG_SEED_IDS,savedId)
+    ? FRAMELOG_SEED_IDS[savedId]:null;
+  if(!['movie','series','person'].includes(type)||
+      (!title&&!seed&&!(Number.isSafeInteger(inputId)&&inputId>0))||
+      title.length>120 || (year&&!/^(18|19|20|21)\d{2}$/.test(year))) {
+    return json({ok:false,code:'BAD_FRAMELOG_REQUEST'},400);
+  }
+  const mediaType=type==='series'?'tv':type;
+  const id=Number.isSafeInteger(inputId)&&inputId>0?inputId:
+    seed?.type===type?seed.id:null;
+  try{
+    if(id){
+      const detail=await tmdb('/'+(type==='series'?'tv':type)+'/'+id,env,{language:'de-DE'});
+      const art=frameLogArtFromTMDB(detail,type);
+      if(art.poster)return json({ok:true,found:true,...art},200,{'cache-control':'public,max-age=86400'});
+    }
+    // For old imported titles without a TMDB identifier, require an exact
+    // title match, not a random first search result.
+    if(!title)return json({ok:true,found:false},200,{'cache-control':'public,max-age=3600'});
+    const path=type==='series'?'/search/tv':type==='person'?'/search/person':'/search/movie';
+    const data=await tmdb(path,env,{
+      query:title,language:'de-DE',include_adult:false,page:1
+    });
+    const normalized=frameLogNormalizeTitle(title);
+    const exact=(Array.isArray(data.results)?data.results:[])
+      .filter(item=>item && frameLogImagePath(type==='person'?item.profile_path:item.poster_path))
+      .filter(item=>[item.title,item.original_title,item.name,item.original_name]
+        .some(name=>frameLogNormalizeTitle(name)===normalized))
+      .map(item=>({item,year:releaseYear(item,mediaType)}));
+    const withYear=year?exact.filter(entry=>entry.year===year):exact;
+    const eligible=withYear.length?withYear:(year?[]:exact);
+    eligible.sort((a,b)=>Number(b.item.popularity||0)-Number(a.item.popularity||0));
+    // Reject ambiguous entries when the year is unknown and TMDB has no
+    // strong popularity signal to distinguish identically named works.
+    const first=eligible[0],second=eligible[1];
+    if(!first || (!year&&second&&Number(first.item.popularity||0)<
+      Math.max(3,Number(second.item.popularity||0)*1.5))) {
+      return json({ok:true,found:false},200,{'cache-control':'public,max-age=3600'});
+    }
+    return json({ok:true,found:true,...frameLogArtFromTMDB(first.item,type)},200,
+      {'cache-control':'public,max-age=86400'});
+  }catch(error){
+    console.error('[FRAMELOG ART]',error);
+    return json({ok:false,code:'FRAMELOG_ART_UNAVAILABLE'},502);
+  }
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -672,6 +760,7 @@ export default {
     if (url.pathname === '/api/trailer') return handleTrailer(request, env);
     if (url.pathname === '/api/taste-features') return handleTasteFeatures(request, env);
     if (url.pathname === '/api/recommendation-art') return handleRecommendationArt(env);
+    if (url.pathname === '/api/framelog-art') return handleFrameLogArt(request, env);
     return env.ASSETS.fetch(request);
   }
 };
