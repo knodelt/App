@@ -229,7 +229,8 @@
     }
 
     const gradient = 1 - sigmoid(diff);
-    const lr = .13 / Math.sqrt(1 + model.steps / 30);
+    const lr=(.13/Math.sqrt(1+model.steps/30))*
+      ((positive.meta?.watched||negative.meta?.watched)?1.6:1);
 
     for (const key of keys) {
       const p = pos.get(key);
@@ -248,8 +249,9 @@
   function behaviorScale(meta = {}) {
     const dwell = Number(meta.dwellMs || 0);
     const dwellBoost = dwell >= 9000 ? 1.12 : dwell >= 4000 ? 1.06 : dwell < 700 ? .9 : 1;
-    const detailBoost = meta.detailsOpened ? 1.08 : 1;
-    return clamp(dwellBoost * detailBoost,.82,1.22);
+    const detailBoost=meta.detailsOpened?1.08:1;
+    // Real viewing feedback is deliberate: upweight compared with interest swipes.
+    return meta.watched?1.35:clamp(dwellBoost*detailBoost,.82,1.22);
   }
 
   function trainExample(example, {pairwise=true} = {}) {
@@ -273,7 +275,8 @@
       features:(example.features || []).slice(0,28),
       meta:{
         dwellMs:Math.min(60000,Math.max(0,Number(example.meta?.dwellMs || 0))),
-        detailsOpened:Boolean(example.meta?.detailsOpened)
+        detailsOpened:Boolean(example.meta?.detailsOpened),
+        watched:Boolean(example.meta?.watched)
       },
       at:Number(example.at || Date.now())
     };
@@ -854,6 +857,41 @@
     originalRecordSwipe(id,action);
     if (item) learnSwipe(id,action,item,meta);
   };
+
+  async function syncWatchedExample(id,item,rating) {
+    if(!id || !item)return;
+    const current=state.watched?.[id];
+    // Async feature lookups may finish after another rating was selected.
+    if(current && current.rating!==rating)return;
+    const features=await getFeatures(item);
+    if(state.watched?.[id] && state.watched[id].rating!==rating)return;
+    model.examples=model.examples.filter(example=>example.id!==id);
+    if(features.length && ['like','dislike','save'].includes(rating)){
+      model.examples.push(compactExample({
+        id,tmdbId:item.tmdbId||null,type:item.type,title:item.title||'',
+        action:rating,features,
+        meta:{dwellMs:0,detailsOpened:false,watched:Boolean(state.watched?.[id])},
+        at:Date.now()
+      }));
+    }
+    model.examples=model.examples.slice(-MAX_EXAMPLES);
+    rebuild(); // replacing a prior opinion must remove its old learned weight
+  }
+
+  document.addEventListener('frame:watched-rated',eventObject=>{
+    const {id,item,rating}=eventObject.detail||{};
+    if(id && item)void syncWatchedExample(id,item,rating);
+  });
+  document.addEventListener('frame:watched-removed',eventObject=>{
+    const {id,item}=eventObject.detail||{};
+    if(!id)return;
+    const original=state.swipes?.[id];
+    if(original && item)void syncWatchedExample(id,item,original);
+    else {
+      model.examples=model.examples.filter(example=>example.id!==id);
+      rebuild();
+    }
+  });
 
   document.addEventListener('frame:recommendation-saved', eventObject => {
     const item=eventObject.detail?.item;
