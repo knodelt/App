@@ -355,6 +355,16 @@
         -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
       }
       .rec-action.remove { color:#ff8a98; border-color:rgba(255,111,135,.28); }
+      .rec-action.save {color:#c2edc8;border-color:rgba(151,227,166,.35);background:rgba(18,60,39,.8);}
+      .rec-action.save.is-saved {color:#a7dfa8;background:rgba(33,87,49,.52);}
+      .rec-action.save:disabled {cursor:default;opacity:1;}
+      .rec-detail-bottom-actions .rec-detail-save {
+        grid-column:1 / -1;min-height:44px;border-radius:13px;
+        border:1px solid rgba(151,227,166,.32);background:rgba(31,76,48,.25);
+        color:#c7eac8;font-weight:800;
+      }
+      .rec-detail-bottom-actions .rec-detail-save:disabled {opacity:1;color:#a7dfa8;}
+
       #recommendList .rec-row { cursor:pointer; }
       #recommendList .rec-row-copy { min-width:0; }
       #recommendList .rec-actions { margin-top:7px; }
@@ -427,6 +437,30 @@
     node.dataset.mediaType = item.type || '';
   }
 
+  function saveButtonMarkup(item) {
+    const key=recommendationKey(item);
+    const saved=state.saved?.includes(recommendationStateId(item));
+    return '<button class="rec-action save'+(saved?' is-saved':'')+'" type="button" '+
+      'data-rec-action="save" data-rec-key="'+escapeHtml(key)+'"'+
+      (saved?' disabled aria-pressed="true"':' aria-pressed="false"')+'>'+
+      (saved?'✓ Gemerkt':'+ Merken')+'</button>';
+  }
+
+  function updateSaveButtons() {
+    document.querySelectorAll('#personalizedView [data-rec-action="save"], #recommendDetailModal [data-detail-action="save"]')
+      .forEach(button=>{
+        const modal=button.closest('#recommendDetailModal');
+        const key=modal?.dataset.recKey||button.dataset.recKey||'';
+        const item=findRecommendation(key);
+        if(!item)return;
+        const saved=Boolean(state.saved?.includes(recommendationStateId(item)));
+        button.disabled=saved;
+        button.classList.toggle('is-saved',saved);
+        button.setAttribute('aria-pressed',String(saved));
+        button.textContent=saved?'✓ Gemerkt':'+ Merken';
+      });
+  }
+
   function renderPersonalized(items, signalCount) {
     const heroHost = document.querySelector('#recommendHero');
     const listHost = document.querySelector('#recommendList');
@@ -453,6 +487,7 @@
         <p>${hero.type === 'series' ? 'Serie' : 'Film'} · ${escapeHtml(hero.year || '—')}</p>
         <p class="rec-hero-description">${escapeHtml(hero.description || '')}</p>
         <div class="rec-actions">
+          ${saveButtonMarkup(hero)}
           <button class="rec-action details" type="button" data-rec-action="details" data-rec-key="${hero.type}:${hero.tmdbId}">Details</button>
           <button class="rec-action remove" type="button" data-rec-action="remove" data-rec-key="${hero.type}:${hero.tmdbId}">Nicht für mich</button>
         </div>
@@ -478,6 +513,7 @@
           <span class="rec-reason-mini">${escapeHtml(reason)}</span>
           <span class="rec-description-mini">${escapeHtml(item.description || '')}</span>
           <div class="rec-actions">
+            ${saveButtonMarkup(item)}
             <button class="rec-action details" type="button" data-rec-action="details" data-rec-key="${item.type}:${item.tmdbId}">Details</button>
             <button class="rec-action remove" type="button" data-rec-action="remove" data-rec-key="${item.type}:${item.tmdbId}">Entfernen</button>
           </div>
@@ -499,6 +535,7 @@
       note.textContent = `${signalCount} Swipes · ${Number(dna.answeredCount || 0)} Fragen · ${Number(learned.examples || 0)} trainierte Entscheidungen`;
     }
 
+    updateSaveButtons();
     document.dispatchEvent(new CustomEvent('frame:recommendations-rendered'));
   }
 
@@ -518,6 +555,58 @@
 
   function recommendationStateId(item) {
     return item ? `tmdb-${item.type}-${item.tmdbId}` : '';
+  }
+
+  function saveRecommendation(item) {
+    if(!item || !['movie','series'].includes(item.type))return;
+    const idNumber=Number(item.tmdbId);
+    if(!Number.isSafeInteger(idNumber)||idNumber<=0)return;
+    const id=recommendationStateId(item);
+    if(state.saved?.includes(id)){
+      updateSaveButtons();
+      showToast('Dieser Titel ist bereits in deiner Merkliste.');
+      return;
+    }
+
+    const safePoster=/^\/[a-zA-Z0-9_-]+\.(?:jpe?g|png|webp)$/i.test(String(item.poster||''))
+      ? item.poster : null;
+    const title=String(item.title||'').slice(0,160);
+    const tags=(Array.isArray(item.tags)?item.tags:[])
+      .filter(tag=>typeof tag==='string').slice(0,12).map(tag=>tag.slice(0,60));
+    const card={
+      id,tmdbId:idNumber,source:'tmdb',type:item.type,title,
+      year:String(item.year||'').slice(0,4),
+      meta:item.type==='series'?'Serie':'Film',
+      subtitle:tags.slice(0,2).join(' · '),
+      blurb:String(item.description||'').slice(0,450),
+      tags,symbol:'✦',poster:safePoster,
+      art:'linear-gradient(145deg,#47353f,#171319)'
+    };
+
+    // The very same state used by a MERKEN swipe, plus the metadata needed
+    // to display personalized titles even after a reload or feed reshuffle.
+    state.saved=Array.isArray(state.saved)?state.saved:[];
+    state.saved.push(id);
+    state.savedItems={...(state.savedItems||{}),[id]:card};
+    state.swipes[id]='save';
+    try{persist();}
+    catch(error){
+      state.saved=state.saved.filter(savedId=>savedId!==id);
+      delete state.savedItems[id];
+      delete state.swipes[id];
+      showToast('Konnte den Film nicht speichern.');
+      return;
+    }
+    history[id]=snapshotItem(card,'save');
+    saveHistory();
+    renderWatchlist();
+    renderTaste();
+    updateProfileStrength();
+    updateReadyIndicator();
+    updateSaveButtons();
+    showToast('In „Meine Merkliste“ gespeichert.');
+    document.dispatchEvent(new CustomEvent('frame:recommendation-saved',{detail:{id,item:card}}));
+    document.dispatchEvent(new CustomEvent('frame:watchlist-updated',{detail:{id,saved:true}}));
   }
 
   function rejectRecommendation(item) {
@@ -571,6 +660,7 @@
             <div class="rec-detail-provider-list"><span class="rec-detail-loading">Wird geladen …</span></div>
           </div>
           <div class="rec-detail-bottom-actions">
+            <button class="rec-detail-save" type="button" data-detail-action="save" aria-pressed="false">+ Merken</button>
             <button type="button" data-detail-action="close">Schließen</button>
             <button class="remove" type="button" data-detail-action="remove">Nicht für mich</button>
           </div>
@@ -581,6 +671,10 @@
     modal.addEventListener('click', event => {
       if (event.target === modal || event.target.closest('.rec-detail-close') || event.target.closest('[data-detail-action="close"]')) {
         closeRecommendationDetails();
+        return;
+      }
+      if (event.target.closest('[data-detail-action="save"]')) {
+        saveRecommendation(findRecommendation(modal.dataset.recKey || ''));
         return;
       }
       if (event.target.closest('[data-detail-action="remove"]')) {
@@ -605,6 +699,7 @@
     const serial = ++detailSerial;
     const modal = ensureRecommendationDetailModal();
     modal.dataset.recKey = recommendationKey(item);
+    updateSaveButtons();
     modal.classList.add('open');
     modal.setAttribute('aria-hidden','false');
 
@@ -831,6 +926,7 @@
       event.preventDefault();
       event.stopPropagation();
       const item = findRecommendation(actionButton.dataset.recKey || '');
+      if (actionButton.dataset.recAction === 'save') saveRecommendation(item);
       if (actionButton.dataset.recAction === 'remove') rejectRecommendation(item);
       if (actionButton.dataset.recAction === 'details') openRecommendationDetails(item);
       return;
@@ -846,6 +942,8 @@
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape' && recommendationSurfaceVisible()) setRecommendationModal(false);
   });
+
+  document.addEventListener('frame:watchlist-updated', () => updateSaveButtons());
 
   document.addEventListener('frame:mood-changed', () => {
     invalidateRecommendations();
