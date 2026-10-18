@@ -26,7 +26,7 @@ const recommendations = [
   { title:'Sharp Objects', year:'2018', type:'Serie', tags:['Mystery','Drama','Slow Burn','Düster'], art:'linear-gradient(145deg,#625249,#2e2724 48%,#0c0c0d)' }
 ];
 
-const defaultState = { swipes:{}, saved:[], savedItems:{}, watched:{}, filter:'all', secret:0 };
+const defaultState = { swipes:{}, saved:[], savedItems:{}, watched:{}, frameLogItems:{}, frameLogMeta:{}, filter:'all', secret:0 };
 const LAST_SWIPE_KEY = 'frame-last-swipe-v1';
 let state = loadState();
 let activeItems = [];
@@ -498,14 +498,15 @@ function getPreviewMatch(item) {
 function getWatchlistItem(id) {
   // A personalized recommendation may never appear in the discovery deck.
   // Keep its own poster/title snapshot so it survives refreshes and new feeds.
-  return catalog.find(item=>item.id===id) || state.savedItems?.[id] || null;
+  return catalog.find(item=>item.id===id) || state.savedItems?.[id] || state.frameLogItems?.[id]?.item || null;
 }
 
 function renderWatchlist() {
   const grid = $('#watchlistGrid');
+  if (!grid) return; // FRAMELOG now owns the unified movie library.
   const items = state.saved.map(id=>getWatchlistItem(id)).filter(Boolean);
-  $('#watchlistCount').textContent = items.length;
-  $('#frameWatchlistCount').textContent = items.length;
+  if ($('#watchlistCount')) $('#watchlistCount').textContent = items.length;
+  if ($('#frameWatchlistCount')) $('#frameWatchlistCount').textContent = items.length;
   if (!items.length) {
     grid.innerHTML = '<div class="empty-list"><b>Noch ist es hier still.</b>Swipe eine Karte nach oben und sie landet hier für später.</div>';
     return;
@@ -552,7 +553,7 @@ function updateUI() { renderWatchlist(); renderRecommendations(); renderTaste();
 
 function switchView(target) {
   $$('.view').forEach(v=>v.classList.toggle('active', v.dataset.view===target));
-  $$('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.target===(['watchlist','watched'].includes(target)?'taste':target)));
+  $$('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.target===(['watchlist','watched','framelog'].includes(target)?'taste':target)));
   if (target !== 'discover') updateUI();
   document.dispatchEvent(new CustomEvent('frame:view-changed', { detail:{ target } }));
   window.scrollTo({top:0, behavior:'smooth'});
@@ -583,8 +584,7 @@ if (frameShell) {
 }
 $$('.nav-item').forEach(n=>n.addEventListener('click',()=>switchView(n.dataset.target)));
 $('#profileShortcut').addEventListener('click',()=>switchView('taste'));
-$('#openWatchlistFromFrame').addEventListener('click',()=>switchView('watchlist'));
-$('#watchlistBack').addEventListener('click',()=>switchView('taste'));
+// FRAMELOG owns the single film journal entry point and its back action.
 $$('.filter').forEach(btn=>btn.addEventListener('click',()=>{
   state.filter = btn.dataset.filter; persist();
   $$('.filter').forEach(b=>b.classList.toggle('active',b===btn));
@@ -601,7 +601,7 @@ $('#reshuffleButton').addEventListener('click',()=>{
   showToast('Neuer Mix. Dein Geschmack bleibt erhalten.');
 });
 $('#resetButton').addEventListener('click',()=>{
-  state={...defaultState, swipes:{}, saved:[], savedItems:{}, watched:{}};
+  state={...defaultState, swipes:{}, saved:[], savedItems:{}, watched:{}, frameLogItems:{}, frameLogMeta:{}};
   saveLastSwipe(null);
   persist();
   document.dispatchEvent(new CustomEvent('frame:taste-reset'));
