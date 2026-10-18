@@ -43,7 +43,7 @@
   }
 
   function saveHistory() {
-    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); } catch {}
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); window.FrameCloud?.changed?.(); } catch {}
   }
 
   function parseTmdbId(id) {
