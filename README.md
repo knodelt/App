@@ -12,7 +12,11 @@ FRAME ist ein Mobile-first-Prototyp für eine Film- und Serien-Discovery-App. St
 - Hoch = **Merken / Watchlist**
 - Filter für Filme, Serien und People
 - Poster, Profilbilder und Kurzinfos
-- lokale Watchlist
+- **FRAMELOG** als zentrales, persönliches Filmtagebuch unter „Mein Frame“
+- Filter: Alle, Gesehen, Merkliste, SUPER und MIST – ohne zusätzlichen Tab in der unteren Navigation
+- getrennte Speicherung von Swipe-Interesse und echten Gesehen-Bewertungen
+- realer Überblick über gesehene Titel, Gefallen und Merkliste, mit Datum/Notiz je gesehenem Titel
+- lokale Merkliste (jetzt integriert in FRAMELOG)
 - **Daily Frame** mit sieben täglichen Vorschlägen
 - **Frame Match** mit serverseitig synchronisierten 10er-Runden für zwei Geräte
 - nach Zustimmung beider Seiten: bis zu 90 Tage gespeicherte Filmpartner
@@ -56,6 +60,12 @@ Normale App-Dateien werden als Static Assets ausgeliefert. `/api/*` wird über `
 Rooms sind normalerweise 24 Stunden gültig. Bestätigen **beide** Seiten „Filmpartner speichern“, bleibt die Verbindung bei Aktivität bis zu 90 Tage erhalten. Beide Teilnehmer können danach in neuen Runden bewerten und enthüllte gemeinsame Titel in einer geteilten Filmliste speichern.
 
 Jeder Participant besitzt einen separaten privaten Sitzungsschlüssel. Die Browser-App merkt sich auf demselben Gerät bis zu acht Partnerverbindungen. Diese Schlüssel gehören **nicht** in Einladungslinks; ohne Benutzerkonto kann ein Gerätewechsel den Zugriff verlieren. Beenden oder Verlassen einer gespeicherten Partnerschaft schließt den gemeinsamen Raum für beide. Swipes werden erst beim Reveal als Matches offengelegt.
+
+### FRAMELOG: lokale Daten und ältere Swipes
+
+FRAMELOG zeigt die bereits vorhandenen Einträge aus `frame-state` und – wo vorhanden – ältere Empfehlungseinträge. Die ursprünglichen Entscheidungen und die späteren Gesehen-Urteile bleiben voneinander getrennt. Neue Einträge erhalten einen kleinen Filmdaten-Schnappschuss; zuvor gespeicherte Titel werden nicht dupliziert. Bei alten, unvollständig gespeicherten Einträgen können Poster oder Datum fehlen.
+
+Gesehen-Einträge unterstützen ein frei editierbares Filmabend-Datum und eine Notiz. Die Daten verbleiben im selben Browser und auf derselben Domain; ohne Benutzerkonten werden sie **nicht** zwischen Geräten synchronisiert.
 
 ## TMDB aktivieren
 
