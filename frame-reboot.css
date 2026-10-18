@@ -1103,10 +1103,10 @@ h1 em {
 }
 
 
-/* ---------- FRAME navigation: five distinct destinations ---------- */
+/* ---------- FRAME navigation: six distinct destinations ---------- */
 .bottom-nav {
   display:grid !important;
-  grid-template-columns:repeat(5,minmax(0,1fr)) !important;
+  grid-template-columns:repeat(6,minmax(0,1fr)) !important;
   align-items:end !important;
   gap:1px !important;
   padding-left:8px !important;
@@ -1877,4 +1877,63 @@ h1 em {
   .frame-log-card{grid-template-columns:74px minmax(0,1fr);}
   .frame-log-poster{width:74px;}
   .frame-log-item-copy>strong{font-size:19px;}
+}
+
+
+/* FRAMELOG: a permanent sixth navigation destination, sized for narrow iPhones. */
+.bottom-nav {
+  grid-template-columns:repeat(6,minmax(0,1fr)) !important;
+  gap:0 !important;
+  padding-left:max(3px,env(safe-area-inset-left)) !important;
+  padding-right:max(3px,env(safe-area-inset-right)) !important;
+}
+.bottom-nav .nav-item {
+  min-width:0 !important;
+  min-height:51px;
+  padding:4px 0 !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:4px !important;
+}
+.bottom-nav .nav-item small {
+  display:block;
+  width:100%;
+  text-align:center;
+  font-size:clamp(7.5px,2.15vw,9.5px) !important;
+  line-height:1.16 !important;
+  letter-spacing:-.025em !important;
+  white-space:nowrap !important;
+}
+.bottom-nav .nav-item-framelog {
+  color:#dba3b6 !important;
+}
+.bottom-nav .nav-item-framelog .frame-log-nav-symbol {
+  width:32px !important;
+  height:33px !important;
+  border-radius:11px;
+  display:grid !important;
+  place-items:center;
+  background:linear-gradient(135deg,rgba(211,146,177,.13),rgba(145,94,142,.1));
+  color:#d8a3ba !important;
+  border:1px solid rgba(229,158,195,.28);
+  font:700 24px/1 var(--font-display,Fraunces,Georgia,serif) !important;
+  box-shadow:none;
+}
+.bottom-nav .nav-item-framelog.active {
+  color:#fff !important;
+}
+.bottom-nav .nav-item-framelog.active .frame-log-nav-symbol {
+  color:#231724 !important;
+  background:linear-gradient(135deg,#f0c4d7,#d58daf);
+  border-color:#efbfd4;
+  box-shadow:0 5px 15px rgba(239,154,188,.19);
+}
+@media(max-width:365px) {
+  .bottom-nav .nav-item small {font-size:7.6px !important;letter-spacing:-.045em !important;}
+  .bottom-nav .nav-item {gap:3px !important;}
+  .bottom-nav .nav-item-framelog .frame-log-nav-symbol {width:30px !important;height:31px !important;}
+  .bottom-nav .nav-item-for-you .for-you-nav-symbol,
+  .bottom-nav .nav-item-daily span {width:32px !important;height:32px !important;}
 }
