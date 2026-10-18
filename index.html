@@ -89,7 +89,6 @@
       </section>
 
       <section class="view frame-log-view" id="frameLogView" data-view="framelog" aria-label="FRAMELOG Filmtagebuch">
-        <button class="frame-log-back" id="frameLogBack" type="button">← Mein Frame</button>
         <header class="frame-log-header">
           <div class="frame-log-overline"><span class="frame-log-spark">✦</span> DEINE FILMGESCHICHTE</div>
           <h1>FRAMELOG<span>.</span></h1>
@@ -407,18 +406,6 @@
           <article><strong id="dislikedStat">0</strong><span>Mist</span></article>
         </div>
 
-        <button class="frame-log-entry" id="openFrameLog" type="button" aria-label="FRAMELOG persönliches Filmtagebuch öffnen">
-          <span class="frame-log-entry-symbol" aria-hidden="true">F<span>✦</span></span>
-          <span class="frame-log-entry-copy">
-            <span class="frame-log-entry-kicker">DEINE GESAMTE FILMGESCHICHTE</span>
-            <strong>FRAMELOG<span>.</span></strong>
-            <small>Gesehen · Merkliste · SUPER · MIST</small>
-          </span>
-          <span class="frame-log-entry-end">
-            <span id="frameLogProfileCount">0 Titel</span>
-            <span aria-hidden="true">↗</span>
-          </span>
-        </button>
         <button class="ghost-btn" id="tutorialReplayButton" type="button">Kurzes Tutorial ansehen</button>
         <button class="ghost-btn" id="resetButton">Geschmack zurücksetzen</button>
         <a class="ghost-btn" href="/about.html" style="display:block;text-align:center;text-decoration:none;box-sizing:border-box;">Über FRAME · Datenquellen</a>
@@ -434,7 +421,8 @@
       </button>
       <button class="nav-item nav-item-daily" data-target="daily" type="button" aria-label="Daily Frame: sieben tägliche Filmvorschläge"><span aria-hidden="true">▣</span><small>Daily Frame</small></button>
       <button class="nav-item" data-target="recommend" type="button" aria-label="Frame Match: gemeinsam Filme finden"><span aria-hidden="true">♡</span><small>Frame Match</small></button>
-      <button class="nav-item" data-target="taste" type="button" aria-label="Mein Frame: Profil und Merkliste"><span aria-hidden="true">◎</span><small>Mein Frame</small></button>
+      <button class="nav-item nav-item-framelog" data-target="framelog" type="button" aria-label="FRAMELOG: dein persönliches Filmtagebuch"><span class="frame-log-nav-symbol" aria-hidden="true">F</span><small>FRAMELOG</small></button>
+      <button class="nav-item" data-target="taste" type="button" aria-label="Mein Frame: Geschmacksprofil und Einstellungen"><span aria-hidden="true">◎</span><small>Mein Frame</small></button>
     </nav>
   </div>
 
