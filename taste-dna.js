@@ -381,10 +381,11 @@
     insight.innerHTML = `
       <div class="taste-dna-top">
         <div>
-          <span>ZUSAMMENHÄNGE</span>
-          <h2>Was FRAME gerade erkennt</h2>
+          <span>DEINE VERBINDUNGEN</span>
+          <h2>Was zusammenpasst</h2>
         </div>
       </div>
+      <p class="taste-dna-explain">Aus deinen Swipes und Antworten erkennt FRAME Zusammenhänge.</p>
       <div class="taste-dna-chipset" id="tasteDnaFeatureChips"></div>
       <div class="taste-dna-relations" id="tasteDnaRelations"></div>`;
     questionCard.insertAdjacentElement('afterend', insight);
@@ -433,7 +434,8 @@
         width:100%; margin-top:9px; padding:9px; border:0; background:transparent;
         color:#77726c; font-size:10px; font-weight:700;
       }
-      .taste-dna-chipset { display:flex; flex-wrap:wrap; gap:6px; margin-top:13px; }
+      .taste-dna-explain {margin:8px 0 0;color:#ada5b2;font-size:11px;line-height:1.55;}
+       .taste-dna-chipset {display:flex;flex-wrap:wrap;gap:7px;margin-top:13px;}
       .taste-dna-chip {
         padding:6px 9px; border-radius:999px; border:1px solid rgba(255,255,255,.09);
         background:#1b1b20; color:#d9d4cd; font-size:10px; font-weight:700;
@@ -445,7 +447,9 @@
         padding:9px 10px; border-radius:13px; background:#19191d;
         color:#c9c4bd; font-size:10px; line-height:1.3;
       }
-      .taste-dna-relation b { color:#ff7c8a; font-size:9px; white-space:nowrap; }
+      .taste-dna-relation b {color:#ffb0c0;font-size:16px;white-space:nowrap;}
+       .taste-dna-relation em {color:#ee8a9b;font-style:normal;margin:0 3px;}
+       .taste-dna-relations-label {margin:2px 1px 0;color:#bfb5c3;font-size:9px;font-weight:800;letter-spacing:.08em;line-height:1.45;}
       .taste-dna-empty { color:#77726c; font-size:10px; line-height:1.45; margin-top:12px; }
       @media (max-width:360px) { .taste-dna-options { grid-template-columns:1fr; } }
     `;
@@ -506,20 +510,36 @@
     const relationHost = document.querySelector('#tasteDnaRelations');
     if (!chipHost || !relationHost) return;
 
-    const strongest = (data.featureWeights || [])
-      .filter(entry => Math.abs(entry.weight * entry.confidence) >= .65)
-      .slice(0,8);
+    const displayName=value=>{
+      const raw=String(value||'').trim();
+      const translated={
+        'based on novel or book':'Buchverfilmungen',
+        'science fiction':'Science-Fiction',
+        'sci-fi & fantasy':'Sci-Fi & Fantasy',
+        'action & adventure':'Action & Abenteuer',
+        'fast paced':'Schnelles Tempo',
+        'plot-driven':'Handlung im Vordergrund',
+        'slow burn':'Langsam erzählte Geschichten',
+        'romance':'Romantik','crime':'Krimi','family':'Familie','comedy':'Komödie'
+      };
+      return translated[raw.toLowerCase()]||raw.slice(0,60);
+    };
+    const strongest=(data.featureWeights||[])
+      .filter(entry=>Math.abs(entry.weight*entry.confidence)>=.65).slice(0,6);
+    chipHost.innerHTML=strongest.length
+      ? strongest.map(entry=>`<span class="taste-dna-chip${entry.weight<0?' negative':''}">${entry.weight>0?'✦ ':'− '}${escapeHtml(displayName(entry.label))}</span>`).join('')
+      : '<p class="taste-dna-empty">Mit weiteren Swipes oder Antworten erkennt FRAME neue Muster.</p>';
 
-    chipHost.innerHTML = strongest.length
-      ? strongest.map(entry => `<span class="taste-dna-chip${entry.weight < 0 ? ' negative' : ''}">${escapeHtml(entry.label)} ${entry.weight > 0 ? '+' : '−'}</span>`).join('')
-      : '<p class="taste-dna-empty">Noch zu wenig Signale. Ein paar Swipes oder Fragen reichen, damit hier echte Muster sichtbar werden.</p>';
-
-    const relations = (data.pairWeights || [])
-      .filter(entry => Math.abs(entry.weight * entry.confidence) >= .55)
-      .slice(0,5);
-
-    relationHost.innerHTML = relations.length
-      ? relations.map(entry => `<div class="taste-dna-relation"><span>${escapeHtml(entry.labelA)} + ${escapeHtml(entry.labelB)}</span><b>${Math.round(entry.confidence * 100)}% sicher</b></div>`).join('')
+    // Don't describe mixed or weak pairs as strong preferences.
+    const positiveKeys=new Set((data.featureWeights||[])
+      .filter(entry=>entry.weight>0).map(entry=>entry.key));
+    const relations=(data.pairWeights||[])
+      .filter(entry=>entry.weight>0 && entry.count>=2 && entry.confidence>=.59
+        && positiveKeys.has(entry.a) && positiveKeys.has(entry.b))
+      .slice(0,3);
+    relationHost.innerHTML=relations.length
+      ? '<p class="taste-dna-relations-label">DIESE MERKMALE PASSEN BEI DIR OFT ZUSAMMEN</p>'+
+        relations.map(entry=>`<div class="taste-dna-relation"><span>${escapeHtml(displayName(entry.labelA))} <em>×</em> ${escapeHtml(displayName(entry.labelB))}</span><b aria-hidden="true">✦</b></div>`).join('')
       : '';
   }
 
