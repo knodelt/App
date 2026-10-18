@@ -38,7 +38,7 @@
       view:'personalized',
       target:'#personalizedView .section-head',
       title:'Für dich: persönlich ausgewählt.',
-      copy:'Hier stellt FRAME Film- und Serientipps passend zu deinen bisherigen Swipes zusammen. Mit mehr Bewertungen werden die Empfehlungen treffender.',
+      copy:'Hier stellt FRAME passende Film- und Serientipps zusammen. Mit „+ Merken“ speicherst du einen Vorschlag sofort. Nach dem Anschauen kannst du auf „✓ Gesehen?“ tippen und angeben, ob dir der Titel wirklich gefallen hat.',
       extra:'for-you',
       panel:'bottom'
     },
@@ -72,8 +72,17 @@
       view:'taste',
       target:'#openWatchlistFromFrame',
       title:'Deine Merkliste bleibt dabei.',
-      copy:'Eine Karte, die du in Framing nach oben wischst, landet in deiner Merkliste. Du findest sie jetzt über „Meine Merkliste“ in Mein Frame – nicht mehr als eigenen unteren Tab.',
+      copy:'Nach oben gewischte Karten und gemerkte „Für dich“-Vorschläge landen hier. Tippe bei einem Film auf „Gesehen?“, um ihn nach dem Anschauen wirklich zu bewerten. Gesehene Titel verlassen die Merkliste.',
       extra:'watchlist',
+      panel:'top',
+      scroll:true
+    },
+    {
+      view:'watched',
+      target:'#watchedView .frame-watched-intro',
+      title:'Schon gesehen? Jetzt zählt dein Urteil.',
+      copy:'Unter „Mein Frame → Schon gesehen“ sammelt FRAME Filme und Serien, die du wirklich angeschaut hast. „Hat gefallen“ oder „Hat nicht gefallen“ beeinflusst künftige Empfehlungen stärker als ein Swipe. Hier kannst du Bewertungen auch ändern oder zurücknehmen.',
+      extra:'watched',
       panel:'top',
       scroll:true
     },
@@ -764,6 +773,13 @@
       return `
         <div class="frame-tutorial-feature">
           <div><b>◎</b><span><strong>Mein Frame:</strong> deine Geschmacks-DNA, Statistiken und Einstellungen.</span></div>
+        </div>`;
+    }
+    if(type==='watched'){
+      return `
+        <div class="frame-tutorial-feature">
+          <div><b>♥</b><span><strong>Hat gefallen:</strong> starke positive Lernerfahrung nach dem Anschauen.</span></div>
+          <div><b>✕</b><span><strong>Hat nicht gefallen:</strong> starke negative Lernerfahrung.</span></div>
         </div>`;
     }
     if (type === 'watchlist') {
