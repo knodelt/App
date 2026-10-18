@@ -100,6 +100,19 @@
         <div class="list-grid" id="watchlistGrid"></div>
       </section>
 
+      <section class="view" id="watchedView" data-view="watched" aria-label="Gesehene Filme und Serien">
+        <button class="frame-watchlist-back" id="watchedBack" type="button">← Mein Frame</button>
+        <div class="section-head compact">
+          <div>
+            <p class="eyebrow">DEINE FILMGESCHICHTE</p>
+            <h1>Schon gesehen.</h1>
+          </div>
+          <span class="count-pill" id="watchedCount">0</span>
+        </div>
+        <p class="frame-watched-intro">Hier zählt, was du wirklich geschaut hast. Deine Bewertungen helfen FRAME mehr als ein spontaner Swipe.</p>
+        <div class="frame-watched-list" id="watchedList"></div>
+      </section>
+
       <section class="view" id="personalizedView" data-view="personalized" aria-label="Persönliche Empfehlungen">
         <div class="section-head compact for-you-section-head">
           <div>
@@ -401,6 +414,15 @@
           <span class="frame-watchlist-entry-count" id="frameWatchlistCount" aria-label="Gemerkte Titel">0</span>
           <span class="frame-watchlist-entry-arrow" aria-hidden="true">→</span>
         </button>
+        <button class="frame-watchlist-entry frame-watched-entry" id="openWatchedFromFrame" type="button">
+          <span class="frame-watchlist-entry-icon" aria-hidden="true">✓</span>
+          <span class="frame-watchlist-entry-copy">
+            <strong>Schon gesehen</strong>
+            <small>Deine gesehenen Filme, Serien und echten Bewertungen</small>
+          </span>
+          <span class="frame-watchlist-entry-count" id="frameWatchedCount" aria-label="Gesehene Titel">0</span>
+          <span class="frame-watchlist-entry-arrow" aria-hidden="true">→</span>
+        </button>
         <button class="ghost-btn" id="tutorialReplayButton" type="button">Kurzes Tutorial ansehen</button>
         <button class="ghost-btn" id="resetButton">Geschmack zurücksetzen</button>
         <a class="ghost-btn" href="/about.html" style="display:block;text-align:center;text-decoration:none;box-sizing:border-box;">Über FRAME · Datenquellen</a>
@@ -473,6 +495,7 @@
   <script src="/taste-dna.js" defer></script>
   <script src="/personalized-recommendations.js" defer></script>
   <script src="/taste-learning.js" defer></script>
+  <script src="/frame-watched.js" defer></script>
   <script src="/streaming-availability.js" defer></script>
   <script src="/swipe-guidance.js" defer></script>
   <script src="/onboarding-tutorial.js" defer></script>
