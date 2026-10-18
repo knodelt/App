@@ -79,15 +79,24 @@ async function startEmail(req,env){
   // Check rate limits before sending. Uniform generic response avoids account enumeration.
   const check=await cmd(env,id,'canCode');
   if(!check.data.ok)return json({ok:false,error:'Bitte später erneut versuchen.'},429);
+  const ip=String(req.headers.get('cf-connecting-ip')||'unknown');
+  const ipKey=hex(await hmac('email-rate:'+ip,env.AUTH_SECRET));
+  const quota=await cmd(env,ipKey,'ipQuota');
+  if(!quota.data.ok)return json({ok:false,error:'Zu viele Anfragen. Bitte später versuchen.'},429);
   const code=String(crypto.getRandomValues(new Uint32Array(1))[0]%1000000).padStart(6,'0');
+  const hash=await hashCode(env,id,code);
+  const prepared=await cmd(env,id,'startCode',{hash,expiresAt:Date.now()+CODE_EXP_MS});
+  if(!prepared.data.ok)return json({ok:false,error:'Bitte später erneut versuchen.'},429);
   const response=await fetch('https://api.resend.com/emails',{
     method:'POST',headers:{'authorization':'Bearer '+env.RESEND_API_KEY,'content-type':'application/json'},
     body:JSON.stringify({from:env.FRAME_EMAIL_FROM,to:[email],subject:'Dein FRAME Anmeldecode',
       text:'Dein FRAME-Code lautet: '+code+'. Er gilt 10 Minuten. Falls du ihn nicht angefordert hast, kannst du diese Nachricht ignorieren.'})
   });
-  if(!response.ok)return json({ok:false,error:'Der Code konnte nicht versendet werden.'},502);
-  return json((await cmd(env,id,'startCode',{hash:await hashCode(env,id,code),
-    expiresAt:Date.now()+CODE_EXP_MS})).data);
+  if(!response.ok){
+    await cmd(env,id,'cancelCode',{hash});
+    return json({ok:false,error:'Der Code konnte nicht versendet werden.'},502);
+  }
+  return json({ok:true});
 }
 async function verifyEmail(req,env) {
   const data=await restrictedBody(req,4096);
@@ -266,6 +275,13 @@ export class FrameAccount {
       const now=Date.now();
       const data=await txn.get('account')||{email:null,rev:0,cloud:null,sessions:{},challenge:null,attempts:[],lastCodeAt:0};
       const out=(v,status=200)=>json(v,status);
+      if(action==='ipQuota'){
+        data.ipAttempts=(data.ipAttempts||[]).filter(t=>now-t<3600000);
+        if(data.ipAttempts.length>=12)return out({ok:false},429);
+        data.ipAttempts.push(now);
+        await txn.put('account',data);
+        return out({ok:true});
+      }
       if(action==='canCode'){
         return out({ok: now-data.lastCodeAt>=60000 && data.attempts.filter(t=>now-t<3600000).length<5});
       }
@@ -275,6 +291,13 @@ export class FrameAccount {
         data.challenge={hash:p.hash,expiresAt:p.expiresAt,tries:0};
         data.lastCodeAt=now;data.attempts=[...data.attempts.filter(t=>now-t<3600000),now];
         await txn.put('account',data);return out({ok:true});
+      }
+      if(action==='cancelCode'){
+        if(data.challenge?.hash===p.hash){
+          data.challenge=null;
+          await txn.put('account',data);
+        }
+        return out({ok:true});
       }
       if(action==='verifyCode'){
         const c=data.challenge;
