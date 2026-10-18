@@ -55,7 +55,7 @@
       view:'recommend',
       target:'#roomPanel',
       title:'Frame Match: zusammen finden.',
-      copy:'Erstelle einen Online-Room für zwei Personen und teile den Link oder QR-Code. Beide bewerten dieselben zehn Titel auf ihrem Handy. Erst beim Reveal werden eure gemeinsamen Treffer sichtbar.',
+      copy:'Lade jemanden per Link oder QR-Code zu Frame Match ein. Beide swipen zehn Titel und sehen ihre Treffer erst nach dem Reveal. Wenn ihr beide zustimmt, bleibt ihr als Filmpartner verbunden – mit gemeinsamer Filmliste und neuen Vorschlägen für spätere Filmabende.',
       extra:'matches',
       panel:'top',
       scroll:true
