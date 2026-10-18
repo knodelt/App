@@ -457,12 +457,14 @@ h1 em {
 /* ---------- Secondary screens ---------- */
 #watchlistView,
 #recommendView,
+#dailyFrameView,
 #tasteView {
   padding: 12px 16px 24px !important;
 }
 
 #watchlistView .section-head.compact,
 #recommendView .section-head.compact,
+#dailyFrameView .section-head.compact,
 #tasteView .section-head.compact {
   margin: 3px 0 20px !important;
   padding: 0 !important;
@@ -471,6 +473,7 @@ h1 em {
 
 #watchlistView h1,
 #recommendView h1,
+#dailyFrameView h1,
 #tasteView h1 {
   font-size: clamp(36px, 10vw, 46px) !important;
   line-height: .95 !important;
@@ -1100,7 +1103,7 @@ h1 em {
 }
 
 
-/* ---------- Für dich: dedicated fifth tab ---------- */
+/* ---------- FRAME navigation: five distinct destinations ---------- */
 .bottom-nav {
   display:grid !important;
   grid-template-columns:repeat(5,minmax(0,1fr)) !important;
@@ -1470,4 +1473,102 @@ h1 em {
 @media (prefers-reduced-motion:reduce) {
   .for-you-ready-notice,
   .for-you-ready-dialog {animation:none !important;}
+}
+
+
+/* FRAME: direct access to a standalone daily ritual and a shared matching space. */
+.frame-match-header-icon {
+  display:grid;
+  place-items:center;
+  width:49px;
+  height:49px;
+  border-radius:17px;
+  flex:0 0 auto;
+  color:#ff8397;
+  background:rgba(255,77,95,.09);
+  border:1px solid rgba(255,112,136,.25);
+  font:700 28px/1 var(--font-ui,system-ui);
+}
+.bottom-nav .nav-item-daily span {
+  display:grid;
+  place-items:center;
+  width:35px;
+  height:35px;
+  margin:0 auto;
+  color:#dcd6df;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:13px;
+}
+.bottom-nav .nav-item-daily.active span {
+  color:#fff !important;
+  background:rgba(255,91,113,.18);
+  border-color:rgba(255,91,113,.65);
+}
+.bottom-nav .nav-item small {
+  font-size:clamp(8.5px,2.3vw,10px) !important;
+  letter-spacing:-.015em !important;
+}
+.frame-watchlist-entry {
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:11px;
+  margin:21px 0 18px;
+  padding:14px 12px;
+  min-height:72px;
+  border:1px solid rgba(255,255,255,.13);
+  border-radius:18px;
+  background:linear-gradient(105deg,#28212a,#19171d);
+  color:#f8f3f4;
+  text-align:left;
+  cursor:pointer;
+}
+.frame-watchlist-entry-icon {
+  display:grid;
+  place-items:center;
+  flex:0 0 39px;
+  height:39px;
+  border:1px solid rgba(255,111,132,.24);
+  border-radius:12px;
+  color:#ff92a3;
+  background:rgba(255,111,132,.1);
+  font-size:25px;
+}
+.frame-watchlist-entry-copy {
+  display:grid;
+  gap:5px;
+  min-width:0;
+  flex:1;
+}
+.frame-watchlist-entry-copy strong {
+  font:800 13px/1.15 var(--font-ui,system-ui);
+}
+.frame-watchlist-entry-copy small {
+  font:500 10px/1.35 var(--font-ui,system-ui);
+  color:#bfb1bd;
+}
+.frame-watchlist-entry-count {
+  display:grid;
+  place-items:center;
+  min-width:24px;
+  height:24px;
+  padding:0 6px;
+  border-radius:999px;
+  background:rgba(255,255,255,.09);
+  font:800 11px/1 var(--font-ui,system-ui);
+}
+.frame-watchlist-entry-arrow {
+  color:#c6b6c0;
+  font-size:17px;
+}
+.frame-watchlist-back {
+  align-self:flex-start;
+  padding:10px 0 8px;
+  margin:0;
+  border:0;
+  background:transparent;
+  color:#ff9cad;
+  font:750 12px/1.1 var(--font-ui,system-ui);
+  cursor:pointer;
 }
