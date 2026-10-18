@@ -1,46 +1,52 @@
 (() => {
   const STORAGE_KEY = 'frame-onboarding-v1';
 
+  // The tutorial follows the five actual navigation destinations. All
+  // spotlights target existing elements; no interaction is required to proceed.
   const steps = [
     {
       view:'discover',
       target:'.top-card',
-      kicker:'SCHRITT 1 · 8',
-      title:'Das ist dein Film-Feed.',
-      copy:'Entscheide einfach nach Gefühl. FRAME lernt aus deinen Swipes, welche Filme, Serien und People wirklich zu dir passen.',
-      extra:'gestures',
+      title:'Willkommen bei Framing.',
+      copy:'Hier entdeckst du Filme, Serien und People. Tippe eine Film- oder Serienkarte an, um Trailer, Handlung und Filminfos zu sehen. Langes Halten zeigt nur das Bild. Bei People öffnet Tippen die Personeninfos.',
+      extra:'preview',
       panel:'top'
     },
     {
       view:'discover',
       target:'#discoverView .actions',
-      kicker:'SCHRITT 2 · 8',
       title:'Drei schnelle Entscheidungen.',
-      copy:'Links = SUPER · hoch = MERKEN · rechts = MIST. Du kannst auch die Buttons antippen. Tippen öffnet bei Filmen und Serien den Trailer mit Infos (bei Personen die Details). Langes Halten zeigt nur das Bild.',
+      copy:'Links wischen bedeutet SUPER, nach oben MERKEN und nach rechts MIST. Alternativ nutzt du die drei Buttons. Jeder Swipe hilft FRAME, deinen Geschmack besser kennenzulernen.',
+      extra:'gestures',
       panel:'top'
     },
     {
       view:'discover',
       target:'.undo-row',
-      kicker:'SCHRITT 3 · 8',
-      title:'Vertippt? Kein Problem.',
-      copy:'SWIPE RÜCKGÄNGIG nimmt genau deine letzte Entscheidung zurück – inklusive Watchlist und gelerntem Geschmack.',
+      title:'Swipe rückgängig? Geht.',
+      copy:'Mit SWIPE RÜCKGÄNGIG machst du die letzte Entscheidung rückgängig – einschließlich Merkliste und Einfluss auf dein Geschmacksprofil.',
       panel:'top'
     },
     {
       view:'discover',
       target:'#moodTrigger',
-      kicker:'SCHRITT 4 · 8',
-      title:'Was passt heute?',
-      copy:'Mit Stimmung sagst du FRAME, ob heute eher Horror, Drama, Action, Feel-Good oder etwas anderes dran ist. Das verändert nur den heutigen Abend – nicht deinen langfristigen Geschmack.',
+      title:'Welche Stimmung passt?',
+      copy:'Wähle vor dem Swipen eine Stimmung, zum Beispiel Action, Horror oder Drama. Das steuert die aktuelle Auswahl, ohne deinen langfristigen Geschmack zu überschreiben.',
+      panel:'bottom'
+    },
+    {
+      view:'personalized',
+      target:'#personalizedView .section-head',
+      title:'Für dich: persönlich ausgewählt.',
+      copy:'Hier stellt FRAME Film- und Serientipps passend zu deinen bisherigen Swipes zusammen. Mit mehr Bewertungen werden die Empfehlungen treffender.',
+      extra:'for-you',
       panel:'bottom'
     },
     {
       view:'daily',
       target:'#dailyDropPanel',
-      kicker:'SCHRITT 5 · 8',
-      title:'Dein Daily Frame.',
-      copy:'Unter Daily Frame bekommst du jeden Tag sieben Titel. Ein kurzer Drop statt endloser Suche: SUPER, MERKEN oder MIST – danach ist für heute Schluss.',
+      title:'Daily Frame: deine täglichen 7.',
+      copy:'Jeden Tag gibt es sieben Vorschläge zum schnellen Bewerten: SUPER, MERKEN oder MIST. Dein Daily Frame ist ein eigener kurzer Film-Check neben Framing.',
       extra:'daily',
       panel:'top',
       scroll:true
@@ -48,28 +54,34 @@
     {
       view:'recommend',
       target:'#roomPanel',
-      kicker:'SCHRITT 6 · 8',
-      title:'Frame Match für zwei.',
-      copy:'Mit Frame Match erstellt ihr einen echten Online-Room. Dein Gegenüber öffnet den Link oder scannt den QR-Code auf dem eigenen Handy. Beide swipen zehn identische Filme – erst nach dem gemeinsamen Reveal werden Treffer sichtbar.',
+      title:'Frame Match: zusammen finden.',
+      copy:'Erstelle einen Online-Room für zwei Personen und teile den Link oder QR-Code. Beide bewerten dieselben zehn Titel auf ihrem Handy. Erst beim Reveal werden eure gemeinsamen Treffer sichtbar.',
       extra:'matches',
       panel:'top',
       scroll:true
     },
     {
-      view:'recommend',
-      target:'.bottom-nav',
-      kicker:'SCHRITT 7 · 8',
-      title:'Und wenn ihr euch nicht entscheiden könnt?',
-      copy:'Frame Match findet eure gemeinsamen Favoriten im Online-Room. Daily Frame liefert jeden Tag sieben Vorschläge. Deine Merkliste findest du unter Mein Frame.',
-      extra:'pick',
-      panel:'top'
+      view:'taste',
+      target:'#tasteView .dna-card',
+      title:'Mein Frame: dein Filmgeschmack.',
+      copy:'Hier siehst du, wie gut FRAME deinen Geschmack kennt, welche Genres du magst und wie sich deine bisherigen Entscheidungen verteilen. Hier kannst du auch das Tutorial erneut öffnen.',
+      extra:'profile',
+      panel:'bottom'
+    },
+    {
+      view:'taste',
+      target:'#openWatchlistFromFrame',
+      title:'Deine Merkliste bleibt dabei.',
+      copy:'Eine Karte, die du in Framing nach oben wischst, landet in deiner Merkliste. Du findest sie jetzt über „Meine Merkliste“ in Mein Frame – nicht mehr als eigenen unteren Tab.',
+      extra:'watchlist',
+      panel:'top',
+      scroll:true
     },
     {
       view:'discover',
       target:'',
-      kicker:'SCHRITT 8 · 8',
-      title:'Viel Spaß mit FRAME.',
-      copy:'Du bist startklar. Swipe los, merk dir deine Favoriten und lass FRAME mit jeder Entscheidung ein bisschen besser werden.',
+      title:'Dein FRAME ist startklar.',
+      copy:'Unten findest du Framing, Für dich, Daily Frame, Frame Match und Mein Frame. Beginne mit ein paar Swipes: FRAME wird mit jeder Entscheidung persönlicher.',
       extra:'start',
       final:true,
       finalPage:true,
@@ -516,22 +528,22 @@
     welcome.innerHTML = `
       <section class="frame-welcome-card" role="dialog" aria-modal="true" aria-labelledby="frameWelcomeTitle">
         <div class="frame-welcome-mark">F</div>
-        <span class="frame-welcome-kicker">DEIN FILMGESCHMACK · DEINE ENTSCHEIDUNG</span>
+        <span class="frame-welcome-kicker">DEINE FILME · DEIN FRAME</span>
         <h2 id="frameWelcomeTitle">Willkommen bei FRAME</h2>
-        <p class="frame-welcome-lead">Entdecke Filme, Serien und People, die wirklich zu dir passen.</p>
-        <p class="frame-welcome-time">Wir zeigen dir in unter 20 Sekunden, wie FRAME funktioniert.</p>
+        <p class="frame-welcome-lead">Entdecke Filme, lerne deinen Geschmack kennen und finde gemeinsam den nächsten Favoriten.</p>
+        <p class="frame-welcome-time">Eine kurze Tour durch die wichtigsten Funktionen.</p>
 
         <div class="frame-welcome-points">
-          <div class="frame-welcome-point"><span>↔</span>Swipe nach Gefühl</div>
-          <div class="frame-welcome-point"><span>⌑</span>Für später merken</div>
-          <div class="frame-welcome-point"><span>✦</span>Persönliche Empfehlungen bekommen</div>
+          <div class="frame-welcome-point"><span>◉</span>Framing · Swipen und Trailer ansehen</div>
+          <div class="frame-welcome-point"><span>✦</span>Für dich · Daily Frame</div>
+          <div class="frame-welcome-point"><span>♡</span>Frame Match · Mein Frame</div>
         </div>
 
         <div class="frame-welcome-actions">
           <button class="frame-welcome-start" type="button">Kurze Tour starten</button>
           <button class="frame-welcome-skip" type="button">Direkt loslegen</button>
         </div>
-        <p class="frame-welcome-note">Du kannst die Tour später im Profil erneut öffnen.</p>
+        <p class="frame-welcome-note">Die Tour kannst du später unter „Mein Frame“ erneut öffnen.</p>
       </section>`;
     document.body.appendChild(welcome);
 
@@ -619,7 +631,10 @@
   }
 
   function targetForStep() {
-    return document.querySelector(steps[current]?.target || '');
+    const selector=steps[current]?.target;
+    if(!selector)return null;
+    try {return document.querySelector(selector);}
+    catch {return null;}
   }
 
   function scrollTargetIntoView(step) {
@@ -711,6 +726,13 @@
   }
 
   function extraMarkup(type) {
+    if (type === 'preview') {
+      return `
+        <div class="frame-tutorial-feature">
+          <div><b>↗</b><span><strong>Tippen:</strong> Trailer, Kurzbeschreibung und Infos (bei People: Personendetails).</span></div>
+          <div><b>◧</b><span><strong>Halten:</strong> nur das Filmplakat, ohne Texte. Erneut halten beendet den Bildmodus.</span></div>
+        </div>`;
+    }
     if (type === 'gestures') {
       return `
         <div class="frame-tutorial-gesture">
@@ -719,31 +741,43 @@
           <span><b>→</b>MIST</span>
         </div>`;
     }
+    if (type === 'for-you') {
+      return `
+        <div class="frame-tutorial-feature">
+          <div><b>✦</b><span><strong>Für dich:</strong> Film- und Serientipps, die FRAME aus deinem Geschmack ableitet.</span></div>
+        </div>`;
+    }
     if (type === 'daily') {
       return `
         <div class="frame-tutorial-feature">
-          <div><b>7</b><span><strong>Today’s 7:</strong> sieben kurze Entscheidungen pro Tag.</span></div>
+          <div><b>7</b><span><strong>Daily Frame:</strong> sieben neue Entscheidungen pro Tag.</span></div>
         </div>`;
     }
     if (type === 'matches') {
       return `
         <div class="frame-tutorial-feature">
-          <div><b>◌</b><span><strong>Hidden:</strong> die Entscheidungen der anderen Person bleiben zunächst geheim.</span></div>
-          <div><b>♥</b><span><strong>Match:</strong> SUPER oder MERKEN bei demselben Titel wird danach sichtbar.</span></div>
+          <div><b>♡</b><span><strong>Privat:</strong> die andere Person sieht deine Swipes zunächst nicht.</span></div>
+          <div><b>✓</b><span><strong>Reveal:</strong> erst danach seht ihr gemeinsame Favoriten.</span></div>
         </div>`;
     }
-    if (type === 'pick') {
+    if (type === 'profile') {
       return `
         <div class="frame-tutorial-feature">
-          <div><b>1</b><span><strong>Just Pick One:</strong> FRAME macht aus Auswahl eine Entscheidung.</span></div>
+          <div><b>◎</b><span><strong>Mein Frame:</strong> deine Geschmacks-DNA, Statistiken und Einstellungen.</span></div>
+        </div>`;
+    }
+    if (type === 'watchlist') {
+      return `
+        <div class="frame-tutorial-feature">
+          <div><b>⌑</b><span><strong>Meine Merkliste:</strong> alle in Framing nach oben gewischten Titel.</span></div>
         </div>`;
     }
     if (type === 'start') {
       return `
         <div class="frame-tutorial-finish">
           <div class="frame-tutorial-finish-mark">F</div>
-          <strong>Dein Feed wartet.</strong>
-          <span>Viel Spaß beim Entdecken – und keine Sorge: FRAME wird mit jedem Swipe persönlicher.</span>
+          <strong>Framing wartet auf dich.</strong>
+          <span>Für dich · Daily Frame · Frame Match · Mein Frame: Alle Bereiche sind unten jederzeit erreichbar.</span>
         </div>`;
     }
     return '';
@@ -837,11 +871,11 @@
     }
     panel?.classList.toggle('final-page', Boolean(step.finalPage));
 
-    root.querySelector('.frame-tutorial-kicker').textContent = step.kicker;
+    root.querySelector('.frame-tutorial-kicker').textContent = step.final ? 'FRAME · STARTKLAR' : `SCHRITT ${current+1} · ${steps.length}`;
     root.querySelector('.frame-tutorial-title').textContent = step.title;
     root.querySelector('.frame-tutorial-copy').textContent = step.copy;
     root.querySelector('.frame-tutorial-back').hidden = current === 0;
-    root.querySelector('.frame-tutorial-next').textContent = step.final ? 'LOS SWIPEN' : 'Weiter';
+    root.querySelector('.frame-tutorial-next').textContent = step.final ? 'FRAMING STARTEN' : 'Weiter';
     root.querySelector('.frame-tutorial-extra').innerHTML = extraMarkup(step.extra);
     root.querySelector('.frame-tutorial-dots').innerHTML = steps
       .map((_,index) => `<span class="frame-tutorial-dot${index===current?' active':''}"></span>`)
