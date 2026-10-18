@@ -407,3 +407,94 @@
 @media (prefers-reduced-motion:reduce) {
   .hm-meter span {transition:none;}
 }
+
+
+/* FRAME Match: paired film partners and a shared watchlist. */
+.hm-partners-home {
+  margin:0 0 18px;padding:17px 15px;border-radius:19px;
+  border:1px solid rgba(255,137,156,.23);
+  background:linear-gradient(125deg,rgba(255,95,123,.115),rgba(255,255,255,.025));
+}
+.hm-partner-eyebrow {
+  display:block;color:#ff96a9;font:800 9px/1.4 var(--font-ui);
+  letter-spacing:.12em;
+}
+.hm-partners-home h3,.hm-shared-head h3 {
+  margin:6px 0 4px;color:#fff;
+  font:650 24px/1.09 var(--font-display);
+}
+.hm-partners-home p,.hm-shared-copy {
+  margin:0 0 13px;color:#bcb0b9;font:550 11px/1.55 var(--font-ui);
+}
+.hm-partners-list{display:grid;gap:8px;}
+.hm-partner-row {
+  display:flex;align-items:center;width:100%;gap:11px;min-height:64px;
+  background:rgba(255,255,255,.065);border:1px solid rgba(255,255,255,.095);
+  border-radius:14px;color:#fff;padding:10px;text-align:left;cursor:pointer;
+}
+.hm-partner-avatar {
+  display:grid;place-items:center;flex:0 0 40px;height:40px;
+  border-radius:14px;background:rgba(255,121,146,.12);color:#ff91a7;
+  font-size:25px;
+}
+.hm-partner-title{display:grid;gap:4px;flex:1;min-width:0;}
+.hm-partner-title strong{font:800 13px/1.2 var(--font-ui);overflow-wrap:anywhere;}
+.hm-partner-title small{font:550 10px/1.2 var(--font-ui);color:#b6aab4;}
+.hm-partner-arrow{font-size:20px;color:#fba0b0;}
+.hm-partner-box {
+  margin:0 0 15px;padding:15px;border-radius:19px;
+  border:1px solid rgba(241,130,154,.24);
+  background:radial-gradient(ellipse at 100% 0%,rgba(255,120,148,.16),transparent 68%),#211b25;
+}
+.hm-partner-box-head{display:grid;gap:5px;}
+.hm-partner-box-head strong{color:#fff;font:650 24px/1.06 var(--font-display);}
+.hm-partner-box p{margin:10px 0 0;color:#cbbcc7;font:550 11px/1.55 var(--font-ui);}
+.hm-partner-box .hm-second-btn{margin-top:13px;background:rgba(255,111,139,.15);border-color:rgba(255,131,151,.38);}
+.hm-partner-switch {
+  padding:12px 0 2px;margin-top:4px;border:0;background:transparent;
+  color:#ffadb9;text-decoration:underline;text-underline-offset:3px;
+  font:750 11px var(--font-ui);
+}
+.hm-save-match {
+  display:inline-flex;align-items:center;justify-content:center;
+  margin-top:10px;min-height:34px;padding:7px 11px;border-radius:10px;
+  border:1px solid rgba(255,143,164,.3);
+  background:rgba(255,108,137,.13);color:#ffd4dd;
+  font:800 10px/1.3 var(--font-ui);
+  cursor:pointer;
+}
+.hm-shared {
+  margin:18px 0 5px;padding:16px;border-radius:22px;
+  border:1px solid rgba(255,255,255,.12);
+  background:linear-gradient(150deg,#251d27,#16151b 63%);
+}
+.hm-shared-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+.hm-shared-head h3{font-size:25px;}
+.hm-shared-count{
+  display:grid;place-items:center;min-width:36px;height:36px;padding:0 6px;
+  border-radius:12px;border:1px solid rgba(255,255,255,.13);
+  background:rgba(255,255,255,.05);color:#fff;font:800 13px var(--font-ui);
+}
+.hm-shared-copy{margin-top:10px;}
+.hm-shared-items{display:grid;gap:9px;}
+.hm-shared-item {
+  display:grid;grid-template-columns:59px minmax(0,1fr);align-items:center;gap:11px;
+  padding:9px;border-radius:14px;background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.07);
+}
+.hm-shared-poster{width:59px;aspect-ratio:2/3;border-radius:9px;background:#30252f center/cover no-repeat;}
+.hm-shared-copy-wrap{display:grid;gap:5px;min-width:0;}
+.hm-shared-copy-wrap strong{color:#f8f2f4;font:700 13px/1.25 var(--font-ui);overflow-wrap:anywhere;}
+.hm-shared-copy-wrap span{color:#bdb1ba;font:600 10px/1.4 var(--font-ui);}
+.hm-shared-copy-wrap button {
+  justify-self:start;min-height:28px;padding:3px 0;border:0;
+  background:transparent;color:#ff9cb0;font:700 10px/1.35 var(--font-ui);
+}
+.hm-shared-empty {
+  margin:0;border:1px dashed rgba(255,255,255,.15);border-radius:13px;
+  padding:16px;color:#c0b4be;font:550 11px/1.6 var(--font-ui);
+}
+@media(max-width:360px){
+  .hm-partners-home,.hm-shared,.hm-partner-box{padding:13px;}
+  .hm-shared-head h3{font-size:22px;}
+}
