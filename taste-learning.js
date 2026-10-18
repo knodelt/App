@@ -426,19 +426,25 @@
   }
 
   async function bootstrapHistoricalLearning() {
-    if (model.examples.length || model.steps || !Object.keys(state?.swipes || {}).length) return;
+    if (model.examples.length || model.steps ||
+      (!Object.keys(state?.swipes||{}).length && !Object.keys(state?.watched||{}).length))return;
 
     let history = {};
     try { history = JSON.parse(localStorage.getItem('frame-recommendation-history-v1') || '{}') || {}; }
     catch {}
 
-    const entries = Object.entries(state.swipes || {}).slice(-80);
+    const merged=new Map(Object.entries(state.swipes||{}));
+    for(const [id,entry] of Object.entries(state.watched||{})){
+      if(['like','dislike'].includes(entry?.rating))merged.set(id,entry.rating);
+    }
+    const entries=[...merged.entries()].slice(-80);
     const examples = [];
 
     for (const [id,action] of entries) {
       const catalogItem = catalog.find(item => item.id === id);
       const historyItem = history[id];
-      const item = catalogItem || (historyItem ? {
+      const viewed=state.watched?.[id];
+      const item = catalogItem || viewed?.item || (historyItem ? {
         id,
         tmdbId:historyItem.tmdbId,
         type:historyItem.type,
@@ -456,8 +462,8 @@
         title:item.title || '',
         action,
         features,
-        meta:{dwellMs:0,detailsOpened:false},
-        at:Number(historyItem?.updatedAt || Date.now())
+        meta:{dwellMs:0,detailsOpened:false,watched:Boolean(viewed)},
+        at:Number(viewed?.watchedAt||historyItem?.updatedAt||Date.now())
       }));
     }
 
@@ -632,6 +638,11 @@
         <span class="online-section-mark" aria-hidden="true">✦</span>
       </div>
       <div class="online-insights" id="onlineLearningInsights"></div>
+      <section class="online-watched-learning" id="onlineWatchedLearning" hidden>
+        <span class="online-small-kicker">ECHTE FILMURTEILE</span>
+        <strong id="onlineWatchedTitle"></strong>
+        <p id="onlineWatchedCopy"></p>
+      </section>
       <div class="online-dna-slot" id="onlineDnaSlot"></div>
       <section class="online-trend" aria-labelledby="onlineTrendHeading">
         <span class="online-small-kicker">DEIN GESCHMACK IN BEWEGUNG</span>
@@ -742,6 +753,18 @@
         padding:15px;color:#b7acb7;font:500 12px/1.6 Manrope,system-ui,sans-serif;
       }
       /* Existing DNA patterns sit within the story rather than a second card. */
+      .online-watched-learning[hidden]{display:none;}
+      .online-watched-learning {
+        margin-top:12px;padding:15px;border-radius:17px;
+        border:1px solid rgba(164,228,186,.16);
+        background:linear-gradient(120deg,rgba(132,211,157,.11),rgba(255,255,255,.018));
+      }
+      .online-watched-learning .online-small-kicker{color:#b4e8c5;}
+      .online-watched-learning strong {
+        display:block;margin:7px 0 0;color:#f6faf6;
+        font:650 20px/1.15 Fraunces,Georgia,serif;
+      }
+      .online-watched-learning p{margin:7px 0 0;color:#bcd0c0;font:550 11px/1.5 Manrope,system-ui,sans-serif;}
       .online-dna-slot:empty {display:none;}
       .online-learning-card .taste-dna-insights {
         margin:11px 0 0;padding:15px 14px;
@@ -795,6 +818,20 @@
     const card=document.querySelector('#onlineLearningCard');
     if(!card)return;
     const story=buildTasteStory(modelSnapshot());
+    const real=Object.values(state.watched||{}).filter(entry=>['like','dislike'].includes(entry?.rating));
+    const observed=card.querySelector('#onlineWatchedLearning');
+    if(observed){
+      observed.hidden=real.length===0;
+      const likes=real.filter(entry=>entry.rating==='like').length;
+      const negative=real.length-likes;
+      const title=card.querySelector('#onlineWatchedTitle');
+      const copy=card.querySelector('#onlineWatchedCopy');
+      if(title)title.textContent=real.length+' wirklich gesehen · '+likes+' gefallen';
+      if(copy)copy.textContent=negative
+        ?'Auch '+negative+' negative'+(negative===1?' Rückmeldung':' Rückmeldungen')+
+          ' helfen FRAME, deine Vorlieben nach dem Anschauen zu verstehen.'
+        :'Diese Urteile nach dem Anschauen zählen für FRAME stärker als erste Eindrücke beim Swipen.';
+    }
     const sentence=card.querySelector('#onlinePortraitSentence');
     const tags=card.querySelector('#onlinePortraitTags');
     const insights=card.querySelector('#onlineLearningInsights');
@@ -883,10 +920,12 @@
   }
 
   document.addEventListener('frame:watched-rated',eventObject=>{
+    render();
     const {id,item,rating}=eventObject.detail||{};
     if(id && item)void syncWatchedExample(id,item,rating,true);
   });
   document.addEventListener('frame:watched-removed',eventObject=>{
+    render();
     const {id,item}=eventObject.detail||{};
     if(!id)return;
     const original=state.swipes?.[id];
