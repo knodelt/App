@@ -160,6 +160,11 @@ async function verifyJWT(idToken,provider,clientId,nonce){
 }
 const sha256=async text=>new Uint8Array(await crypto.subtle.digest('SHA-256',textBytes(text)));
 async function oauthStart(req,env,provider){
+  const publicOrigin=String(env.FRAME_PUBLIC_ORIGIN||'https://framingapp.de').replace(/\/$/,'');
+  if(new URL(req.url).origin!==publicOrigin)
+    return new Response(null,{status:302,headers:{
+      location:publicOrigin+'/api/account/oauth/'+provider+'/start','cache-control':'no-store'
+    }});
   const google=provider==='google';
   const clientId=google?env.GOOGLE_CLIENT_ID:env.APPLE_CLIENT_ID;
   if(!clientId||(google&&!env.GOOGLE_CLIENT_SECRET)||
@@ -168,7 +173,7 @@ async function oauthStart(req,env,provider){
   const state=rnd(),nonce=rnd(),verifier=rnd(48),exp=Date.now()+10*60000;
   const payload=b64url(textBytes(JSON.stringify({provider,state,nonce,verifier,exp})));
   const sig=b64url(await hmac(payload,env.AUTH_SECRET));
-  const redirect=new URL('/api/account/oauth/'+provider+'/callback',req.url).toString();
+  const redirect=new URL('/api/account/oauth/'+provider+'/callback',publicOrigin).toString();
   const url=new URL(google?'https://accounts.google.com/o/oauth2/v2/auth':'https://appleid.apple.com/auth/authorize');
   const params={client_id:clientId,redirect_uri:redirect,response_type:'code',scope:google?'openid email':'name email',
     state,nonce};
