@@ -11,7 +11,7 @@
   const X_RELEASE = 88;
   const Y_RELEASE = 120;
   const Y_INTENT_RATIO = 1.8;
-  const TAP_MOVE_TOLERANCE = 8;
+  const TAP_MOVE_TOLERANCE = 22; // Android touch jitter must not cancel taps.
   const node = id => document.getElementById(id);
   const show = (id,visible) => { const el=node(id); if(el) el.hidden=!visible; };
   const text = (id,value) => { const el=node(id); if(el) el.textContent=value == null ? '' : String(value); };
@@ -31,6 +31,9 @@
   let initialResume = false;
   let pointer = null;
   let holdTimer = null;
+  let tapFallback = null;
+  let tapReady = false;
+  let suppressTapClick = false;
   let swipeAnimating = false;
   let qrLastLink = '';
 
@@ -223,6 +226,8 @@
     if(identity===cardShown) return;
     cardShown=identity;
     cancelCardHold();
+    cancelCardTap();
+    suppressTapClick=false;
     pointer=null;
     const art=node('hmCardArt');
     if(art) {
@@ -522,6 +527,20 @@
     if(holdTimer!==null)clearTimeout(holdTimer);
     holdTimer=null;
   }
+  function cancelCardTap(){
+    if(tapFallback!==null)clearTimeout(tapFallback);
+    tapFallback=null;
+    tapReady=false;
+  }
+  function openCardTrailer(){
+    if(swipeAnimating || busy || !window.FrameTrailer?.open)return;
+    const item=cardForVote();
+    if(!item)return;
+    window.FrameTrailer.open({
+      type:item.type,tmdbId:item.tmdbId,title:item.title,
+      year:item.year,poster:item.poster,blurb:item.blurb
+    });
+  }
 
   function onPointerDown(event) {
     if (pointer || swipeAnimating || busy || !cardForVote()) return;
@@ -529,6 +548,8 @@
     if (event.isPrimary === false) return;
     const card=node('hmCard');
     if (!card) return;
+    cancelCardTap();
+    suppressTapClick=false;
     try { card.setPointerCapture(event.pointerId); } catch {}
     card.classList.remove('entering','guided-x','guided-y','leaving');
     card.classList.add('dragging');
@@ -547,6 +568,7 @@
       pointer=null;
       try{card.releasePointerCapture(heldId);}catch{}
       resetSwipeCard();
+      suppressTapClick=true;
       // Hold toggles clean poster view, never a vote or trailer.
       const imageOnly=card.classList.toggle('image-only');
       try {navigator.vibrate?.(imageOnly?5:3);}catch{}
@@ -623,18 +645,26 @@
     }
 
     if(action) {
+      suppressTapClick=true;
+      cancelCardTap();
       void vote(action);
     } else {
       resetSwipeCard();
-      // A stationary short tap opens the trailer; incomplete swipes don't.
-      if(!tapMoved && !axis
-        && Math.hypot(event.clientX-finished.x,event.clientY-finished.y)<=TAP_MOVE_TOLERANCE
-        && window.FrameTrailer?.open) {
-        const item=cardForVote();
-        if(item)window.FrameTrailer.open({
-          type:item.type,tmdbId:item.tmdbId,title:item.title,
-          year:item.year,poster:item.poster,blurb:item.blurb
-        });
+      const distance=Math.hypot(event.clientX-finished.x,event.clientY-finished.y);
+      // Axis detection starts at 12px, but harmless Android tap jitter may
+      // briefly lock an axis. A tap is still valid within 22px if no vote fired.
+      if(!tapMoved && distance<=TAP_MOVE_TOLERANCE && !suppressTapClick) {
+        tapReady=true;
+        // Wait for native click, preventing the Android synthetic click from
+        // immediately closing a modal opened during pointerup.
+        tapFallback=setTimeout(()=>{
+          tapFallback=null;
+          if(!tapReady)return;
+          tapReady=false;
+          openCardTrailer();
+        },350);
+      }else{
+        suppressTapClick=true;
       }
     }
   }
@@ -642,8 +672,17 @@
   function onPointerCancel(event) {
     if(!pointer || pointer.id!==event.pointerId)return;
     cancelCardHold();
+    cancelCardTap();
+    suppressTapClick=true;
     pointer=null;
     resetSwipeCard();
+  }
+
+  function onCardClick(event){
+    if(event.target.closest?.('button,a'))return;
+    if(!tapReady || suppressTapClick)return;
+    cancelCardTap();
+    openCardTrailer();
   }
 
   function bind() {
@@ -672,6 +711,7 @@
     card?.addEventListener('pointerup',onPointerEnd);
     card?.addEventListener('pointercancel',onPointerCancel);
     card?.addEventListener('lostpointercapture',onPointerCancel);
+    card?.addEventListener('click',onCardClick);
     card?.addEventListener('contextmenu',event=>event.preventDefault());
     document.addEventListener('visibilitychange',()=>{
       if(!document.hidden && session){refreshState();connectSocket();}
