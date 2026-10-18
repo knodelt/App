@@ -209,6 +209,12 @@
 
   node('frameTrailerClose').addEventListener('click',()=>close());
   node('frameTrailerBack').addEventListener('click',()=>close());
+  node('frameTrailerWatched')?.addEventListener('click',()=>{
+    if(!current)return;
+    const item={...current,blurb:current.descriptionHint||''};
+    close({restoreFocus:false});
+    window.FrameWatched?.open(item);
+  });
 
   overlay.addEventListener('pointerdown',event=>event.stopPropagation());
   overlay.addEventListener('pointerup',event=>event.stopPropagation());
