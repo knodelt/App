@@ -26,7 +26,7 @@ const recommendations = [
   { title:'Sharp Objects', year:'2018', type:'Serie', tags:['Mystery','Drama','Slow Burn','Düster'], art:'linear-gradient(145deg,#625249,#2e2724 48%,#0c0c0d)' }
 ];
 
-const defaultState = { swipes:{}, saved:[], filter:'all', secret:0 };
+const defaultState = { swipes:{}, saved:[], savedItems:{}, filter:'all', secret:0 };
 const LAST_SWIPE_KEY = 'frame-last-swipe-v1';
 let state = loadState();
 let activeItems = [];
@@ -495,16 +495,27 @@ function getPreviewMatch(item) {
   return Math.max(52, Math.min(96, Math.round(71 + raw*1.4)));
 }
 
+function getWatchlistItem(id) {
+  // A personalized recommendation may never appear in the discovery deck.
+  // Keep its own poster/title snapshot so it survives refreshes and new feeds.
+  return catalog.find(item=>item.id===id) || state.savedItems?.[id] || null;
+}
+
 function renderWatchlist() {
   const grid = $('#watchlistGrid');
-  const items = state.saved.map(id=>catalog.find(x=>x.id===id)).filter(Boolean);
+  const items = state.saved.map(id=>getWatchlistItem(id)).filter(Boolean);
   $('#watchlistCount').textContent = items.length;
   $('#frameWatchlistCount').textContent = items.length;
   if (!items.length) {
     grid.innerHTML = '<div class="empty-list"><b>Noch ist es hier still.</b>Swipe eine Karte nach oben und sie landet hier für später.</div>';
     return;
   }
-  grid.innerHTML = items.map(item=>`<article class="mini-card"><div class="mini-art" style="--art:${item.art};${item.poster ? `--poster:url('${posterUrl(item.poster,'w500')}')` : ''}"></div><div class="mini-copy"><strong>${item.title}</strong><small>${typeLabel(item.type)} · ${item.year}</small></div></article>`).join('');
+  const safe = value=>String(value ?? '').replace(/[&<>"']/g,c=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+  const poster = item=>/^\/[a-zA-Z0-9_-]+\.(?:jpg|jpeg|png|webp)$/i.test(String(item.poster||''))
+    ? posterUrl(item.poster,'w500') : '';
+  grid.innerHTML = items.map(item=>`<article class="mini-card"><div class="mini-art" style="--art:linear-gradient(145deg,#47353f,#171319);${poster(item) ? `--poster:url('${poster(item)}')` : ''}"></div><div class="mini-copy"><strong>${safe(item.title)}</strong><small>${typeLabel(item.type)} · ${safe(item.year)}</small></div></article>`).join('');
 }
 
 function renderRecommendations() {
