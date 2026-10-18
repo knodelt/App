@@ -148,6 +148,9 @@ body {
   left: auto;
   transform: none;
   width: 100%;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-rows: minmax(0, 1fr);
   min-height: calc(55px + env(safe-area-inset-bottom));
   padding: 6px 10px calc(6px + env(safe-area-inset-bottom));
 }
