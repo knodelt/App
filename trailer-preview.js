@@ -16,6 +16,7 @@
   let previewRequest=null;
   let metaRequest=null;
   let lastFocus=null;
+  let openedAt=0;
   let seq=0;
 
   const posterUrl=value=> {
@@ -141,6 +142,7 @@
     node('frameTrailerPoster').style.backgroundImage=poster?'url("'+poster+'")':'';
     showStatus('Trailer wird gesucht …');
     overlay.hidden=false;
+    openedAt=Date.now();
     document.body.classList.add('frame-trailer-open');
     node('frameTrailerClose').focus({preventScroll:true});
     if(current.tmdbId)loadMeta(token);
@@ -211,7 +213,8 @@
   overlay.addEventListener('pointerdown',event=>event.stopPropagation());
   overlay.addEventListener('pointerup',event=>event.stopPropagation());
   overlay.addEventListener('click',event=>{
-    if(event.target===overlay)close();
+    // Ignore any delayed synthetic click from the tap that opened the dialog.
+    if(event.target===overlay && Date.now()-openedAt>450)close();
   });
   overlay.addEventListener('keydown',event=>{
     if(event.key==='Escape'){
