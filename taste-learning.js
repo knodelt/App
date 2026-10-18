@@ -464,89 +464,345 @@
     event('history_bootstrap',{examples:model.examples.length});
   }
 
-  function ensureUi() {
-    if (document.querySelector('#onlineLearningCard')) return;
-    const anchor = document.querySelector('#tasteDnaInsights') || document.querySelector('#tasteDnaQuestionCard');
-    if (!anchor) return;
 
-    const card = document.createElement('article');
-    card.id = 'onlineLearningCard';
-    card.className = 'online-learning-card';
-    card.innerHTML = `
+  // Turn real model features and saved decisions into explainable, evidence-
+  // based insights. Avoid inventing traits or trends from weak signals.
+  const STORY_GROUPS = new Set(['genre','trait','keyword']);
+  const FRIENDLY_LABELS = {
+    'based on novel or book':'Buchverfilmungen',
+    'science fiction':'Science-Fiction',
+    'sci-fi':'Science-Fiction',
+    'action & adventure':'Action & Abenteuer',
+    'action & adventures':'Action & Abenteuer',
+    'plot-driven':'Handlung im Vordergrund',
+    'character-driven':'Figuren im Mittelpunkt',
+    'slow burn':'Langsam erzählte Geschichten',
+    'mindfuck':'Rätselhafte Geschichten',
+    'romance':'Romantik',
+    'crime':'Krimi',
+    'comedy':'Komödie',
+    'family':'Familie',
+    'adventure':'Abenteuer',
+    'animation':'Animation',
+    'fantasy':'Fantasy'
+  };
+  function friendlyLabel(value) {
+    const raw=String(value||'').replace(/\\s+/g,' ').trim().slice(0,64);
+    return FRIENDLY_LABELS[raw.toLowerCase()] || raw;
+  }
+
+  function tasteEvidence() {
+    const evidence=new Map();
+    for(const example of model.examples||[]) {
+      if(!['like','save','dislike'].includes(example.action))continue;
+      const perItem=new Set();
+      for(const feature of example.features||[]) {
+        if(!STORY_GROUPS.has(feature.group) || !feature.key || perItem.has(feature.key))continue;
+        perItem.add(feature.key);
+        const record=evidence.get(feature.key)||{
+          key:feature.key,label:friendlyLabel(feature.label),
+          group:feature.group,pos:0,neg:0
+        };
+        if(example.action==='dislike')record.neg++;
+        else record.pos++;
+        evidence.set(feature.key,record);
+      }
+    }
+    return evidence;
+  }
+
+  function buildTasteStory(snapshot) {
+    const evidence=tasteEvidence();
+    const candidates=(snapshot.featureWeights||[])
+      .filter(feature=>STORY_GROUPS.has(feature.group))
+      .map(feature=>{
+        const record=evidence.get(feature.key);
+        if(!record)return null;
+        return {...record,weight:feature.weight,confidence:feature.confidence,
+          strength:Math.abs(feature.weight)*(feature.confidence||0)};
+      })
+      .filter(item=>item &&
+        item.pos+item.neg>=2 && item.confidence>=.18 && Math.abs(item.weight)>=.045 &&
+        (item.weight>0?item.pos>item.neg:item.neg>item.pos))
+      .sort((a,b)=>b.strength-a.strength);
+
+    // At least two genuine decisions supporting the direction are required.
+    const liked=candidates.filter(item=>item.weight>0&&item.pos>=2).slice(0,3);
+    const skipped=candidates.filter(item=>item.weight<0&&item.neg>=2).slice(0,2);
+
+    let sentence='Dein Geschmack bekommt gerade Konturen.';
+    if(liked.length>=2) {
+      sentence=liked[0].label+' und '+liked[1].label+
+        ' fallen bei deinen bisherigen Bewertungen besonders positiv auf.';
+    }else if(liked.length===1) {
+      sentence=liked[0].label+' scheint dich bisher besonders anzusprechen.';
+    }else if(skipped.length) {
+      sentence='Bei '+skipped[0].label+' sagst du bisher eher MIST. FRAME sucht weiter nach deinen Favoriten.';
+    }
+
+    const insights=[];
+    if(liked[0])insights.push({
+      icon:'✦',eyebrow:'DAS ZIEHT DICH AN',
+      title:liked[0].label,
+      copy:'Bei '+liked[0].pos+' bewerteten Titeln mit diesem Merkmal hast du SUPER oder MERKEN gewählt.',
+      tone:'positive'
+    });
+    if(liked[1])insights.push({
+      icon:'↗',eyebrow:'AUCH DAS PASST',
+      title:liked[1].label,
+      copy:'Dieses Merkmal taucht ebenfalls mehrfach bei deinen positiven Entscheidungen auf.',
+      tone:'positive'
+    });
+    if(skipped[0])insights.push({
+      icon:'↘',eyebrow:'EHER NICHT DEIN DING',
+      title:skipped[0].label,
+      copy:'Hier hast du bei '+skipped[0].neg+' bewerteten Titeln MIST gewählt.',
+      tone:'negative'
+    });
+
+    const actual=(model.examples||[]).filter(item=>['like','save','dislike'].includes(item.action));
+    const newest=actual.length?actual[actual.length-1]:null;
+    const recent=newest?{
+      title:String(newest.title||'Dieser Titel').slice(0,90),
+      action:newest.action==='like'?'SUPER':newest.action==='save'?'MERKEN':'MIST'
+    }:null;
+
+    // Compare equally sized sets of eight past/recent decisions. A feature
+    // has to occur at least twice in BOTH sets to call it a change.
+    const older=actual.slice(-16,-8),latest=actual.slice(-8);
+    const trendOptions=[];
+    if(older.length===8 && latest.length===8) {
+      const ratios=(list,key)=>{
+        const relevant=list.filter(item=>(item.features||[]).some(f=>f.key===key));
+        if(relevant.length<2)return null;
+        return relevant.filter(item=>item.action!=='dislike').length/relevant.length;
+      };
+      for(const item of candidates) {
+        const before=ratios(older,item.key),after=ratios(latest,item.key);
+        if(before===null || after===null)continue;
+        const delta=after-before;
+        if(Math.abs(delta)<.4)continue;
+        trendOptions.push({...item,delta});
+      }
+      trendOptions.sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta));
+    }
+    const trend=trendOptions[0]||null;
+
+    let expectation='FRAME probiert weiterhin unterschiedliche Filme und Serien aus, um deine Vorlieben genauer zu erkennen.';
+    if(liked.length>=2) {
+      expectation='Bei neuen Vorschlägen kann FRAME '+liked[0].label+' und '+liked[1].label+
+        ' stärker berücksichtigen'+(skipped.length?' und '+skipped[0].label+' vorsichtiger gewichten.':'.');
+    }else if(liked.length===1) {
+      expectation='FRAME kann '+liked[0].label+' bei künftigen Vorschlägen stärker berücksichtigen. Weitere Swipes schärfen die Auswahl.';
+    }else if(skipped.length) {
+      expectation='FRAME kann '+skipped[0].label+' bei weiteren Vorschlägen vorsichtiger gewichten und andere Richtungen ausprobieren.';
+    }
+
+    return {sentence,liked,skipped,insights,recent,trend,expectation,hasSignals:actual.length>0};
+  }
+
+  function ensureUi() {
+    if(document.querySelector('#onlineLearningCard'))return;
+    const anchor=document.querySelector('#tasteDnaInsights')||document.querySelector('#tasteDnaQuestionCard');
+    if(!anchor)return;
+    const card=document.createElement('article');
+    card.id='onlineLearningCard';
+    card.className='online-learning-card';
+    card.setAttribute('aria-labelledby','onlineLearningHeadline');
+    card.innerHTML=`
       <div class="online-learning-head">
         <div>
-          <span>ECHTES ONLINE-LEARNING</span>
-          <h2>FRAME trainiert mit</h2>
+          <span class="online-kicker">FRAME · DEIN GESCHMACK</span>
+          <h2 id="onlineLearningHeadline">FRAME versteht dich immer besser.</h2>
         </div>
-        <b>LIVE</b>
+        <span class="online-live"><i aria-hidden="true"></i> LIVE</span>
       </div>
-      <p>Nach jedem Swipe passt ein kleines Rankingmodell seine Gewichte selbst an. SUPER und MIST werden zusätzlich paarweise miteinander verglichen.</p>
-      <div class="online-learning-stats">
-        <div><strong id="onlineExamples">0</strong><small>Trainingsentscheidungen</small></div>
-        <div><strong id="onlineSteps">0</strong><small>Lernupdates</small></div>
-        <div><strong id="onlineExplore">15%</strong><small>Exploration</small></div>
+      <p class="online-learning-intro">Nicht nur was du magst. Sondern welche Muster deine Entscheidungen verbinden.</p>
+      <section class="online-portrait" aria-labelledby="onlinePortraitLabel">
+        <div class="online-portrait-rings" aria-hidden="true"></div>
+        <span id="onlinePortraitLabel" class="online-small-kicker">DEIN GESCHMACK IN EINEM SATZ</span>
+        <p id="onlinePortraitSentence">FRAME liest deine ersten Signale …</p>
+        <div class="online-portrait-tags" id="onlinePortraitTags"></div>
+      </section>
+      <div class="online-section-heading">
+        <span>WAS FRAME SCHON ERKENNT</span>
+        <span class="online-section-mark" aria-hidden="true">✦</span>
       </div>
-      <div class="online-learning-factors" id="onlineLearningFactors"></div>`;
+      <div class="online-insights" id="onlineLearningInsights"></div>
+      <section class="online-trend" aria-labelledby="onlineTrendHeading">
+        <span class="online-small-kicker">DEIN GESCHMACK IN BEWEGUNG</span>
+        <h3 id="onlineTrendHeading">Was sich verändert</h3>
+        <p id="onlineTrendCopy"></p>
+        <div class="online-latest" id="onlineLatestSignal"></div>
+      </section>
+      <section class="online-outlook" aria-labelledby="onlineOutlookHeading">
+        <span class="online-outlook-icon" aria-hidden="true">↗</span>
+        <div>
+          <h3 id="onlineOutlookHeading">Das könnte FRAME dir jetzt zeigen</h3>
+          <p id="onlineOutlookCopy"></p>
+        </div>
+      </section>
+      <p class="online-learning-note">Aus deinen tatsächlichen Bewertungen abgeleitet. Erste Hinweise sind keine festen Schubladen.</p>`;
     anchor.insertAdjacentElement('afterend',card);
   }
 
   function injectStyles() {
-    if (document.querySelector('#frameOnlineLearningStyles')) return;
-    const style = document.createElement('style');
-    style.id = 'frameOnlineLearningStyles';
-    style.textContent = `
+    if(document.querySelector('#frameOnlineLearningStyles'))return;
+    const style=document.createElement('style');
+    style.id='frameOnlineLearningStyles';
+    style.textContent=`
       .online-learning-card {
-        margin:14px 0 0; padding:17px; border:1px solid rgba(255,255,255,.09);
-        border-radius:22px; background:#141417;
+        margin:16px 0 4px;
+        padding:clamp(17px,4.5vw,24px);
+        color:#f6f3f4;
+        background:linear-gradient(155deg,#18161e 0%,#111116 54%,#131119 100%);
+        border:1px solid rgba(255,255,255,.11);
+        border-radius:27px;
+        box-shadow:0 20px 45px rgba(0,0,0,.2);
+        font-family:Manrope,system-ui,sans-serif;
       }
-      .online-learning-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
-      .online-learning-head span { color:#b9f36a; font-size:9px; font-weight:800; letter-spacing:.08em; }
+      .online-learning-head {display:flex;align-items:flex-start;gap:12px;justify-content:space-between;}
+      .online-kicker,.online-small-kicker,.online-section-heading>span:first-child {
+        color:#ff8a9e;font:800 10px/1.3 Manrope,system-ui,sans-serif;letter-spacing:.105em;
+      }
       .online-learning-head h2 {
-        margin:4px 0 0; color:#f7f5f2; font-family:Fraunces,Georgia,serif;
-        font-size:23px; line-height:1; letter-spacing:-.025em;
+        margin:8px 0 0;max-width:320px;color:#fff;
+        font:650 clamp(29px,8.3vw,38px)/.99 Fraunces,Georgia,serif;
+        letter-spacing:-.045em;
       }
-      .online-learning-head > b {
-        padding:6px 8px; border-radius:999px; background:rgba(185,243,106,.1);
-        color:#b9f36a; font-size:9px; font-weight:800;
+      .online-live {
+        display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;
+        padding:8px 9px;border:1px solid rgba(188,244,139,.2);border-radius:999px;
+        color:#c1ed9a;background:rgba(156,227,124,.08);
+        font:800 9px/1 Manrope,system-ui,sans-serif;
       }
-      .online-learning-card > p { margin:11px 0 0; color:#88837d; font-size:10px; line-height:1.5; }
-      .online-learning-stats {
-        display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin-top:13px;
+      .online-live i {display:block;width:6px;height:6px;border-radius:50%;background:#b1ea91;box-shadow:0 0 0 3px rgba(177,234,145,.13);animation:onlinePulse 2.3s ease-in-out infinite;}
+      @keyframes onlinePulse {50%{opacity:.48;transform:scale(.85)}}
+      .online-learning-intro {margin:14px 0 0;color:#ada6b1;font:500 12px/1.55 Manrope,system-ui,sans-serif;}
+      .online-portrait {
+        position:relative;isolation:isolate;overflow:hidden;
+        margin-top:21px;padding:23px 19px 20px;min-height:178px;
+        border-radius:21px;border:1px solid rgba(255,255,255,.16);
+        background:radial-gradient(ellipse at 95% -10%,rgba(255,154,164,.32),transparent 60%),
+                   radial-gradient(ellipse at -15% 110%,rgba(131,85,174,.27),transparent 60%),
+                   linear-gradient(145deg,#413040,#25202f 65%,#1d1a25);
       }
-      .online-learning-stats div {
-        padding:10px 8px; border-radius:14px; background:#1a1a1f; min-width:0;
+      .online-portrait-rings {
+        position:absolute;z-index:-1;right:-66px;top:-116px;
+        width:260px;height:260px;border:1px solid rgba(255,255,255,.17);
+        border-radius:50%;box-shadow:0 0 0 32px rgba(255,255,255,.035),0 0 0 80px rgba(255,255,255,.025);
+        pointer-events:none;
       }
-      .online-learning-stats strong { display:block; color:#f7f5f2; font-size:17px; }
-      .online-learning-stats small { display:block; margin-top:3px; color:#77726c; font-size:8px; line-height:1.25; }
-      .online-learning-factors { display:grid; gap:6px; margin-top:12px; }
-      .online-factor {
-        display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:9px;
-        padding:8px 10px; border-radius:12px; background:#19191d;
+      .online-portrait .online-small-kicker {color:#ffd2d8;position:relative;}
+      #onlinePortraitSentence {
+        position:relative;margin:15px 0 0;max-width:340px;
+        font:650 clamp(20px,5.8vw,27px)/1.18 Fraunces,Georgia,serif;
+        letter-spacing:-.025em;color:#fff;
+        overflow-wrap:anywhere;
       }
-      .online-factor span { min-width:0; color:#cfcac3; font-size:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-      .online-factor b { font-size:9px; color:#b9f36a; }
-      .online-factor.negative b { color:#ff8291; }
-      .online-learning-empty { color:#77726c; font-size:10px; line-height:1.45; }
+      .online-portrait-tags {position:relative;display:flex;flex-wrap:wrap;gap:6px;margin-top:17px;}
+      .online-taste-tag {
+        border:1px solid rgba(255,255,255,.16);border-radius:999px;
+        padding:7px 10px;background:rgba(255,255,255,.085);
+        font:700 10px/1.2 Manrope,system-ui,sans-serif;color:#fff1f3;
+      }
+      .online-taste-tag.negative {color:#e8d9de;background:rgba(10,9,13,.24);}
+      .online-section-heading {display:flex;justify-content:space-between;align-items:center;margin:23px 2px 11px;}
+      .online-section-heading>span:first-child {color:#b6abb5;}
+      .online-section-mark {color:#ff829b;font-size:22px;}
+      .online-insights {display:grid;gap:9px;}
+      .online-insight {
+        display:grid;grid-template-columns:43px minmax(0,1fr);gap:12px;
+        padding:15px 14px;border-radius:17px;
+        border:1px solid rgba(255,255,255,.065);background:rgba(255,255,255,.035);
+      }
+      .online-insight-icon {
+        display:grid;place-items:center;width:43px;height:43px;
+        border-radius:14px;background:rgba(182,235,154,.08);color:#c5ed9c;
+        font:700 24px/1 Fraunces,Georgia,serif;
+      }
+      .online-insight.negative .online-insight-icon {color:#ff9aaa;background:rgba(255,117,147,.1);}
+      .online-insight span {display:block;color:#998f9f;font:800 9px/1.3 Manrope,system-ui,sans-serif;letter-spacing:.09em;}
+      .online-insight strong {
+        display:block;margin-top:4px;color:#f9f5f7;
+        font:700 15px/1.25 Manrope,system-ui,sans-serif;
+        overflow-wrap:anywhere;
+      }
+      .online-insight p {margin:6px 0 0;color:#b8afbb;font:500 11px/1.55 Manrope,system-ui,sans-serif;}
+      .online-insight-empty {
+        border:1px dashed rgba(255,255,255,.13);border-radius:15px;
+        padding:15px;color:#b7acb7;font:500 12px/1.6 Manrope,system-ui,sans-serif;
+      }
+      .online-trend {margin-top:21px;padding:17px;border:1px solid rgba(255,255,255,.09);border-radius:19px;background:rgba(255,255,255,.026);}
+      .online-trend h3 {margin:7px 0 0;font:650 23px/1.1 Fraunces,Georgia,serif;color:#fff;}
+      .online-trend>p {margin:10px 0 0;color:#c4b9c6;font:500 11.5px/1.6 Manrope,system-ui,sans-serif;}
+      .online-latest {margin-top:13px;padding-top:11px;border-top:1px solid rgba(255,255,255,.08);color:#afa5b1;font:600 10px/1.5 Manrope,system-ui,sans-serif;}
+      .online-latest strong {color:#ffc2ce;font-weight:800;}
+      .online-outlook {
+        display:grid;grid-template-columns:38px minmax(0,1fr);gap:10px;
+        margin-top:10px;padding:17px 14px;border-radius:19px;
+        background:linear-gradient(120deg,rgba(245,119,147,.14),rgba(122,89,160,.11));
+        border:1px solid rgba(241,137,165,.15);
+      }
+      .online-outlook-icon {
+        display:grid;place-items:center;width:38px;height:38px;border-radius:13px;
+        background:rgba(255,255,255,.1);color:#ffd4dc;font-size:21px;
+      }
+      .online-outlook h3 {margin:1px 0 0;color:#ffbccc;font:800 10px/1.4 Manrope,system-ui,sans-serif;letter-spacing:.045em;}
+      .online-outlook p {margin:8px 0 0;color:#e9dde8;font:600 12px/1.5 Manrope,system-ui,sans-serif;}
+      .online-learning-note {margin:13px 2px 0;color:#78717f;font:500 9px/1.5 Manrope,system-ui,sans-serif;}
+      @media (max-width:360px) {
+        .online-learning-card {padding:15px;}
+        .online-learning-head h2 {font-size:27px;}
+        .online-portrait {padding:20px 15px;}
+      }
+      @media (prefers-reduced-motion:reduce) {.online-live i{animation:none;}}
     `;
     document.head.appendChild(style);
   }
 
   function render() {
     ensureUi();
-    const snapshot = modelSnapshot();
-    const examples = document.querySelector('#onlineExamples');
-    const steps = document.querySelector('#onlineSteps');
-    const explore = document.querySelector('#onlineExplore');
-    const factors = document.querySelector('#onlineLearningFactors');
-    if (examples) examples.textContent = snapshot.examples;
-    if (steps) steps.textContent = snapshot.steps;
-    if (explore) explore.textContent = `${Math.round(snapshot.explorationRate*100)}%`;
-    if (!factors) return;
-
-    const top = snapshot.featureWeights.slice(0,7);
-    factors.innerHTML = top.length
-      ? top.map(entry => `<div class="online-factor${entry.weight < 0 ? ' negative' : ''}"><span>${escapeHtml(entry.label)}</span><b>${entry.weight >= 0 ? '+' : ''}${entry.weight.toFixed(2)} · ${Math.round(entry.confidence*100)}%</b></div>`).join('')
-      : '<p class="online-learning-empty">Noch kein trainiertes Modell. Der erste SUPER/MIST-Swipe startet das Lernen.</p>';
+    const card=document.querySelector('#onlineLearningCard');
+    if(!card)return;
+    const story=buildTasteStory(modelSnapshot());
+    const sentence=card.querySelector('#onlinePortraitSentence');
+    const tags=card.querySelector('#onlinePortraitTags');
+    const insights=card.querySelector('#onlineLearningInsights');
+    const trend=card.querySelector('#onlineTrendCopy');
+    const latest=card.querySelector('#onlineLatestSignal');
+    const outlook=card.querySelector('#onlineOutlookCopy');
+    if(sentence)sentence.textContent=story.sentence;
+    if(tags){
+      const chips=[
+        ...story.liked.slice(0,2).map(entry=>({label:entry.label,negative:false})),
+        ...story.skipped.slice(0,1).map(entry=>({label:entry.label,negative:true}))
+      ];
+      tags.innerHTML=chips.length
+        ? chips.map(entry=>'<span class="online-taste-tag'+(entry.negative?' negative':'')+'">'+
+            (entry.negative?'− ':'✦ ')+escapeHtml(entry.label)+'</span>').join('')
+        : '<span class="online-taste-tag">Dein Profil wächst mit jedem Swipe</span>';
+    }
+    if(insights){
+      insights.innerHTML=story.insights.length
+        ? story.insights.map(item=>'<div class="online-insight'+(item.tone==='negative'?' negative':'')+'">'+
+          '<div class="online-insight-icon" aria-hidden="true">'+escapeHtml(item.icon)+'</div>'+
+          '<div><span>'+escapeHtml(item.eyebrow)+'</span><strong>'+escapeHtml(item.title)+'</strong>'+
+          '<p>'+escapeHtml(item.copy)+'</p></div></div>').join('')
+        : '<p class="online-insight-empty">Noch sind die Muster nicht eindeutig. Bewerte ein paar weitere Titel mit SUPER, MERKEN oder MIST – dann werden hier echte Zusammenhänge sichtbar.</p>';
+    }
+    if(trend){
+      trend.textContent=story.trend
+        ? 'In deinen letzten acht Entscheidungen kam '+story.trend.label+
+          (story.trend.delta>0?' häufiger positiv an als zuvor.':' häufiger bei MIST vor als zuvor.')
+        : 'Noch keine klare Veränderung. Sobald wiederkehrende Unterschiede zwischen älteren und neueren Bewertungen erkennbar sind, zeigt FRAME sie dir.';
+    }
+    if(latest){
+      latest.innerHTML=story.recent
+        ? 'ZULETZT GELERNT · '+escapeHtml(story.recent.title)+' · <strong>'+escapeHtml(story.recent.action)+'</strong>'
+        : 'DEIN NÄCHSTER SWIPE WIRD ZUM ERSTEN SIGNAL';
+    }
+    if(outlook)outlook.textContent=story.expectation;
   }
 
   function escapeHtml(value) {
