@@ -112,7 +112,7 @@
 
   function save() {
     data.updatedAt = Date.now();
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch {}
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); window.FrameCloud?.changed?.(); } catch {}
   }
 
   function clamp(value, min, max) {
