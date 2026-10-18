@@ -603,8 +603,8 @@
 
   function ensureUi() {
     if(document.querySelector('#onlineLearningCard'))return;
-    const anchor=document.querySelector('#tasteDnaInsights')||document.querySelector('#tasteDnaQuestionCard');
-    if(!anchor)return;
+    const question=document.querySelector('#tasteDnaQuestionCard');
+    if(!question)return;
     const card=document.createElement('article');
     card.id='onlineLearningCard';
     card.className='online-learning-card';
@@ -629,6 +629,7 @@
         <span class="online-section-mark" aria-hidden="true">✦</span>
       </div>
       <div class="online-insights" id="onlineLearningInsights"></div>
+      <div class="online-dna-slot" id="onlineDnaSlot"></div>
       <section class="online-trend" aria-labelledby="onlineTrendHeading">
         <span class="online-small-kicker">DEIN GESCHMACK IN BEWEGUNG</span>
         <h3 id="onlineTrendHeading">Was sich verändert</h3>
@@ -643,7 +644,11 @@
         </div>
       </section>
       <p class="online-learning-note">Aus deinen tatsächlichen Bewertungen abgeleitet. Erste Hinweise sind keine festen Schubladen.</p>`;
-    anchor.insertAdjacentElement('afterend',card);
+    // The learning story is the primary view; taste DNA questions stay optional.
+    question.insertAdjacentElement('beforebegin',card);
+    const connections=document.querySelector('#tasteDnaInsights');
+    const slot=card.querySelector('#onlineDnaSlot');
+    if(connections&&slot)slot.appendChild(connections);
   }
 
   function injectStyles() {
@@ -733,6 +738,27 @@
         border:1px dashed rgba(255,255,255,.13);border-radius:15px;
         padding:15px;color:#b7acb7;font:500 12px/1.6 Manrope,system-ui,sans-serif;
       }
+      /* Existing DNA patterns sit within the story rather than a second card. */
+      .online-dna-slot:empty {display:none;}
+      .online-learning-card .taste-dna-insights {
+        margin:11px 0 0;padding:15px 14px;
+        border:1px solid rgba(255,255,255,.065);border-radius:17px;
+        background:rgba(255,255,255,.028);box-shadow:none;
+      }
+      .online-learning-card .taste-dna-top h2 {
+        margin:5px 0 0;font:650 21px/1.14 Fraunces,Georgia,serif;color:#fff;
+      }
+      .online-learning-card .taste-dna-top span {color:#ff9aac;}
+      .online-learning-card .taste-dna-chip {
+        padding:7px 10px;border-color:rgba(255,255,255,.10);
+        color:#e8dfeb;background:rgba(255,255,255,.055);font-size:10px;
+      }
+      .online-learning-card .taste-dna-chip.negative {color:#ffc0cc;background:rgba(255,94,124,.075);}
+      .online-learning-card .taste-dna-relation {
+        display:flex;align-items:center;flex-wrap:wrap;gap:9px;
+        background:rgba(255,255,255,.04);color:#e8e2e9;
+      }
+      .online-learning-card .taste-dna-relation span {min-width:0;overflow-wrap:anywhere;}
       .online-trend {margin-top:21px;padding:17px;border:1px solid rgba(255,255,255,.09);border-radius:19px;background:rgba(255,255,255,.026);}
       .online-trend h3 {margin:7px 0 0;font:650 23px/1.1 Fraunces,Georgia,serif;color:#fff;}
       .online-trend>p {margin:10px 0 0;color:#c4b9c6;font:500 11.5px/1.6 Manrope,system-ui,sans-serif;}
