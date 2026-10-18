@@ -1685,3 +1685,11 @@ h1 em {
   .frame-watched-card{grid-template-columns:68px minmax(0,1fr);}
   .frame-watched-poster{width:68px;}
 }
+
+/* Let the user rate an already seen movie directly from Framing's trailer. */
+.frame-trailer-actions .frame-trailer-watched {
+  min-height:43px;padding:10px 14px;border-radius:13px;
+  border:1px solid rgba(167,229,184,.32);
+  background:rgba(123,197,149,.14);color:#c8f0d2;
+  font:800 11px/1.2 var(--font-ui,system-ui);
+}
