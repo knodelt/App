@@ -2062,3 +2062,44 @@ h1 em {
     grid-template-rows:33px 15px !important;
   }
 }
+
+
+/* FRAME V106: unified typography for the six TOP-LEVEL screen headlines.
+   These selectors deliberately override each page's previous independent h1
+   sizing (including FRAMELOG and short-viewport Framing rules). Card titles,
+   detail headings, statistics and modal headings remain unchanged. */
+#discoverView .section-head h1,
+#personalizedView .section-head h1,
+#dailyFrameView .section-head h1,
+#recommendView .section-head h1,
+#frameLogView .frame-log-header h1,
+#tasteView .section-head h1 {
+  font-family:var(--font-display,Fraunces,Georgia,serif) !important;
+  font-size:clamp(32px,9vw,36px) !important;
+  font-weight:650 !important;
+  font-style:normal !important;
+  line-height:1.02 !important;
+  letter-spacing:-.04em !important;
+  text-transform:none !important;
+  color:var(--text,#f7f1f4) !important;
+  text-shadow:none !important;
+  margin:0 !important;
+}
+/* FRAMELOG uses an ordinary page kicker instead of its former mini-brand
+   typography, matching the other page kickers. */
+#frameLogView .frame-log-overline {
+  display:flex;
+  align-items:center;
+  gap:7px;
+  margin:0 0 6px !important;
+  font-family:var(--font-ui,Manrope,system-ui,sans-serif) !important;
+  font-size:11px !important;
+  font-weight:800 !important;
+  line-height:1 !important;
+  letter-spacing:.06em !important;
+  text-transform:uppercase !important;
+  color:var(--accent,#ff5b71) !important;
+}
+#frameLogView .frame-log-header {padding-top:0;}
+/* Keep normal title rhythm and a small cushion before subsequent content. */
+#frameLogView .frame-log-header > p {margin-top:9px;}
