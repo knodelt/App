@@ -41,11 +41,19 @@
   };
   const hasData=s=>{
     if(!s||!Object.keys(s).length)return false;
-    let local={};try{local=JSON.parse(s['frame-state']||'{}')}catch{}
+    const parse=key=>{try{return JSON.parse(s[key]||'{}')}catch{return {}}};
+    const local=parse('frame-state'),dna=parse('frame-taste-dna-v2'),
+      online=parse('frame-online-learning-v1'),history=parse('frame-recommendation-history-v1'),
+      loop=parse('frame-loop-v1');
     return Object.keys(local.swipes||{}).length>0 ||
       (local.saved||[]).length>0 ||
       Object.keys(local.watched||{}).length>0 ||
-      Object.keys(s).some(k=>k!=='frame-state'&&k!=='frame-loop-mode-v1');
+      Object.keys(local.frameLogItems||{}).length>0 ||
+      Object.keys(local.frameLogMeta||{}).length>0 ||
+      Object.keys(dna.items||{}).length>0 ||
+      (online.examples||[]).length>0 ||
+      Object.keys(history||{}).length>0 ||
+      (loop.pickHistory||[]).length>0;
   };
   const status=(value,bad=false)=>{
     text('frameAccountStatus',value);
@@ -164,8 +172,8 @@
         }
         return;
       }
-      if(baseline===localHash && sameOwner) {
-        // Local copy was unmodified since the previous save: cloud may safely win.
+      if(!hasData(local) || (baseline===localHash && sameOwner)) {
+        // Fresh devices and unchanged local copies can safely receive cloud data.
         restoreLocal(remote);
         retainMarks(remoteHash,revision);
         location.reload();return;
