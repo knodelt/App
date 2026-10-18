@@ -1,9 +1,11 @@
 /* FRAME retention loop — Daily Drop, local Room and Just Pick One */
 
-#recommendView {
+#recommendView,
+#dailyFrameView {
   gap: 0;
 }
 
+#dailyFrameView .section-head.compact,
 #recommendView .section-head.compact {
   flex: 0 0 auto;
   margin-bottom: 16px !important;
