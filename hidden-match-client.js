@@ -3,6 +3,7 @@
   // Hidden Match V1: a room lives on the server, never in another player's localStorage.
   const SESSION_KEY = 'frame-hidden-match-session-v1';
   const NAME_KEY = 'frame-hidden-match-name-v1';
+  const PARTNERS_KEY = 'frame-match-partners-v1';
   const CODE_RE = /^[A-HJ-NP-Z2-9]{8}$/;
   const API = '/api/hidden-match/';
   // Mirror the exact intention locks and release thresholds from swipe-guidance.js.
@@ -37,6 +38,42 @@
   let swipeAnimating = false;
   let qrLastLink = '';
 
+  function savedPartners() {
+    try {
+      const entries=JSON.parse(localStorage.getItem(PARTNERS_KEY)||'[]');
+      return Array.isArray(entries)?entries.filter(v=>v && CODE_RE.test(v.code)
+        && ['host','guest'].includes(v.role) && typeof v.token==='string'
+        && v.token.length>=36 && Number(v.expiresAt)>Date.now()).slice(-8):[];
+    }catch{return [];}
+  }
+  function savePartners(entries) {
+    try{localStorage.setItem(PARTNERS_KEY,JSON.stringify(entries.slice(-8)));}catch{}
+  }
+  function paintPartners() {
+    const list=savedPartners(), panel=node('hmPartnersHome'),host=node('hmPartnersList');
+    if(!panel || !host)return;
+    panel.hidden=!list.length;
+    host.innerHTML=list.map(entry=>
+      '<button type="button" class="hm-partner-row" data-hm-resume="'+escapeHtml(entry.code)+'">'+
+      '<span class="hm-partner-avatar" aria-hidden="true">♡</span>'+
+      '<span class="hm-partner-title"><strong>'+escapeHtml(entry.partnerName)+'</strong>'+
+      '<small>Euer Frame · Runde '+Number(entry.round||1)+'</small></span>'+
+      '<span class="hm-partner-arrow" aria-hidden="true">→</span></button>'
+    ).join('');
+  }
+  function forgetPartner(code) {
+    savePartners(savedPartners().filter(entry=>entry.code!==code));
+    paintPartners();
+  }
+  function rememberPartner() {
+    if(!session || !room?.partnership?.active)return;
+    const other=room.role==='host'?room.guestName:room.hostName;
+    const list=savedPartners().filter(entry=>entry.code!==session.code);
+    list.push({...session,partnerName:String(other||'Filmfan').slice(0,24),
+      expiresAt:Number(room.expiresAt)||Date.now()+86400000,round:room.round});
+    savePartners(list);
+  }
+
   function getStoredSession() {
     try {
       const value = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
@@ -63,7 +100,7 @@
   function clearError() { show('hmError',false); }
   function setWorking(working) {
     busy=Boolean(working);
-    for(const id of ['hmCreate','hmJoin','hmReadyButton','hmPick','hmNext','hmCloseRoom','hmExit']) {
+    for(const id of ['hmCreate','hmJoin','hmReadyButton','hmPick','hmNext','hmCloseRoom','hmExit','hmSavePartner']) {
       const button=node(id);
       if(button) button.disabled=busy || swipeAnimating;
     }
@@ -104,6 +141,8 @@
     history.replaceState(history.state,'',url.pathname+url.search+url.hash);
   }
   function showSetup(code=null) {
+    paintPartners();
+    if(code && node('hmPartnersHome'))node('hmPartnersHome').hidden=true;
     show('hmSetup',true);
     show('hmLive',false);
     show('hmHostSetup',!code);
@@ -127,6 +166,7 @@
     clearConnection();
     try {localStorage.removeItem(SESSION_KEY);}catch{}
     session=null;room=null;cardShown='';revealShown='';qrLastLink='';
+    paintPartners();
     cancelCardHold();
     pointer=null;swipeAnimating=false;
     resetSwipeCard();
@@ -163,6 +203,7 @@
   function beginLive(result) {
     room=result.room;
     rememberSession({code:room.code,role:room.role,token:result.token});
+    rememberPartner();
     clearInviteParameter();
     setWorking(false);
     clearError();
@@ -182,7 +223,7 @@
     } catch(e) { error(e.message); }
     finally {
       setWorking(false);
-      node('hmCreate').innerHTML='Hidden Match starten <span aria-hidden="true">→</span>';
+      node('hmCreate').innerHTML='Frame Match starten <span aria-hidden="true">→</span>';
     }
   }
   async function joinRoom() {
@@ -206,6 +247,7 @@
       cardShown='';revealShown='';
     }
     room=newRoom;
+    rememberPartner();
     // Online status can arrive while the old card is flying away. Don't
     // repaint it until the animation (and vote persistence) has finished.
     if (!swipeAnimating) paint();
@@ -251,7 +293,9 @@
   function paintReveal() {
     if(!room) return;
     const matches=room.matches || [];
-    const key=room.code+':'+room.round+':'+room.status+':'+matches.map(item=>item.id).join(',');
+    const savedIds=new Set((room.sharedList||[]).map(item=>item.id));
+    const key=room.code+':'+room.round+':'+room.status+':'+Boolean(room.partnership?.active)+':'
+      +matches.map(item=>item.id).join(',')+':'+[...savedIds].join(',');
     if(key !== revealShown) {
       revealShown=key;
       text('hmRevealTitle',matches.length===1?'Ein gemeinsamer Treffer!':matches.length?matches.length+' gemeinsame Treffer':'Noch kein gemeinsamer Treffer.');
@@ -266,7 +310,8 @@
         return '<div class="hm-match-card" style="animation-delay:'+Math.min(index*100,550)+'ms">'
           +'<div class="hm-match-poster"'+(art?' style="background-image:url(\''+art+'\')"':'')+'></div>'
           +'<div class="hm-match-copy"><span class="hm-match-tier">'+tier+'</span><h4>'+escapeHtml(item.title)+'</h4>'
-          +'<p>'+escapeHtml(why)+' · '+escapeHtml(item.year||'')+'</p></div></div>';
+          +'<p>'+escapeHtml(why)+' · '+escapeHtml(item.year||'')+'</p>'
+          +(room.partnership?.active?'<button class="hm-save-match" type="button" data-hm-save="'+escapeHtml(item.id)+'">'+(savedIds.has(item.id)?'✓ Auf eurer Liste · Entfernen':'+ Für uns merken')+'</button>':'')+'</div></div>';
       }).join('');
     }
     const picked=node('hmPicked');
@@ -276,14 +321,50 @@
         +'<p>Das ist heute euer gemeinsamer Favorit. Viel Spaß beim Filmabend!</p>';
     } else if(picked) { picked.hidden=true;picked.textContent=''; }
     show('hmPick',Boolean(matches.length) && !room.picked);
-    show('hmNext',room.role==='host');
-    text('hmNext',matches.length?'Nochmal 10 neue Titel':'Neue Runde versuchen');
+    show('hmNext',room.role==='host'||Boolean(room.partnership?.active));
+    text('hmNext',room.partnership?.active?'Neue Vorschläge für euch beide'
+      :matches.length?'Nochmal 10 neue Titel':'Neue Runde versuchen');
+  }
+
+  function paintPartner() {
+    const active=Boolean(room.partnership?.active);
+    const hasGuest=Boolean(room.guestName);
+    show('hmPartnerBox',active||hasGuest);
+    if(!active&&!hasGuest)return;
+    const name=room.role==='host'?room.guestName:room.hostName;
+    text('hmPartnerStatus',active?'Du und '+name+' seid verbunden':'Filmfreundschaft mit '+name);
+    text('hmPartnerExplain',active
+      ? 'Eure Verbindung und gemeinsame Liste bleiben bis zu 90 Tage nach der letzten gemeinsamen Aktion erhalten – auf euren bisherigen Geräten.'
+      :room.partnership?.ownConsent
+        ?'Du hast zugestimmt. Sobald '+name+' ebenfalls bestätigt, speichert FRAME eure Verbindung.'
+        :'Wenn ihr beide zustimmt, könnt ihr euch wiederfinden, Treffer gemeinsam merken und neue Runden spielen.');
+    show('hmSavePartner',!active&&!room.partnership?.ownConsent);
+    show('hmSwitchPartner',active);
+  }
+  function paintShared() {
+    const active=Boolean(room.partnership?.active);
+    show('hmShared',active);
+    if(!active)return;
+    const list=room.sharedList||[];
+    text('hmSharedCount',String(list.length));
+    const host=node('hmSharedItems');
+    if(!host)return;
+    host.innerHTML=list.length?list.map(item=>{
+      const poster=posterUrl(item);
+      return '<article class="hm-shared-item">'+
+        '<div class="hm-shared-poster"'+(poster?' style="background-image:url(\''+poster+'\')"':'')+'></div>'+
+        '<div class="hm-shared-copy-wrap"><strong>'+escapeHtml(item.title)+'</strong>'+
+        '<span>'+(item.type==='movie'?'Film':'Serie')+' · '+escapeHtml(item.year||'')+'</span>'+
+        '<button type="button" data-hm-save="'+escapeHtml(item.id)+'">Aus Liste entfernen</button></div></article>';
+    }).join(''):'<p class="hm-shared-empty">Noch kein gemeinsamer Film gespeichert. Nach dem Reveal könnt ihr eure Treffer hier sammeln.</p>';
   }
   function paint() {
     if(!room || !session) { showSetup(); return; }
     show('hmSetup',false);
     show('hmLive',true);
     const host=room.role==='host';
+    paintPartner();
+    paintShared();
     text('hmRoomCode',room.code);
     const total=room.total||10;
     text('hmHostNameLabel',room.hostName+(host?' (Du)':''));
@@ -330,7 +411,7 @@
     show('hmClosed',room.status==='closed');
     show('hmExit',!host && room.status!=='closed');
     show('hmCloseRoom',host && room.status!=='closed');
-    text('hmRoomFooter',room.status==='closed'?'Room beendet':room.status==='waiting'?'Einladung 24 Stunden gültig':room.status==='ready'?'Beide entscheiden, wann der Reveal startet.':'Eure Stimmen bleiben bis zum gemeinsamen Reveal geheim.');
+    text('hmRoomFooter',room.status==='closed'?'Room beendet':room.partnership?.active?'Gespeicherte Partnerschaft · jederzeit beendbar':room.status==='waiting'?'Einladung 24 Stunden gültig':room.status==='ready'?'Beide entscheiden, wann der Reveal startet.':'Eure Stimmen bleiben bis zum gemeinsamen Reveal geheim.');
   }
   async function perform(endpoint,payload={},options={}) {
     if (busy || !session) return;
@@ -339,12 +420,12 @@
     try {
       const result=await post(endpoint,payload);
       if(session?.code===before) setRoom(result.room);
-      if(endpoint==='close') {clearConnection();}
-      if(endpoint==='leave') {dropLocalSession();}
+      if(endpoint==='close') {forgetPartner(before);clearConnection();}
+      if(endpoint==='leave') {forgetPartner(before);dropLocalSession();}
       if(options.announce && typeof showToast==='function') showToast(options.announce);
     } catch(e) {
       error(e.message);
-      if(e.code==='ROOM_CLOSED' || e.code==='UNAUTHORIZED') dropLocalSession();
+      if(e.code==='ROOM_CLOSED' || e.code==='UNAUTHORIZED') {forgetPartner(before);dropLocalSession();}
     } finally {
       setWorking(false);
       if(room && !swipeAnimating)paint();
@@ -431,6 +512,7 @@
       }
     }catch(e) {
       if(e.code==='ROOM_CLOSED'||e.code==='UNAUTHORIZED') {
+        forgetPartner(session.code);
         dropLocalSession();
         error('Dein Room ist beendet oder abgelaufen. Starte einen neuen.');
       }else connectionBadge('offline');
@@ -508,18 +590,18 @@
     const url=node('hmInviteLink')?.value;
     if(!url)return;
     if(navigator.share) {
-      try { await navigator.share({title:'FRAME Hidden Match',text:'Lass uns zusammen einen Film finden!',url}); }
+      try { await navigator.share({title:'FRAME Match',text:'Lass uns zusammen einen Film finden!',url}); }
       catch(e) {if(e.name!=='AbortError')await copyInvitation();}
     } else await copyInvitation();
   }
   async function leaveRoom() {
     if(!session || busy)return;
     if(session.role==='host') {
-      if(!confirm('Möchtest du den gemeinsamen Room wirklich beenden?'))return;
+      if(!confirm(room?.partnership?.active?'Filmpartnerschaft für beide endgültig beenden? Eure gemeinsame Liste wird gelöscht.':'Möchtest du den gemeinsamen Room wirklich beenden?'))return;
       await perform('close');
       dropLocalSession();
     }else {
-      if(!confirm('Room verlassen? Deine Stimmen dieser Runde gehen verloren.'))return;
+      if(!confirm(room?.partnership?.active?'Filmpartnerschaft endgültig beenden? Eure gemeinsame Liste wird für beide gelöscht.':'Room verlassen? Deine Stimmen dieser Runde gehen verloren.'))return;
       await perform('leave');
     }
   }
@@ -685,8 +767,36 @@
     openCardTrailer();
   }
 
+  function resumePartner(code) {
+    const stored=savedPartners().find(item=>item.code===code);
+    if(!stored)return;
+    clearConnection();
+    rememberSession({code:stored.code,role:stored.role,token:stored.token});
+    room=null;cardShown='';revealShown='';
+    openExisting();
+    try{switchView('recommend');}catch{}
+  }
+  function chooseAnotherPartner() {
+    if(!room?.partnership?.active)return;
+    clearConnection();
+    try{localStorage.removeItem(SESSION_KEY);}catch{}
+    session=null;room=null;cardShown='';revealShown='';
+    showSetup();
+  }
+  function onSharedAction(event) {
+    const target=event.target.closest('[data-hm-save]');
+    if(target && room?.partnership?.active)perform('toggleSave',{itemId:target.dataset.hmSave});
+  }
   function bind() {
     node('hmCreate')?.addEventListener('click',createRoom);
+    node('hmSavePartner')?.addEventListener('click',()=>perform('savePartner'));
+    node('hmSwitchPartner')?.addEventListener('click',chooseAnotherPartner);
+    node('hmPartnersList')?.addEventListener('click',event=>{
+      const button=event.target.closest('[data-hm-resume]');
+      if(button)resumePartner(button.dataset.hmResume);
+    });
+    node('hmMatchCards')?.addEventListener('click',onSharedAction);
+    node('hmSharedItems')?.addEventListener('click',onSharedAction);
     node('hmJoin')?.addEventListener('click',joinRoom);
     node('hmCancelInvite')?.addEventListener('click',()=>{clearInviteParameter();showSetup();});
     node('hmStartOver')?.addEventListener('click',dropLocalSession);
