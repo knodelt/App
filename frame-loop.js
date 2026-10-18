@@ -21,7 +21,7 @@
   }
 
   function safeSet(key, value) {
-    try { localStorage.setItem(key, value); } catch {}
+    try { localStorage.setItem(key, value); window.FrameCloud?.changed?.(); } catch {}
   }
 
   function loadLoop() {
