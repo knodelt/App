@@ -69,19 +69,19 @@
       panel:'bottom'
     },
     {
-      view:'taste',
-      target:'#openFrameLog',
-      title:'FRAMELOG: deine ganze Filmgeschichte.',
-      copy:'Ein einziger Ort für deine Merkliste, gesehene Filme, echte Bewertungen und frühere SUPER- oder MIST-Swipes. In FRAMELOG kannst du filtern, ein Filmabend-Datum festhalten und kurze Notizen ergänzen.',
+      view:'framelog',
+      target:'#frameLogView .frame-log-header',
+      title:'FRAMELOG: dein eigenes Filmtagebuch.',
+      copy:'FRAMELOG hat jetzt einen eigenen Button unten. Hier findest du deine Merkliste, Gesehen-Bewertungen und SUPER- oder MIST-Swipes. Filtere alle Titel oder ergänze Filmabend-Datum und Notizen.',
       extra:'framelog',
-      panel:'top',
+      panel:'bottom',
       scroll:true
     },
     {
       view:'discover',
       target:'',
       title:'Dein FRAME ist startklar.',
-      copy:'Unten findest du Framing, Für dich, Daily Frame, Frame Match und Mein Frame. Beginne mit ein paar Swipes: FRAME wird mit jeder Entscheidung persönlicher.',
+      copy:'Unten findest du Framing, Für dich, Daily Frame, Frame Match, FRAMELOG und Mein Frame. Beginne mit ein paar Swipes: FRAME wird mit jeder Entscheidung persönlicher.',
       extra:'start',
       final:true,
       finalPage:true,
@@ -779,7 +779,7 @@
         <div class="frame-tutorial-finish">
           <div class="frame-tutorial-finish-mark">F</div>
           <strong>Framing wartet auf dich.</strong>
-          <span>Für dich · Daily Frame · Frame Match · Mein Frame: Alle Bereiche sind unten jederzeit erreichbar.</span>
+          <span>Für dich · Daily Frame · Frame Match · FRAMELOG · Mein Frame: Alle Bereiche sind unten erreichbar.</span>
         </div>`;
     }
     return '';
