@@ -70,9 +70,9 @@ Gesehen-Einträge unterstützen ein frei editierbares Filmabend-Datum und eine N
 
 ## FRAME Cloud einrichten (framingapp.de)
 
-Das Repository enthält die technische Implementierung für eine passwortlose Anmeldung
-mit E-Mail-Code, Google und Apple sowie private Cloud-Speicherung über Cloudflare
-Durable Objects. **Ohne Anbieter-Secrets ist die Anmeldung noch nicht freigeschaltet.**
+FRAME unterstützt ausschließlich die passwortlose Anmeldung per E-Mail-Code über
+Brevo sowie private Cloud-Speicherung über Cloudflare Durable Objects.
+Für die Anmeldung müssen BREVO_API_KEY und AUTH_SECRET im Worker hinterlegt sein.
 Alle Schlüssel gehören ausschließlich in Cloudflare Workers & Pages → app →
 Settings → Variables and Secrets, niemals in das öffentliche GitHub-Repository.
 
@@ -84,9 +84,6 @@ Beim nächsten Cloudflare-Build muss die neue Klasse erfolgreich bereitgestellt 
 
 Ein verschlüsseltes Worker-Secret **AUTH_SECRET** mit einem zufälligen
 Schlüssel (mindestens 32 Zeichen, empfohlen 64 zufällige Hexzeichen) anlegen.
-Optional kann die öffentliche Textvariable **FRAME_PUBLIC_ORIGIN** auf
-https://framingapp.de gesetzt werden.
-
 **AUTH_SECRET nicht verlieren und nicht verändern!** Der Schlüssel leitet die
 Kontenzuordnung aus einer verifizierten E-Mail-Adresse ab. Ein neuer Schlüssel
 kann die Wiederherstellung älterer Cloud-Konten verhindern.
@@ -127,38 +124,6 @@ unbrauchbar. Ein fehlerhafter Versand verwirft den zuvor erzeugten Code.
 
 **Hinweis:** `FRAME_EMAIL_FROM` muss eine verifizierte Absenderadresse sein.
 Eine Versandadresse ist nicht automatisch ein empfangsbereites Postfach.
-Google-/Apple-OAuth sind separat und optional.
-
-### 3. Google-Login aktivieren
-
-In https://console.cloud.google.com/apis/credentials einen OAuth-2.0-Webclient
-anlegen und den Einwilligungsbildschirm konfigurieren.
-
-- Zugelassener Ursprung: **https://framingapp.de**
-- Autorisierte Weiterleitung: **https://framingapp.de/api/account/oauth/google/callback**
-- Worker-Secrets: **GOOGLE_CLIENT_ID** und **GOOGLE_CLIENT_SECRET**
-
-FRAME blendet die Google-Anmeldung erst nach Hinterlegung beider Client-Zugangsdaten ein. Fehlgeschlagene OAuth-Rückleitungen zeigen eine Fehlermeldung im Login-Fenster.
-
-FRAME verwendet OAuth Authorization Code mit PKCE und prüft signierte ID-Tokens,
-Issuer, Audience, Nonce, Gültigkeit und die verifizierte E-Mail-Adresse.
-
-### 4. Login mit Apple aktivieren
-
-Im Apple Developer-Konto Sign in with Apple aktivieren, eine Services ID für
-die Website einrichten und die Domain **framingapp.de** registrieren.
-
-- Return-URL: **https://framingapp.de/api/account/oauth/apple/callback**
-- **APPLE_CLIENT_ID:** die Services ID
-- **APPLE_TEAM_ID:** Apple Team ID
-- **APPLE_KEY_ID:** Kennung des Sign-in-with-Apple-Schlüssels
-- **APPLE_PRIVATE_KEY:** vollständiger Inhalt des privaten .p8-Schlüssels
-
-Die Werte sind als Worker-Secrets zu speichern. Für Sign in with Apple im Web benötigt man eine Mitgliedschaft im kostenpflichtigen Apple Developer Program. FRAME signiert den
-Apple-Client-Secret-JWT selbst auf dem Server und prüft ID-Tokens gegen Apples
-öffentliche JWK-Schlüssel. Mit Apples Funktion „E-Mail verbergen“ entsteht
-gegebenenfalls ein separates Konto statt einer automatischen Verknüpfung.
-
 ### Daten und Konflikte
 
 - Ohne Konto funktioniert FRAME weiterhin lokal.
@@ -173,7 +138,7 @@ gegebenenfalls ein separates Konto statt einer automatischen Verknüpfung.
 - Die Kontolöschung entfernt den privaten Cloud-Datensatz und alle Sessions.
 - Eine JSON-Sicherung lässt sich über den Konto-Bereich herunterladen.
 
-**Vor einem öffentlichen Start:** E-Mail-Zustellung, Google- und Apple-Login,
+**Vor einem öffentlichen Start:** E-Mail-Zustellung, E-Mail-Login,
 Zwei-Geräte-Synchronisierung, Konflikte und Löschung live prüfen, außerdem
 Impressum, vollständige Datenschutzerklärung/DSGVO und genutzte Filmrechte.
 
@@ -223,7 +188,7 @@ Ohne lokales Worker-Runtime-Setup läuft dabei nur der Seed-Katalog. Für das ko
 1. TMDB Secret aktivieren
 2. echte TMDB-basierte Empfehlungen statt statischer Recommendation-Seeds
 3. Detailansicht für Filme/Serien/People
-4. FRAME Cloud-Secrets und OAuth-Anbieter im Cloudflare-Dashboard einrichten
+4. E-Mail-Login über Brevo und Cloudflare-Secrets verlässlich betreiben
 5. Konten mit zwei Smartphones live testen und bei Bedarf verbessern
 6. optional bestehende Frame-Match-Partnerschaften mit Accounts verknüpfen
 7. Push/Reminder für neue Daily Drops und neue gemeinsame Matches
