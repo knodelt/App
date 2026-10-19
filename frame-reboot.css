@@ -2283,3 +2283,12 @@ h1 em {
 }
 .frame-account-dialog .frame-email-symbol{color:#f0bdcf;}
 
+
+
+/* FRAME Phase 1: backup control for guests / existing local-only users. */
+.frame-account-card .frame-account-secondary{
+  display:block;width:100%;min-height:39px;margin-top:9px;padding:10px;
+  color:#dbcdd7;background:rgba(255,255,255,.045);
+  border:1px solid rgba(255,255,255,.14);border-radius:13px;
+  font:750 11px/1.3 var(--font-ui,Manrope,system-ui,sans-serif);
+}
