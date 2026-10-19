@@ -41,12 +41,22 @@ self.addEventListener('fetch', event => {
     return;
   }
   event.respondWith(
-    caches.match(event.request).then(cached => cached || fetch(event.request).then(response => {
-      if(response.ok){
-        const copy=response.clone();
-        event.waitUntil(caches.open(CACHE).then(cache=>cache.put(event.request,copy)).catch(()=>{}));
+    caches.match(event.request).then(async cached => {
+      // Versioned JS/CSS URLs (e.g. ?v=117) can use the pre-cached unversioned
+      // file when offline. Never serve HTML as a script or stylesheet.
+      if(cached)return cached;
+      const plain=await caches.match(url.pathname);
+      try{
+        const response=await fetch(event.request);
+        if(response.ok){
+          const copy=response.clone();
+          event.waitUntil(caches.open(CACHE).then(cache=>cache.put(event.request,copy)).catch(()=>{}));
+        }
+        return response;
+      }catch{
+        if(plain)return plain;
+        return Response.error();
       }
-      return response;
-    }).catch(() => caches.match('/index.html')))
+    })
   );
 });
