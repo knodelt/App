@@ -9,6 +9,8 @@
   // Survives location.reload() but not a fresh browser session. Prevents a
   // cloud restore from triggering unbounded reloads on mobile browsers.
   const RESTORE_GUARD='frame-cloud-restore-reload-v2';
+  // An imported backup may differ from cloud; never silently overwrite it.
+  const IMPORT_PENDING='frame-cloud-import-pending-v1';
   const panel=document.querySelector('#frameAccountPanel'),modal=document.querySelector('#frameAccountModal');
   if(!panel||!modal)return;
   const pick=id=>document.getElementById(id);
@@ -148,7 +150,7 @@
     }
   };
   const clearCloudMarks=()=>{
-    for(const key of [OWNER,HASH,REV]){
+    for(const key of [OWNER,HASH,REV,IMPORT_PENDING]){
       try{localStorage.removeItem(key)}catch{}
     }
     sessionClear(RESTORE_GUARD);
@@ -184,6 +186,7 @@
     const before=await fingerprint(values);
     const result=await accountFetch('sync',{method:'PUT',body:JSON.stringify({revision:rev,data:values})});
     retainMarks(before,result.revision);
+    try{localStorage.removeItem(IMPORT_PENDING)}catch{}
     syncStatus('Synchronisiert · '+new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}));
     return before;
   }
@@ -260,10 +263,19 @@
       if(serial!==initSerial)return;
       if(remoteHash===localHash){
         retainMarks(remoteHash,revision);
+        try{localStorage.removeItem(IMPORT_PENDING)}catch{}
         sessionClear(RESTORE_GUARD);
         paused=false;ready=true;
         syncStatus('Deine Daten sind synchronisiert.');
         show('frameAccountConflict',false);
+        return;
+      }
+      if(safeGet(IMPORT_PENDING)==='1'){
+        // Imported backup must be reconciled explicitly, including an empty
+        // backup. Otherwise an automatic download might erase the import.
+        syncStatus('Backup wiederhergestellt. Wähle aus, ob es in die Cloud hochgeladen oder durch den Cloud-Stand ersetzt werden soll.',true);
+        text('frameAccountConflictMessage','Dein importiertes Backup und die Cloud unterscheiden sich. Wähle bewusst aus, welche Version bleiben soll.');
+        show('frameAccountConflict',true);
         return;
       }
       if(!cloud.data) {
@@ -319,6 +331,7 @@
       if(await fingerprint(snapshot())!==hash)
         throw Error('Cloud-Daten konnten nicht vollständig übernommen werden.');
       retainMarks(hash,cloud.revision);
+      try{localStorage.removeItem(IMPORT_PENDING)}catch{}
       // This reload follows an explicit user choice, never an automatic loop.
       sessionSet(RESTORE_GUARD,me.email+':'+cloud.revision+':'+hash);
       location.reload();
@@ -351,7 +364,7 @@
       }
       // Never silently discard an unsynced local watchlist during sign-out.
       if(!deleteAccount && (paused || !ready)){
-        syncStatus('Abmelden gesperrt, solange Daten nicht synchronisiert sind. Bitte erst abgleichen oder ein lokales Backup herunterladen.',true);
+        syncStatus('Abmelden gesperrt: Daten sind noch nicht synchronisiert. Bitte zuerst den Cloud-Abgleich abschließen. Du kannst vorher ein Geräte-Backup sichern.',true);
         return;
       }
       ready=false;
@@ -423,6 +436,29 @@
   };
   pick('frameAccountDownload')?.addEventListener('click',downloadLocalBackup);
   pick('frameAccountDownloadGuest')?.addEventListener('click',downloadLocalBackup);
+  const importFileInput=pick('frameAccountImportFile');
+  const openImport=()=>{if(importFileInput){importFileInput.value='';importFileInput.click();}};
+  pick('frameAccountImport')?.addEventListener('click',openImport);
+  pick('frameAccountImportGuest')?.addEventListener('click',openImport);
+  importFileInput?.addEventListener('change',async()=>{
+    const file=importFileInput.files?.[0];
+    if(!file)return;
+    try{
+      if(file.size>3*1024*1024)throw Error('Backup zu groß. Maximal 3 MB erlaubt.');
+      const backup=JSON.parse(await file.text());
+      if(!['frame-local-backup','frame-cloud-backup'].includes(backup?.type)||
+         !validSnapshot(backup.data))throw Error('Keine gültige FRAME-Backup-Datei.');
+      if(!confirm('Das Backup ersetzt die aktuellen Gerätedaten. Sichere vorher bei Bedarf deinen bisherigen Stand. Fortfahren?'))return;
+      restoreLocal(backup.data);
+      if(me?.authenticated)safeSet(IMPORT_PENDING,'1');
+      clearRetry();
+      location.reload();
+    }catch(error){
+      const message='Wiederherstellen fehlgeschlagen: '+(error?.message||'Ungültige Datei.');
+      if(me?.authenticated)syncStatus(message,true);
+      else status(message,true);
+    }
+  });
   pick('frameAccountReload')?.addEventListener('click',()=>location.reload());
   pick('frameAccountUseCloud')?.addEventListener('click',()=>void chooseRemote());
   pick('frameAccountUseLocal')?.addEventListener('click',()=>void chooseLocal());
