@@ -2292,3 +2292,7 @@ h1 em {
   border:1px solid rgba(255,255,255,.14);border-radius:13px;
   font:750 11px/1.3 var(--font-ui,Manrope,system-ui,sans-serif);
 }
+
+
+/* Phase 1: Hidden restore file picker must not occupy layout space. */
+.frame-account-card #frameAccountImportFile[hidden]{display:none!important;}
