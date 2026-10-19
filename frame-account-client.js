@@ -15,22 +15,29 @@
   const show=(id,on)=>{const n=pick(id);if(n)n.hidden=!on;};
   const text=(id,val)=>{const n=pick(id);if(n)n.textContent=val;};
   let me=null,revision=0,ready=false,inflight=false,paused=false,timer=null,changedDuring=false;
-  let lastHash='',lastSentHash='',config={email:false},initSerial=0;
+  let lastHash='',config={email:false},initSerial=0;
   let providerCheck=null,providerCheckId=0;
+  let retryTimer=null,retryDelay=3000;
   const safeGet=key=>{try{return localStorage.getItem(key)}catch{return null}};
   const safeSet=(key,val)=>{try{localStorage.setItem(key,val)}catch{}};
   const sessionGet=key=>{try{return sessionStorage.getItem(key)}catch{return null}};
   const sessionSet=(key,val)=>{try{sessionStorage.setItem(key,val)}catch{}};
   const sessionClear=key=>{try{sessionStorage.removeItem(key)}catch{}};
   const accountFetch=async(path,options={})=>{
-    const result=await fetch('/api/account/'+path,{
-      credentials:'same-origin',cache:'no-store',
-      headers:{accept:'application/json',...(options.body?{'content-type':'application/json'}:{}),...options.headers},
-      ...options
-    });
-    let data={};try{data=await result.json()}catch{}
-    if(!result.ok)throw Object.assign(new Error(data.error||'Server nicht erreichbar.'),{status:result.status,data});
-    return data;
+    const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),20000);
+    try{
+      const result=await fetch('/api/account/'+path,{
+        credentials:'same-origin',cache:'no-store',signal:controller.signal,
+        headers:{accept:'application/json',...(options.body?{'content-type':'application/json'}:{}),...options.headers},
+        ...options
+      });
+      let data={};try{data=await result.json()}catch{}
+      if(!result.ok)throw Object.assign(new Error(data.error||'Server nicht erreichbar.'),{status:result.status,data});
+      return data;
+    }catch(error){
+      if(error.name==='AbortError')throw Error('Zeitüberschreitung. Bitte Verbindung prüfen.');
+      throw error;
+    }finally{clearTimeout(timeout);}
   };
   const snapshot=()=>{
     const values={};
@@ -87,15 +94,16 @@
   };
   const renderProviders=(state='ready',message='')=>{
     const usable=state==='ready';
-    show('frameAccountEmailLogin',usable&&Boolean(config.email));
+    // FRAME supports email-code login only. A temporary configuration error
+    // must never conceal its one working authentication option.
+    show('frameAccountEmailLogin',true);
     const none=!config.email;
-    const explain=state!=='ready'||none;
+    const explain=state==='error'||(state==='ready'&&none);
     show('frameAccountProvidersDisabled',explain);
     show('frameAccountRetryProviders',explain&&state!=='loading');
     if(explain){
       text('frameAccountProvidersDisabled',
-        message || (state==='loading'?'Anmeldemethoden werden geprüft …':
-          'Momentan ist keine Anmeldemethode verfügbar. Bitte erneut prüfen.'));
+        message || 'E-Mail-Anmeldung gerade nicht erreichbar. Versuche es erneut.');
     }
   };
   async function refreshProviders(){
@@ -122,7 +130,6 @@
     modal.hidden=!value;
     if(value){
       void refreshProviders();
-      if(config.email)pick('frameAccountEmailInput')?.focus({preventScroll:true});
     }
   };
   const clearCloudMarks=()=>{
@@ -162,10 +169,23 @@
     syncStatus('Synchronisiert · '+new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}));
     return before;
   }
+  function scheduleRetry(){
+    if(retryTimer||!ready||paused)return;
+    retryTimer=setTimeout(()=>{
+      retryTimer=null;
+      if(ready&&!paused)void push();
+    },retryDelay);
+    retryDelay=Math.min(retryDelay*2,60000);
+  }
+  function clearRetry(){
+    clearTimeout(retryTimer);
+    retryTimer=null;retryDelay=3000;
+  }
   function queue(){
     if(!ready||paused||!me?.authenticated)return;
     if(inflight){changedDuring=true;return;}
     clearTimeout(timer);
+    clearTimeout(retryTimer);retryTimer=null;
     timer=setTimeout(()=>{void push();},1700);
     syncStatus('Änderungen werden gesichert …');
   }
@@ -174,15 +194,24 @@
     inflight=true;
     try {
       const local=snapshot(),hash=await fingerprint(local);
-      if(hash===lastHash){syncStatus('Alle Änderungen synchronisiert');return;}
+      if(hash===lastHash){clearRetry();syncStatus('Alle Änderungen synchronisiert');return;}
       await upload(local,revision);
+      clearRetry();
       if((await fingerprint(snapshot()))!==hash)changedDuring=true;
     }catch(e){
       if(e.status===409){
+        clearRetry();
         paused=true;ready=false;
         syncStatus('Änderungen auf zwei Geräten erkannt. Bitte abgleichen.',true);
         show('frameAccountConflict',true);
-      }else syncStatus(e.message||'Cloud-Speicherung fehlgeschlagen. Erneut versuchen.',true);
+      }else if(e.status===401){
+        clearRetry();
+        paused=true;ready=false;
+        syncStatus('Deine Sitzung ist abgelaufen. Bitte erneut anmelden. Lokale Daten bleiben erhalten.',true);
+      }else{
+        syncStatus('Offline oder Cloud nicht erreichbar. Lokale Änderungen bleiben erhalten; neuer Versuch folgt.',true);
+        scheduleRetry();
+      }
     }finally{
       inflight=false;
       if(changedDuring){
@@ -192,7 +221,9 @@
     }
   }
   async function reconcile({allowAutomaticRestore=true}={}){
-    if(!me?.authenticated)return;
+    if(!me?.authenticated||inflight)return;
+    clearTimeout(timer);
+    clearRetry();
     const serial=++initSerial;
     ready=false;paused=true;
     syncStatus('Cloud-Daten werden geprüft …');
@@ -254,7 +285,7 @@
       // Both copies contain changes; never silently discard one.
       syncStatus('Auf diesem Gerät und in der Cloud liegen unterschiedliche Daten vor.',true);
       show('frameAccountConflict',true);
-    }catch(e){syncStatus(e.message||'Cloud nicht erreichbar.',true);}
+    }catch(e){syncStatus((e.message||'Cloud nicht erreichbar.')+' Lokale Daten bleiben erhalten.',true);}
   }
   async function chooseRemote(){
     if(!confirm('Die Daten dieses Geräts durch deine Cloud-Daten ersetzen? Nicht synchronisierte lokale Änderungen gehen dabei verloren.'))return;
@@ -287,6 +318,7 @@
     if(!confirm(warn))return;
     try{
       clearTimeout(timer);
+      clearRetry();
       if(!deleteAccount && ready && !paused){
         await push();
         const current=await fingerprint(snapshot());
@@ -295,8 +327,11 @@
           return;
         }
       }
-      if(!deleteAccount && (paused || !ready) &&
-         !confirm('Die Cloud ist nicht synchronisiert. Trotzdem abmelden und lokale Änderungen verwerfen?'))return;
+      // Never silently discard an unsynced local watchlist during sign-out.
+      if(!deleteAccount && (paused || !ready)){
+        syncStatus('Abmelden gesperrt, solange Daten nicht synchronisiert sind. Bitte erst abgleichen oder ein lokales Backup herunterladen.',true);
+        return;
+      }
       ready=false;
       await accountFetch(deleteAccount?'delete':'logout',{method:'POST',body:'{}'});
       for(const key of KEYS){try{localStorage.removeItem(key)}catch{}}
@@ -306,7 +341,9 @@
   }
   async function init(){
     showPanel();
-    await refreshProviders();
+    // Do not delay account status behind an optional provider availability
+    // check (Cloudflare cold-start / offline can take several seconds).
+    void refreshProviders();
     try{me=await accountFetch('me');}
     catch(e){status(e.message||'Anmeldung momentan nicht verfügbar.',true);return;}
     showPanel();
@@ -349,9 +386,10 @@
   });
   pick('frameAccountDownload')?.addEventListener('click',async()=>{
     try{
-      const data=me?.authenticated?(await accountFetch('sync')).data:snapshot();
-      if(!data)throw Error('Noch keine Daten gesichert.');
-      const blob=new Blob([JSON.stringify({type:'frame-cloud-backup',savedAt:new Date().toISOString(),data},null,2)],{type:'application/json'});
+      // Always export the current local copy, including changes not yet in
+      // the cloud. Downloading the remote copy could silently omit them.
+      const data=snapshot();
+      const blob=new Blob([JSON.stringify({type:'frame-local-backup',savedAt:new Date().toISOString(),data},null,2)],{type:'application/json'});
       const url=URL.createObjectURL(blob),a=document.createElement('a');
       a.href=url;a.download='FRAME-Backup-'+new Date().toISOString().slice(0,10)+'.json';
       document.body.appendChild(a);a.click();a.remove();
@@ -368,10 +406,18 @@
   pick('frameAccountLogout')?.addEventListener('click',()=>void logout(false));
   pick('frameAccountDelete')?.addEventListener('click',()=>void logout(true));
   document.addEventListener('visibilitychange',()=>{
-    if(document.visibilityState==='visible'&&me?.authenticated&&!inflight)
-      void reconcile({allowAutomaticRestore:false});
+    if(document.visibilityState!=='visible'||!me?.authenticated||inflight)return;
+    void (async()=>{
+      // Pending local edits must be uploaded (with revision check) before
+      // attempting a fresh cloud pull when returning to the app.
+      if(ready&&!paused&&(await fingerprint(snapshot()))!==lastHash)await push();
+      if(ready&&!paused&&!inflight)await reconcile({allowAutomaticRestore:false});
+    })();
   });
-  window.addEventListener('online',()=>{if(ready)queue();});
+  window.addEventListener('online',()=>{
+    if(ready&&!paused){clearRetry();queue();}
+    else if(me?.authenticated)void reconcile({allowAutomaticRestore:false});
+  });
   window.FrameCloud={
     changed:queue,
     refresh:()=>reconcile({allowAutomaticRestore:false})
