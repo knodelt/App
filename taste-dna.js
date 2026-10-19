@@ -158,6 +158,11 @@
   }
 
   function recompute({emit=true} = {}) {
+    // Startup calculation must not touch storage if the meaning of the model
+    // hasn't changed. Updating "updatedAt" on every open caused cloud conflicts.
+    const before=JSON.stringify({
+      items:data.items,featureWeights:data.featureWeights,pairWeights:data.pairWeights
+    });
     syncItemsToSwipes();
 
     const features = new Map();
@@ -223,7 +228,10 @@
       .sort((a,b) => Math.abs(b.weight * b.confidence) - Math.abs(a.weight * a.confidence))
       .slice(0,60);
 
-    save();
+    const after=JSON.stringify({
+      items:data.items,featureWeights:data.featureWeights,pairWeights:data.pairWeights
+    });
+    if(after!==before)save();
     render();
     expose();
 
