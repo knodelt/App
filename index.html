@@ -13,7 +13,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
   <link rel="stylesheet" href="/app-layout.css" />
-  <link rel="stylesheet" href="/frame-reboot.css?v=119" />
+  <link rel="stylesheet" href="/frame-reboot.css?v=120" />
   <link rel="stylesheet" href="/frame-loop.css" />
   <link rel="stylesheet" href="/hidden-match.css" />
   <link rel="stylesheet" href="/trailer-preview.css" />
@@ -495,7 +495,16 @@
         </section>
         <button class="ghost-btn" id="tutorialReplayButton" type="button">Kurzes Tutorial ansehen</button>
         <button class="ghost-btn" id="resetButton">Geschmack zurücksetzen</button>
-        <a class="ghost-btn" href="/about.html" style="display:block;text-align:center;text-decoration:none;box-sizing:border-box;">Über FRAME · Datenquellen</a>
+        <a class="frame-beta-entry" href="/beta.html" aria-label="FRAME Beta-Test: Feedback geben">
+          <span class="frame-beta-entry-mark" aria-hidden="true">◎</span>
+          <span class="frame-beta-entry-copy"><strong>FRAME mitgestalten.</strong><small>Teste die App und sag, was dir fehlt.</small></span>
+          <span class="frame-beta-entry-arrow" aria-hidden="true">→</span>
+        </a>
+        <nav class="frame-legal-links" aria-label="Rechtliche Informationen">
+          <a href="/about.html">Datenquellen</a>
+          <a href="/datenschutz.html">Datenschutz</a>
+          <a href="/impressum.html">Impressum</a>
+        </nav>
         <p class="tiny-credit" id="tinyCredit">FRAME</p>
       </section>
     </main>
@@ -520,6 +529,7 @@
       <span class="frame-account-kicker">FRAME · DEIN FILMGESCHMACK</span>
       <h2 id="frameAccountModalTitle">Dein FRAME. Auf jedem Gerät.</h2>
       <p>Melde dich sicher an. Ein vorhandenes Konto wird über die verifizierte E-Mail-Adresse gefunden.</p>
+      <p class="frame-auth-legal">Informationen zur Verarbeitung deiner Daten findest du unter <a href="/datenschutz.html">Datenschutz</a> (noch in rechtlicher Prüfung).</p>
       <div class="frame-account-provider-list">
         <button type="button" class="frame-provider-button frame-provider-email" id="frameAccountEmailLogin" hidden>
           <span class="frame-provider-symbol frame-email-symbol" aria-hidden="true">✉</span><span>Mit E-Mail-Code anmelden</span>
