@@ -40,5 +40,8 @@
         "FrameAccount"
       ]
     }
-  ]
+  ],
+  "vars": {
+    "FRAME_EMAIL_FROM": "login@framingapp.de"
+  }
 }
