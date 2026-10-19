@@ -222,6 +222,66 @@ keinen zusätzlichen Login-Anbieter.
 Wochenwechsel am Montag, lange Filmtitel, Merken/Gesehen aus „Für dich“,
 Cache-Update sowie die Darstellung bei noch leerem FRAMELOG.
 
+## Phase 3 · Beta und Veröffentlichungs-Checkliste (Stand 19.10.2026)
+
+### Umgesetzt
+
+- **Beta-Testseite `/beta.html`:** sechs überprüfbare Alltagstests,
+  Rückkehrabsicht, getesteter Bereich, freiwillige Geräteinformation und
+  Freitext. Feedback wird im Browser zusammengestellt und kann über
+  das Betriebssystem geteilt oder kopiert werden. **Keine automatische
+  Übermittlung, kein zusätzlicher Datenbankeintrag, kein Feedback-Tracking.**
+- **`/impressum.html` und `/datenschutz.html`:** technische Entwürfe mit
+  sichtbarem Hinweis auf fehlende Pflichtangaben. Keine ausgedachten
+  Betreiberadressen oder angeblichen Datenschutz-Zertifizierungen.
+- **Mein Frame** verlinkt Beta, Datenschutz, Impressum und Datenquellen.
+  Der Login-Dialog enthält einen Datenschutz-Link. Die bisherige
+  E-Mail-Anmeldung und Cloud-Speicherung bleiben unverändert.
+- Die drei neuen Seiten sind im Offline-Cache enthalten.
+
+### Sperrpunkte vor breiter Veröffentlichung – NICHT freigegeben
+
+- [ ] **Anbieter/Impressum:** Name bzw. Unternehmensbezeichnung,
+      ladungsfähige Anschrift, empfangsfähige E-Mail-Adresse sowie ggf.
+      Rechtsform, Registerangaben und Steuerkennzeichen vom Betreiber
+      autorisiert. Rechtsgrundlage: https://www.gesetze-im-internet.de/ddg/__5.html
+- [ ] **DSGVO:** Verantwortliche Stelle und Kontakt, Art.-13-Pflichtinformationen,
+      Rechtsgrundlagen, Dienstleister-/Auftragsverarbeiterverträge,
+      Aufbewahrungsfristen und Transfers dokumentiert. Die aktuelle
+      Datenschutzerklärung ist ein **Entwurf**, keine fertige Freigabe.
+- [ ] **TMDB-Nutzungsrechte:** Die aktuellen TMDB-API-Bedingungen untersagen
+      in ihrem Wortlaut den Einsatz von TMDB APIs/Inhalten in Verbindung mit
+      ML-/KI-basierten Anwendungen. FRAME verwendet Taste-DNA/Online-Lernen
+      mit TMDB-basierten Filminformationen. **Vor öffentlichem Launch
+      schriftliche Nutzungsfreigabe/geeignete Lizenz klären, notfalls
+      Empfehlungsarchitektur und Datenquelle umstellen**.
+      https://www.themoviedb.org/api-terms-of-use
+      Die TMDB-Attribution in `about.html` und die Quellenangabe für
+      JustWatch sind bereits vorhanden, lösen dieses Problem aber nicht.
+- [ ] **Externe Ressourcen:** Google-Fonts-Laden von Google-Servern auf
+      lokale Fonts oder rechtskonforme Alternative umstellen; eingebettete
+      YouTube-Trailer und externe TMDB-Bilder auf rechtmäßige
+      Drittanbieter-Einbindung und Information prüfen.
+- [ ] **Kinder/Jugendschutz, Bildrechte, Sicherheit:** Zielgruppe
+      festlegen; mögliche Inhalte, Abuse-/Rate-Limits, Löschverfahren,
+      Backups und Verantwortlichkeiten prüfen.
+- [ ] **Beta-Praxistest:** 5–10 freiwillige Personen, iPhone/Android,
+      verschiedene Browser. Login-Code, Cloud-Sync auf zwei Geräten,
+      Framing, Für dich, FRAMELOG, Daily Frame, Frame Match, Offline
+      und Datenlöschung nachvollziehbar testen. Keine Codes oder
+      privaten Filmhistorien in Feedback-Nachrichten erbitten.
+- [ ] **Release-Entscheid:** kritisch gemeldete Fehler behoben,
+      rechtliche Sperrpunkte geschlossen, Betreiberdaten veröffentlicht,
+      erst dann öffentliche Bewerbung.
+
+### Beta-Auswertung
+
+Testpersonen über https://framingapp.de/beta.html einladen.
+Den per Teilen-Funktion verschickten Text sammeln und Probleme nach
+**Blocker / schwer / kosmetisch** sowie nach App-Bereich einordnen.
+Der Beta-Test ist kein automatischer E-Mail-Sender oder dauerhafter
+Feedback-Speicher; dazu wäre ein späteres separates Opt-in nötig.
+
 ## TMDB aktivieren
 
 1. Bei TMDB anmelden und unter **Account Settings → API** eine Developer-API-Anwendung registrieren.
