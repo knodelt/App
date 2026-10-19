@@ -442,18 +442,20 @@
           <div id="frameAccountGuest">
             <p>Filme, FRAMELOG und dein Geschmack können auf allen Geräten verfügbar sein.</p>
             <button id="frameAccountOpen" class="frame-account-primary" type="button">Anmelden oder Konto erstellen</button>
+            <button id="frameAccountDownloadGuest" class="frame-account-secondary" type="button">Gerätedaten als Backup sichern</button>
           </div>
           <div id="frameAccountSigned" hidden>
             <strong class="frame-account-email" id="frameAccountEmail"></strong>
             <p class="frame-account-status" id="frameAccountSyncStatus" role="status">Cloud wird abgeglichen …</p>
             <div id="frameAccountConflict" hidden>
-              <p>Deine lokalen Daten und die Cloud unterscheiden sich. Wähle, welche Version erhalten bleiben soll.</p>
+              <p id="frameAccountConflictMessage">Deine lokalen Daten und die Cloud unterscheiden sich. Sichere die Daten bei Bedarf und wähle dann bewusst, welche Version erhalten bleibt.</p>
+              <button type="button" id="frameAccountReload">Seite neu laden (Gerätedaten übernehmen)</button>
               <button type="button" id="frameAccountUseCloud">Cloud-Daten auf dieses Gerät laden</button>
               <button type="button" id="frameAccountUseLocal">Daten dieses Geräts in die Cloud laden</button>
             </div>
             <div class="frame-account-actions">
               <button type="button" id="frameAccountSyncNow">Jetzt synchronisieren</button>
-              <button type="button" id="frameAccountDownload">Cloud-Backup herunterladen</button>
+              <button type="button" id="frameAccountDownload">Gerätedaten als Backup sichern</button>
               <button type="button" id="frameAccountLogout">Abmelden</button>
               <button type="button" id="frameAccountDelete" class="frame-account-danger">Konto und Cloud-Daten löschen</button>
             </div>
