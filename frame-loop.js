@@ -6,22 +6,27 @@
 
   let loop = loadLoop();
   // Local hand-off rooms were replaced with authenticated online Hidden Match.
-  // FRAME Daily is always a solo feature from here on.
+  // FRAME Daily is always a solo feature from here on. Normalize only in
+  // memory at startup: storage writes here used to corrupt sync baselines
+  // immediately after restoring cloud data and could trigger reload loops.
   let mode = 'user';
   loop.room = {active:false,partnerName:''};
   if (loop.daily) {
     loop.daily.partnerVotes = {};
     loop.daily.completedByPartner = false;
   }
-  safeSet(MODE_KEY,mode);
-  saveLoop();
+  // Persist the current model only after an actual user action.
 
   function safeGet(key) {
     try { return localStorage.getItem(key); } catch { return null; }
   }
 
   function safeSet(key, value) {
-    try { localStorage.setItem(key, value); window.FrameCloud?.changed?.(); } catch {}
+    try {
+      if(localStorage.getItem(key)===value)return;
+      localStorage.setItem(key, value);
+      window.FrameCloud?.changed?.();
+    } catch {}
   }
 
   function loadLoop() {
