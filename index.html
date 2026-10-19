@@ -126,9 +126,38 @@
           <div><strong id="frameLogLikedCount">0</strong><span>Gefallen</span></div>
           <div><strong id="frameLogSavedCount">0</strong><span>Merkliste</span></div>
         </div>
+        <section class="frame-log-week" aria-labelledby="frameLogWeekHeading">
+          <div class="frame-log-week-top">
+            <span>DEIN WOCHENRÜCKBLICK</span>
+            <span>LETZTE 7 TAGE</span>
+          </div>
+          <h2 id="frameLogWeekHeading">Deine Filmwoche.</h2>
+          <div class="frame-log-week-numbers">
+            <div><strong id="frameLogWeekSeen">0</strong><span>gesehen</span></div>
+            <div><strong id="frameLogWeekLiked">0</strong><span>hat gefallen</span></div>
+            <div><strong id="frameLogWeekNotes">0</strong><span>mit Notiz</span></div>
+          </div>
+          <p id="frameLogWeekHighlight" aria-live="polite">Deine Filmwoche beginnt mit deinem nächsten Filmabend.</p>
+        </section>
         <div class="frame-log-toolbar">
           <div class="frame-log-toolbar-copy">
             <span>DEIN ARCHIV</span><span id="frameLogResultCount">0 Titel</span>
+          </div>
+          <div class="frame-log-tools">
+            <label class="frame-log-search-box" for="frameLogSearch">
+              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.8" cy="10.8" r="6.6"/><path d="m16 16 5 5"/></svg>
+              <input id="frameLogSearch" type="search" placeholder="Filme, Serien, Notizen suchen" autocomplete="off" aria-label="FRAMELOG durchsuchen" />
+            </label>
+            <label class="frame-log-sort-box" for="frameLogSort">
+              <span>Sortieren</span>
+              <select id="frameLogSort" aria-label="FRAMELOG sortieren">
+                <option value="recent">Neueste</option>
+                <option value="oldest">Älteste</option>
+                <option value="title">Titel A–Z</option>
+                <option value="year">Erscheinungsjahr</option>
+                <option value="watched">Gesehen am</option>
+              </select>
+            </label>
           </div>
           <div class="frame-log-tabs" id="frameLogTabs" role="group" aria-label="Filmtagebuch filtern">
             <button type="button" class="active" data-frame-log-tab="all" aria-pressed="true">Alle</button>
