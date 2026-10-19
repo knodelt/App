@@ -6,6 +6,9 @@
     'frame-mood-v1','frame-recommendation-exclusions-v1'
   ];
   const OWNER='frame-cloud-owner-v1',HASH='frame-cloud-hash-v1',REV='frame-cloud-revision-v1';
+  // Survives location.reload() but not a fresh browser session. Prevents a
+  // cloud restore from triggering unbounded reloads on mobile browsers.
+  const RESTORE_GUARD='frame-cloud-restore-reload-v2';
   const panel=document.querySelector('#frameAccountPanel'),modal=document.querySelector('#frameAccountModal');
   if(!panel||!modal)return;
   const pick=id=>document.getElementById(id);
@@ -15,6 +18,9 @@
   let lastHash='',lastSentHash='',config={email:false,google:false,apple:false},initSerial=0;
   const safeGet=key=>{try{return localStorage.getItem(key)}catch{return null}};
   const safeSet=(key,val)=>{try{localStorage.setItem(key,val)}catch{}};
+  const sessionGet=key=>{try{return sessionStorage.getItem(key)}catch{return null}};
+  const sessionSet=(key,val)=>{try{sessionStorage.setItem(key,val)}catch{}};
+  const sessionClear=key=>{try{sessionStorage.removeItem(key)}catch{}};
   const accountFetch=async(path,options={})=>{
     const result=await fetch('/api/account/'+path,{
       credentials:'same-origin',cache:'no-store',
@@ -79,6 +85,7 @@
     for(const key of [OWNER,HASH,REV]){
       try{localStorage.removeItem(key)}catch{}
     }
+    sessionClear(RESTORE_GUARD);
   };
   const retainMarks=(hash,rev)=>{
     safeSet(OWNER,me.email);safeSet(HASH,hash);safeSet(REV,String(rev));
@@ -140,7 +147,7 @@
       }
     }
   }
-  async function reconcile(){
+  async function reconcile({allowAutomaticRestore=true}={}){
     if(!me?.authenticated)return;
     const serial=++initSerial;
     ready=false;paused=true;
@@ -156,6 +163,7 @@
       if(serial!==initSerial)return;
       if(remoteHash===localHash){
         retainMarks(remoteHash,revision);
+        sessionClear(RESTORE_GUARD);
         paused=false;ready=true;
         syncStatus('Deine Daten sind synchronisiert.');
         show('frameAccountConflict',false);
@@ -173,10 +181,26 @@
         return;
       }
       if(!hasData(local) || (baseline===localHash && sameOwner)) {
-        // Fresh devices and unchanged local copies can safely receive cloud data.
+        // Do not reload the site again if it has already restored this exact
+        // cloud revision during the current browser tab session.
+        const stamp=me.email+':'+revision+':'+remoteHash;
+        if(!allowAutomaticRestore || sessionGet(RESTORE_GUARD)===stamp){
+          paused=true;ready=false;
+          syncStatus('Cloud-Daten und Gerät unterscheiden sich. Bitte den Stand prüfen.',true);
+          show('frameAccountConflict',true);
+          return;
+        }
         restoreLocal(remote);
+        const importedHash=await fingerprint(snapshot());
+        if(importedHash!==remoteHash){
+          syncStatus('Cloud-Wiederherstellung konnte nicht geprüft werden.',true);
+          show('frameAccountConflict',true);
+          return;
+        }
         retainMarks(remoteHash,revision);
-        location.reload();return;
+        sessionSet(RESTORE_GUARD,stamp);
+        location.reload();
+        return;
       }
       if(baseline===remoteHash && sameOwner) {
         await upload(local,revision);
@@ -193,9 +217,13 @@
     try{
       const cloud=await accountFetch('sync');
       if(!cloud.data)throw Error('Noch keine Cloud-Daten vorhanden.');
-      restoreLocal(cloud.data);
       const hash=await fingerprint(cloud.data);
+      restoreLocal(cloud.data);
+      if(await fingerprint(snapshot())!==hash)
+        throw Error('Cloud-Daten konnten nicht vollständig übernommen werden.');
       retainMarks(hash,cloud.revision);
+      // This reload follows an explicit user choice, never an automatic loop.
+      sessionSet(RESTORE_GUARD,me.email+':'+cloud.revision+':'+hash);
       location.reload();
     }catch(e){syncStatus(e.message,true);}
   }
@@ -288,13 +316,21 @@
   });
   pick('frameAccountUseCloud')?.addEventListener('click',()=>void chooseRemote());
   pick('frameAccountUseLocal')?.addEventListener('click',()=>void chooseLocal());
-  pick('frameAccountSyncNow')?.addEventListener('click',()=>{paused=false;ready=true;void push();});
+  pick('frameAccountSyncNow')?.addEventListener('click',()=>{
+    // Never bypass a conflict and overwrite another device's data without consent.
+    if(paused||!ready){void reconcile({allowAutomaticRestore:false});return;}
+    void push();
+  });
   pick('frameAccountLogout')?.addEventListener('click',()=>void logout(false));
   pick('frameAccountDelete')?.addEventListener('click',()=>void logout(true));
   document.addEventListener('visibilitychange',()=>{
-    if(document.visibilityState==='visible'&&me?.authenticated&&!inflight)void reconcile();
+    if(document.visibilityState==='visible'&&me?.authenticated&&!inflight)
+      void reconcile({allowAutomaticRestore:false});
   });
   window.addEventListener('online',()=>{if(ready)queue();});
-  window.FrameCloud={changed:queue,refresh:reconcile};
+  window.FrameCloud={
+    changed:queue,
+    refresh:()=>reconcile({allowAutomaticRestore:false})
+  };
   void init();
 })();
