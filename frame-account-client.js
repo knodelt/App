@@ -127,6 +127,25 @@
       if(config.email||config.google||config.apple)pick('frameAccountEmailInput')?.focus({preventScroll:true});
     }
   };
+  const showOAuthResult=()=>{
+    const search=new URLSearchParams(location.search||'');
+    const result=search.get('frame_auth');
+    if(result!=='failed'&&result!=='connected')return;
+    search.delete('frame_auth');
+    try{
+      history.replaceState(history.state,'',location.pathname+
+        (search.toString()?'?'+search.toString():'')+(location.hash||''));
+    }catch{}
+    if(result==='failed'){
+      toggleModal(true);
+      text('frameAccountDialogMessage','Die Anmeldung konnte nicht abgeschlossen werden. Bitte versuche es erneut.');
+    }else if(me?.authenticated){
+      status('Sicher angemeldet. Deine Cloud-Daten werden abgeglichen.');
+    }else{
+      toggleModal(true);
+      text('frameAccountDialogMessage','Die Anmeldung wurde nicht erkannt. Bitte erneut versuchen.');
+    }
+  };
   const clearCloudMarks=()=>{
     for(const key of [OWNER,HASH,REV]){
       try{localStorage.removeItem(key)}catch{}
@@ -312,6 +331,7 @@
     try{me=await accountFetch('me');}
     catch(e){status(e.message||'Anmeldung momentan nicht verfügbar.',true);return;}
     showPanel();
+    showOAuthResult();
     if(me.authenticated)await reconcile();
   }
   pick('frameHeaderLogin')?.addEventListener('click',()=>{
