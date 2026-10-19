@@ -91,18 +91,39 @@ https://framingapp.de gesetzt werden.
 Kontenzuordnung aus einer verifizierten E-Mail-Adresse ab. Ein neuer Schlüssel
 kann die Wiederherstellung älterer Cloud-Konten verhindern.
 
-### 2. E-Mail-Login aktivieren
+### 2. Kostenlose E-Mail-Anmeldung über Brevo (Workers Free)
 
-Bei https://resend.com eine Absenderdomain **framingapp.de** verifizieren,
-dazu die geforderten DNS-Einträge in Cloudflare hinzufügen und einen API-Key
-erstellen. Dann diese beiden Worker-Secrets setzen:
+**Brevo Free** enthält derzeit bis zu **300 E-Mails täglich** inklusive Transaktions-E-Mails.
+Der Worker benötigt weder SMTP-Zugang noch Resend noch einen eigenen Mailserver.
 
-- **RESEND_API_KEY:** privater API-Key
-- **FRAME_EMAIL_FROM:** z. B. FRAME <login@framingapp.de> (muss zur verifizierten Absenderdomain passen)
+1. Unter https://www.brevo.com/de/ registrieren (Free-Tarif).
+2. Brevo → Einstellungen → Absender, Domains, IPs → Domains:
+   **framingapp.de** hinzufügen und authentifizieren.
+3. Die von Brevo angezeigten TXT- und DKIM-CNAME-DNS-Einträge im
+   Cloudflare-DNS der Zone framingapp.de anlegen. DKIM-CNAME-Einträge:
+   **DNS only / Proxy deaktiviert**. Keine vorhandenen Worker-Routen löschen.
+   Es darf nur **einen** _dmarc-TXT-Eintrag geben; nötigenfalls bestehenden ergänzen.
+4. Absender mit Anzeigename **FRAME** und Adresse **login@framingapp.de**
+   in Brevo verifizieren (Brevo sendet nur von registrierten Absendern).
+5. Brevo → Einstellungen → SMTP & API → API Keys & MCP →
+   **Generate a new API key**. Einen **API v3 Key**, *keinen SMTP-Schlüssel* erstellen.
+6. Cloudflare Workers & Pages → Worker **app** → Settings → Variables and Secrets:
+   - **BREVO_API_KEY** als **Secret**: der private Brevo-API-v3-Schlüssel.
+   - **FRAME_EMAIL_FROM** als Text: **login@framingapp.de** (nur E-Mail-Adresse, kein „FRAME <...>“).
+   - **AUTH_SECRET** als Secret (mindestens 32 zufällige Zeichen; muss dauerhaft unverändert bleiben).
+7. Worker neu bereitstellen, Konto/Frame Cloud öffnen und eine Test-E-Mail
+   an die eigene Adresse senden. Bei „Sending platform disabled“ muss die
+   Transaktionsplattform ggf. von Brevo freigeschaltet werden.
 
-Die sechsstelligen Codes gelten 10 Minuten und sind einmalig. Häufigkeit pro
-E-Mail-Adresse und Client-IP ist begrenzt; nach fünf Fehlversuchen ist ein
-Code ungültig. Der Versand ist ohne diese Konfiguration nicht verfügbar.
+Der Worker ruft serverseitig **POST https://api.brevo.com/v3/smtp/email** mit
+dem Header `api-key` auf. Brevo-Key und Login-Code werden nicht in der Website
+gespeichert. Die Einmalcodes gelten 10 Minuten; Anfragen werden pro E-Mail-Adresse
+und IP-Adresse gedrosselt, spätestens nach fünf falschen Versuchen ist ein Code
+unbrauchbar. Ein fehlerhafter Versand verwirft den zuvor erzeugten Code.
+
+**Hinweis:** `FRAME_EMAIL_FROM` muss eine verifizierte Absenderadresse sein.
+Eine Versandadresse ist nicht automatisch ein empfangsbereites Postfach.
+Google-/Apple-OAuth sind separat und optional.
 
 ### 3. Google-Login aktivieren
 
