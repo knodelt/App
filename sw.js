@@ -1,4 +1,4 @@
-const CACHE = 'frame-v111-cloud-reload-guard';
+const CACHE = 'frame-v112-header-login';
 const ASSETS = ['/', '/index.html', '/about.html', '/styles.css', '/app-layout.css', '/frame-reboot.css', '/frame-loop.css', '/viewport-lock.js', '/app.js', '/mood-filter.js', '/tmdb-feed.js', '/card-details.js', '/watchlist-controls.js', '/taste-dna.js', '/personalized-recommendations.js', '/taste-learning.js', '/frame-watched.js', '/frame-log.js', '/streaming-availability.js', '/swipe-guidance.js', '/manifest.webmanifest', '/icon.svg', '/onboarding-tutorial.js', '/frame-loop.js', '/hidden-match.css', '/trailer-preview.js', '/trailer-preview.css', '/hidden-match-client.js', '/frame-account-client.js', '/vendor-qrcode.js'];
 
 self.addEventListener('install', event => {
