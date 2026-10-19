@@ -13,7 +13,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
   <link rel="stylesheet" href="/app-layout.css" />
-  <link rel="stylesheet" href="/frame-reboot.css?v=112" />
+  <link rel="stylesheet" href="/frame-reboot.css?v=113" />
   <link rel="stylesheet" href="/frame-loop.css" />
   <link rel="stylesheet" href="/hidden-match.css" />
   <link rel="stylesheet" href="/trailer-preview.css" />
@@ -491,7 +491,8 @@
         <button type="button" id="frameAccountGoogle" hidden>Mit Google anmelden</button>
         <button type="button" id="frameAccountEmailLogin" hidden>Mit E-Mail-Code anmelden</button>
       </div>
-      <p id="frameAccountProvidersDisabled" class="frame-account-note" hidden>Die Anmeldung wird derzeit eingerichtet. Zuerst müssen die Zugangsdaten im Cloudflare-Worker hinterlegt werden.</p>
+      <p id="frameAccountProvidersDisabled" class="frame-account-note" role="status" aria-live="polite" hidden>Anmeldemethoden werden geprüft …</p>
+      <button id="frameAccountRetryProviders" class="frame-account-provider-retry" type="button" hidden>Erneut versuchen</button>
       <div id="frameAccountEmailStep" class="frame-account-form" hidden>
         <label for="frameAccountEmailInput">Deine E-Mail-Adresse</label>
         <input id="frameAccountEmailInput" type="email" inputmode="email" autocomplete="email" placeholder="name@beispiel.de" maxlength="254" />
@@ -567,6 +568,6 @@
   <script src="/frame-loop.js" defer></script>
   <script src="/vendor-qrcode.js" defer></script>
   <script src="/hidden-match-client.js" defer></script>
-  <script src="/frame-account-client.js?v=112" defer></script>
+  <script src="/frame-account-client.js?v=113" defer></script>
 </body>
 </html>
