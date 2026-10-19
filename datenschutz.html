@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#110f16"><meta name="description" content="Datenschutzhinweise zu FRAME"><link rel="icon" href="/icon.svg" type="image/svg+xml"><title>Datenschutz · FRAME</title>
+<style>
+:root{color-scheme:dark;--bg:#110f16;--panel:#201b26;--line:rgba(255,255,255,.11);--text:#f7f0f4;--muted:#aea2b0;--pink:#f2a9c2}
+*{box-sizing:border-box}html{background:var(--bg)}body{margin:0;background:radial-gradient(ellipse at 90% -10%,rgba(240,137,183,.11),transparent 46%),var(--bg);color:var(--text);font:14px/1.6 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{width:min(100%,680px);margin:auto;padding:24px 18px calc(45px + env(safe-area-inset-bottom))}
+a{color:#ffc1d6}a.back{display:inline-block;text-decoration:none;color:var(--muted);font-size:12px;padding:10px 0 25px}
+.eyebrow{color:var(--pink);font-size:10px;font-weight:800;letter-spacing:.13em}
+h1,h2{font-family:Georgia,serif;letter-spacing:-.025em}h1{font-size:clamp(38px,9vw,56px);line-height:1.06;margin:8px 0 14px}h2{font-size:24px;line-height:1.16;margin:0 0 12px}h3{font-size:16px;line-height:1.35;margin:16px 0 4px}
+.intro{color:var(--muted);font-size:14px;margin:0 0 23px}
+.card{border:1px solid var(--line);background:linear-gradient(140deg,rgba(255,255,255,.065),rgba(255,255,255,.025));padding:20px;border-radius:20px;margin:14px 0}
+.card p,.card li{color:#c7bec9}p{margin:9px 0}ul{padding-left:20px}li{margin:6px 0}.notice{border-left:3px solid #eda4bf;padding:10px 12px;background:rgba(248,171,203,.08);border-radius:5px;color:#f5d6e2}
+.meta{font-size:11px;color:var(--muted)}footer{padding-top:28px;color:var(--muted);font-size:12px;display:flex;gap:16px;flex-wrap:wrap}
+button,input,select,textarea{font:inherit}button{cursor:pointer}button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid #ffb5d0;outline-offset:2px}
+label{display:block;color:#f3e7ee;font-weight:650;font-size:12px;margin:12px 0 5px}
+input:not([type=checkbox]),select,textarea{display:block;width:100%;background:#16121b;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:11px 12px;color:#fff;font-size:14px}
+input[type=checkbox]{accent-color:#e6a0b8;width:18px;height:18px;flex:none}
+textarea{min-height:118px;resize:vertical}
+.primary,.secondary{min-height:43px;padding:10px 15px;border-radius:12px;font-weight:750}
+.primary{background:#f1bed0;color:#231720;border:0}
+.secondary{border:1px solid rgba(255,255,255,.25);color:#f7e9f1;background:#2e2433}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.check{display:flex;align-items:start;gap:10px;border:1px solid rgba(255,255,255,.10);padding:12px;border-radius:12px;background:rgba(255,255,255,.03);font-size:13px;color:#dcd2dd}
+.check span{flex:1}
+#feedbackOutput{min-height:130px;white-space:pre-wrap}
+[hidden]{display:none!important}
+@media(max-width:390px){.grid{grid-template-columns:1fr}.card{padding:16px}}
+</style></head>
+<body><main><a class="back" href="/">← Zurück zu FRAME</a>
+<p class="eyebrow">DEINE DATEN</p><h1>Datenschutz.</h1>
+<p class="intro">Wie FRAME derzeit technische Verbindungen und persönliche Filmdaten verarbeitet. Stand: 19. Oktober 2026.</p>
+<div class="notice"><strong>Hinweis: Entwurf, noch nicht freigegeben.</strong> Angaben zur datenschutzrechtlich verantwortlichen Person, Kontaktadresse, konkreten Löschfristen, Dienstleisterverträgen und möglichen Drittlandübermittlungen müssen vor dem öffentlichen Launch vervollständigt und rechtlich geprüft werden.</div>
+<section class="card"><h2>1 · Verantwortliche Stelle</h2>
+<p>Verantwortlicher Betreiber, ladungsfähige Anschrift und E-Mail-Adresse: <strong>noch zu ergänzen.</strong> Ohne diese Angaben ist die Datenschutzerklärung nicht vollständig.</p></section>
+<section class="card"><h2>2 · Ohne Konto und mit Konto</h2>
+<p>FRAME funktioniert ohne Login. Swipes, Merkliste, Gesehen-Bewertungen, FRAMELOG-Notizen, Daily-Frame-Daten und Geschmackseinstellungen werden im Browser gespeichert. Sie können über den lokalen JSON-Backup-Export gesichert werden.</p>
+<p>Bei freiwilliger E-Mail-Anmeldung verarbeitet FRAME die angegebene Adresse für Konto und Login-Code. Für angemeldete Konten wird die persönliche Film- und Geschmacksdaten-Kopie über Cloudflare Durable Objects synchronisiert. FRAME nutzt technisch notwendige Sitzungs-Cookies; die Kontositzung ist im Code auf höchstens 30 Tage ausgelegt.</p>
+<p>Im Konto-Bereich stehen Export, Abmeldung und die Löschung von Konto und Cloud-Daten zur Verfügung. Die Löschung von lokalen Browserdaten auf anderen Geräten muss ggf. separat erfolgen.</p></section>
+<section class="card"><h2>3 · Beteiligte Dienste</h2>
+<ul><li><strong>Cloudflare:</strong> Bereitstellung der Website, Worker-API, Konten- und Frame-Match-Speicherung; technisch notwendige Verbindungsdaten können verarbeitet werden.</li>
+<li><strong>Brevo:</strong> Versand der passwortlosen E-Mail-Anmeldecodes an die angegebene E-Mail-Adresse.</li>
+<li><strong>TMDB / JustWatch:</strong> Film-, Serien-, Bild- und Streaminginformationen. Beim Anzeigen externer Bilder können Verbindungen zum Bildanbieter entstehen.</li>
+<li><strong>YouTube:</strong> Trailer werden erst auf Nutzeraktion über youtube-nocookie.com eingebettet; eine Verbindung zu Google entsteht beim Laden des Videos.</li>
+<li><strong>Google Fonts:</strong> Die aktuelle Website lädt an einigen Stellen noch Schriftdateien von Google-Servern. Dabei können Verbindungsdaten an Google gelangen; die Einbindung ist vor einem öffentlichen Start zu prüfen bzw. auf lokale Auslieferung umzustellen.</li></ul>
+<p>Frame Match verarbeitet gewählte Anzeigenamen, Raumstimmen und Sitzungsdaten. Die genauen Aufbewahrungs- und Ablaufregeln sind in <a href="/about.html">Über FRAME</a> beschrieben.</p></section>
+<section class="card"><h2>4 · Zwecke und Rechtsgrundlagen</h2>
+<p>Technische Auslieferung, Kontoführung, die gewünschte Cloud-Synchronisierung und nutzungsabhängige Empfehlungserstellung dienen dem Betrieb der Funktionen. Die jeweils zutreffenden Rechtsgrundlagen (insbesondere Art. 6 DSGVO), Empfänger, Auftragsverarbeiter und ggf. Schutzmaßnahmen für Drittlandtransfers sind vor der Freigabe abschließend festzulegen und zu dokumentieren.</p></section>
+<section class="card"><h2>5 · Deine Rechte</h2>
+<p>Je nach Voraussetzungen bestehen Rechte auf Auskunft, Berichtigung, Löschung, Einschränkung, Datenübertragbarkeit und Widerspruch sowie ein Beschwerderecht bei einer Datenschutzaufsichtsbehörde. Soweit eine Verarbeitung auf Einwilligung beruht, kann diese für die Zukunft widerrufen werden. Eine funktionsfähige Kontaktadresse des Verantwortlichen muss vor der Veröffentlichung ergänzt werden.</p>
+<p><a href="https://eur-lex.europa.eu/eli/reg/2016/679/oj" target="_blank" rel="noopener noreferrer">DSGVO im Original ↗</a></p></section><footer><a href="/about.html">Datenquellen</a><a href="/datenschutz.html">Datenschutz</a><a href="/impressum.html">Impressum</a><a href="/beta.html">Beta-Test</a></footer></main></body></html>
