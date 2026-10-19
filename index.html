@@ -13,7 +13,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
   <link rel="stylesheet" href="/app-layout.css" />
-  <link rel="stylesheet" href="/frame-reboot.css?v=113" />
+  <link rel="stylesheet" href="/frame-reboot.css?v=115" />
   <link rel="stylesheet" href="/frame-loop.css" />
   <link rel="stylesheet" href="/hidden-match.css" />
   <link rel="stylesheet" href="/trailer-preview.css" />
@@ -487,9 +487,15 @@
       <h2 id="frameAccountModalTitle">Dein FRAME. Auf jedem Gerät.</h2>
       <p>Melde dich sicher an. Ein vorhandenes Konto wird über die verifizierte E-Mail-Adresse gefunden.</p>
       <div class="frame-account-provider-list">
-        <button type="button" id="frameAccountApple" hidden>Mit Apple anmelden</button>
-        <button type="button" id="frameAccountGoogle" hidden>Mit Google anmelden</button>
-        <button type="button" id="frameAccountEmailLogin" hidden>Mit E-Mail-Code anmelden</button>
+        <button type="button" class="frame-provider-button frame-provider-google" id="frameAccountGoogle" hidden>
+          <span class="frame-provider-symbol frame-google-symbol" aria-hidden="true">G</span><span>Mit Google anmelden</span>
+        </button>
+        <button type="button" class="frame-provider-button frame-provider-apple" id="frameAccountApple" hidden>
+          <span class="frame-provider-symbol frame-apple-symbol" aria-hidden="true">Apple</span><span>Mit Apple anmelden</span>
+        </button>
+        <button type="button" class="frame-provider-button frame-provider-email" id="frameAccountEmailLogin" hidden>
+          <span class="frame-provider-symbol frame-email-symbol" aria-hidden="true">✉</span><span>Mit E-Mail-Code anmelden</span>
+        </button>
       </div>
       <p id="frameAccountProvidersDisabled" class="frame-account-note" role="status" aria-live="polite" hidden>Anmeldemethoden werden geprüft …</p>
       <button id="frameAccountRetryProviders" class="frame-account-provider-retry" type="button" hidden>Erneut versuchen</button>
@@ -503,7 +509,8 @@
         <input id="frameAccountCodeInput" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="123456" />
         <button type="button" id="frameAccountVerifyCode">Anmelden</button>
       </div>
-      <p id="frameAccountDialogMessage" class="frame-account-note" aria-live="polite"></p>
+      <p id="frameAccountDialogMessage" class="frame-account-note" role="status" aria-live="polite"></p>
+      <p class="frame-auth-email-hint">Bei Apples „E-Mail verbergen“ kann eine andere Adresse verwendet werden. In diesem Fall ist eine automatische Verknüpfung mit deinem bisherigen Konto nicht garantiert.</p>
       <p class="frame-account-privacy">Private Cloud-Speicherung. Kein Passwort nötig. Du entscheidest selbst über vorhandene Gerätedaten.</p>
     </section>
   </div>
@@ -568,6 +575,6 @@
   <script src="/frame-loop.js" defer></script>
   <script src="/vendor-qrcode.js" defer></script>
   <script src="/hidden-match-client.js" defer></script>
-  <script src="/frame-account-client.js?v=113" defer></script>
+  <script src="/frame-account-client.js?v=115" defer></script>
 </body>
 </html>
