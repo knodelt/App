@@ -138,6 +138,8 @@ anlegen und den Einwilligungsbildschirm konfigurieren.
 - Autorisierte Weiterleitung: **https://framingapp.de/api/account/oauth/google/callback**
 - Worker-Secrets: **GOOGLE_CLIENT_ID** und **GOOGLE_CLIENT_SECRET**
 
+FRAME blendet die Google-Anmeldung erst nach Hinterlegung beider Client-Zugangsdaten ein. Fehlgeschlagene OAuth-Rückleitungen zeigen eine Fehlermeldung im Login-Fenster.
+
 FRAME verwendet OAuth Authorization Code mit PKCE und prüft signierte ID-Tokens,
 Issuer, Audience, Nonce, Gültigkeit und die verifizierte E-Mail-Adresse.
 
@@ -152,7 +154,7 @@ die Website einrichten und die Domain **framingapp.de** registrieren.
 - **APPLE_KEY_ID:** Kennung des Sign-in-with-Apple-Schlüssels
 - **APPLE_PRIVATE_KEY:** vollständiger Inhalt des privaten .p8-Schlüssels
 
-Die Werte sind als Worker-Secrets zu speichern. FRAME signiert den
+Die Werte sind als Worker-Secrets zu speichern. Für Sign in with Apple im Web benötigt man eine Mitgliedschaft im kostenpflichtigen Apple Developer Program. FRAME signiert den
 Apple-Client-Secret-JWT selbst auf dem Server und prüft ID-Tokens gegen Apples
 öffentliche JWK-Schlüssel. Mit Apples Funktion „E-Mail verbergen“ entsteht
 gegebenenfalls ein separates Konto statt einer automatischen Verknüpfung.
