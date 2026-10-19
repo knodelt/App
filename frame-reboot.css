@@ -2194,3 +2194,55 @@ h1 em {
   .frame-account-card{padding:13px 11px;}
   .frame-account-actions{grid-template-columns:1fr;}
 }
+
+
+/* FRAME · Compact login entry in the top-right header (v112). */
+.topbar .frame-header-actions {
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  flex:0 0 auto;
+  gap:8px;
+  min-width:0;
+}
+.topbar .frame-header-login {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  min-height:34px;
+  min-width:61px;
+  padding:0 10px;
+  border:1px solid rgba(239,159,190,.28);
+  border-radius:999px;
+  background:rgba(227,145,175,.09);
+  color:#f5d6e1;
+  font:800 11px/1 var(--font-ui,Manrope,system-ui,sans-serif);
+  letter-spacing:0;
+  white-space:nowrap;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+.topbar .frame-header-login svg {
+  width:14px;
+  height:14px;
+  flex:0 0 14px;
+}
+.topbar .frame-header-login.is-logged-in {
+  border-color:rgba(156,218,174,.33);
+  background:rgba(124,189,145,.1);
+  color:#c9efd2;
+}
+.topbar .frame-header-login:focus-visible {
+  outline:2px solid #f8b5d0;
+  outline-offset:3px;
+}
+.topbar .frame-header-actions .profile-chip {flex:0 0 auto;}
+@media(max-width:375px) {
+  .topbar .frame-header-actions {gap:5px;}
+  .topbar .frame-header-login {min-width:56px;padding:0 7px;gap:4px;font-size:10px;}
+  .topbar .frame-header-login svg {width:12px;height:12px;flex-basis:12px;}
+  .topbar .brand {min-width:0;}
+  .topbar .brand-copy {min-width:0;}
+  .topbar .brand-copy small {white-space:nowrap;}
+}
