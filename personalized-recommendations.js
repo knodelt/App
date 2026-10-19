@@ -671,9 +671,14 @@
     updateProfileStrength();
     updateReadyIndicator();
     updateSaveButtons();
-    showToast('In „Meine Merkliste“ gespeichert.');
+    showToast('Gemerkt. FRAME berücksichtigt das für neue Vorschläge.');
     document.dispatchEvent(new CustomEvent('frame:recommendation-saved',{detail:{id,item:card}}));
     document.dispatchEvent(new CustomEvent('frame:watchlist-updated',{detail:{id,saved:true}}));
+    // New MERKEN signal should influence the next recommendations immediately.
+    // Keep existing cards visible until the background response has arrived.
+    lastSignature='';
+    if(recommendationSurfaceVisible())
+      queueMicrotask(()=>refreshRecommendations({background:true}));
   }
 
   function rejectRecommendation(item) {
