@@ -115,6 +115,10 @@ Der Worker benötigt weder SMTP-Zugang noch Resend noch einen eigenen Mailserver
    an die eigene Adresse senden. Bei „Sending platform disabled“ muss die
    Transaktionsplattform ggf. von Brevo freigeschaltet werden.
 
+Der Anmeldecode wird als **HTML- und Plain-Text-E-Mail** im FRAME-Design verschickt,
+ohne externe Grafiken oder Webfonts. Der sechsstellige Code bleibt kopierbar;
+der Text-Fallback enthält echte Zeilenumbrüche und einen Sicherheitshinweis.
+
 Der Worker ruft serverseitig **POST https://api.brevo.com/v3/smtp/email** mit
 dem Header `api-key` auf. Brevo-Key und Login-Code werden nicht in der Website
 gespeichert. Die Einmalcodes gelten 10 Minuten; Anfragen werden pro E-Mail-Adresse
