@@ -152,7 +152,10 @@ Der Nutzer wählt, ob die Cloud- oder Gerätefassung erhalten bleiben soll.
 
 **Geräte-Backups:** In *Mein Frame → Dein FRAME-Konto* kann jeder Nutzer,
 auch ohne Anmeldung, ein JSON-Backup seines **aktuellen lokalen Bestands**
-herunterladen. Diese Sicherung ist besonders wichtig, wenn die Cloud offline
+herunterladen und über **FRAME-Backup wiederherstellen** zurückspielen.
+Eine importierte Sicherung wird vor dem Import auf Struktur und Dateigröße
+geprüft; bei angemeldeten Nutzern muss der Unterschied zur Cloud ausdrücklich
+aufgelöst werden. Diese Sicherung ist besonders wichtig, wenn die Cloud offline
 oder ein Datenkonflikt noch ungeklärt ist. Backup-Dateien enthalten private
 Filmvorlieben und sollten entsprechend sicher aufbewahrt werden.
 
