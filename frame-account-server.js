@@ -88,6 +88,80 @@ async function startEmail(req,env){
   const hash=await hashCode(env,id,code);
   const prepared=await cmd(env,id,'startCode',{hash,expiresAt:Date.now()+CODE_EXP_MS});
   if(!prepared.data.ok)return json({ok:false,error:'Bitte später erneut versuchen.'},429);
+// HTML + plain-text email: compatible with Outlook, Gmail and iOS Mail.
+// The code is copyable text; external image requests and webfonts are avoided.
+function buildFrameLoginEmail(code){
+  if(!/^\d{6}$/.test(code))throw Error('INVALID_EMAIL_CODE');
+  const subject='Dein Anmeldecode für FRAME';
+  const textContent=[
+    'FRAME',
+    '',
+    'Dein Anmeldecode',
+    '',
+    code,
+    '',
+    'Gültig für 10 Minuten. Der Code kann nur einmal verwendet werden.',
+    '',
+    'Falls du diese Anmeldung nicht angefordert hast, kannst du die E-Mail ignorieren.',
+    'Gib deinen Anmeldecode niemals an andere Personen weiter.',
+    '',
+    'FRAME · Filme. Serien. People.',
+    'https://framingapp.de'
+  ].join('\n');
+  const htmlContent=String.raw`<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Dein Anmeldecode für FRAME</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f1f3;color:#251f27;font-family:Arial,Helvetica,sans-serif;">
+  <div style="display:none;font-size:1px;color:#f4f1f3;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">Dein FRAME-Anmeldecode ist zehn Minuten gültig.</div>
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;background-color:#f4f1f3;">
+    <tr><td align="center" style="padding:36px 16px 40px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:separate;max-width:520px;background-color:#ffffff;border:1px solid #eae3e8;border-radius:20px;overflow:hidden;">
+        <tr><td style="padding:28px 32px;background-color:#161319;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td align="center" valign="middle" style="width:44px;height:44px;border-radius:12px;background-color:#fa5275;color:#ffffff;font:bold 30px Georgia,'Times New Roman',serif;">F</td>
+              <td valign="middle" style="padding-left:13px;">
+                <div style="color:#ffffff;font:bold 19px Arial,Helvetica,sans-serif;letter-spacing:3px;line-height:25px;">FRAME</div>
+                <div style="color:#c5b7c1;font:12px Arial,Helvetica,sans-serif;line-height:19px;">Filme · Serien · People</div>
+              </td>
+            </tr>
+          </table>
+        </td></tr>
+        <tr><td style="padding:36px 32px 12px;">
+          <p style="margin:0 0 12px;color:#cc476b;font:bold 11px Arial,Helvetica,sans-serif;letter-spacing:2px;">DEIN FRAME-KONTO</p>
+          <h1 style="margin:0 0 14px;color:#241d26;font:bold 30px/1.15 Georgia,'Times New Roman',serif;">Dein Anmeldecode.</h1>
+          <p style="margin:0;color:#635965;font:15px/1.65 Arial,Helvetica,sans-serif;">Schön, dass du da bist. Gib diesen Code in FRAME ein, um dich sicher anzumelden.</p>
+        </td></tr>
+        <tr><td style="padding:20px 32px;">
+          <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:separate;background-color:#fcf3f6;border:1px solid #f3d9e2;border-radius:14px;">
+            <tr><td align="center" style="padding:24px 12px 21px;">
+              <div style="color:#8f5269;font:bold 11px Arial,Helvetica,sans-serif;letter-spacing:1.5px;">DEIN EINMAL-CODE</div>
+              <div style="padding:10px 0 8px;color:#1c1820;font:bold 39px/1.2 'Courier New',Courier,monospace;letter-spacing:6px;white-space:nowrap;">${code}</div>
+              <div style="color:#94687c;font:13px Arial,Helvetica,sans-serif;line-height:18px;">10 Minuten gültig · einmal verwendbar</div>
+            </td></tr>
+          </table>
+        </td></tr>
+        <tr><td style="padding:0 32px 34px;">
+          <p style="margin:0;color:#6f6570;font:13px/1.65 Arial,Helvetica,sans-serif;">Du hast keinen Code angefordert? Dann kannst du diese Nachricht einfach ignorieren.</p>
+          <p style="margin:12px 0 0;color:#9c536a;font:12px/1.6 Arial,Helvetica,sans-serif;">Sicherheitshinweis: Gib deinen Anmeldecode niemals an andere Personen weiter.</p>
+        </td></tr>
+        <tr><td style="padding:19px 32px 22px;background-color:#fbf9fa;border-top:1px solid #f0e9ed;">
+          <p style="margin:0;color:#8c818c;font:12px/1.6 Arial,Helvetica,sans-serif;">Automatisch gesendet von <strong>FRAME</strong><br><a href="https://framingapp.de" style="color:#a24e6b;text-decoration:none;">framingapp.de</a></p>
+        </td></tr>
+      </table>
+      <p style="margin:17px 0 0;color:#9c919b;font:11px/1.5 Arial,Helvetica,sans-serif;">Diese Nachricht enthält einen vertraulichen Anmeldecode.</p>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+  return {subject,textContent,htmlContent};
+}
+
   // Brevo Transactional API works with Workers Free via ordinary HTTPS fetch.
   // No email credential is ever sent to the browser or committed to GitHub.
   let response;
@@ -99,10 +173,7 @@ async function startEmail(req,env){
       body:JSON.stringify({
         sender:{name:'FRAME',email:senderEmail},
         to:[{email}],
-        subject:'Dein FRAME-Anmeldecode',
-        textContent:'Dein FRAME-Anmeldecode: '+code+
-          '\\nGültig für 10 Minuten und nur einmal verwendbar.'+
-          '\\nFalls du ihn nicht angefordert hast, ignoriere diese Nachricht.'
+        ...buildFrameLoginEmail(code)
       })
     });
   }catch(error){
