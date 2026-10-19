@@ -39,6 +39,8 @@ const clearSession='__Host-frame_session=; Path=/; HttpOnly; Secure; SameSite=La
 const oauthCookie=(value,age)=>'__Host-frame_oauth='+value+'; Path=/; HttpOnly; Secure; SameSite=None; Max-Age='+age;
 const emailOK=v=>/^[^\s@]{1,100}@[^\s@]{1,190}\.[^\s@]{2,40}$/.test(v)&&v.length<=254;
 const emailNormalize=v=>String(v||'').trim().toLowerCase();
+// Public, verified sender. Keep the dashboard variable in sync with wrangler.jsonc.
+const frameSenderEmail=env=>String(env.FRAME_EMAIL_FROM||'login@framingapp.de').trim();
 const originOK=req=>{try{return new URL(req.headers.get('origin')).origin===new URL(req.url).origin;}catch{return false;}};
 const accountID=async(email,env)=>hex(await hmac('account:'+email,env.AUTH_SECRET));
 const object=(env,id)=>env.FRAME_ACCOUNTS.get(env.FRAME_ACCOUNTS.idFromName(id));
@@ -145,7 +147,7 @@ function buildFrameLoginEmail(code){
 }
 
 async function startEmail(req,env){
-  const senderEmail=String(env.FRAME_EMAIL_FROM||'').trim();
+  const senderEmail=frameSenderEmail(env);
   if(!env.BREVO_API_KEY||!emailOK(senderEmail))return json({ok:false,error:'E-Mail-Versand ist noch nicht eingerichtet.'},503);
   const {email:input}=await restrictedBody(req,4096);
   const email=emailNormalize(input);
@@ -314,7 +316,7 @@ export async function handleFrameAccount(request,env){
   if(!env.FRAME_ACCOUNTS||!env.AUTH_SECRET||env.AUTH_SECRET.length<32)
     return json({ok:false,error:'Konten werden noch eingerichtet.'},503);
   try{
-    if(path==='config'&&request.method==='GET')return json({ok:true,email:!!(env.BREVO_API_KEY&&emailOK(String(env.FRAME_EMAIL_FROM||'').trim())),
+    if(path==='config'&&request.method==='GET')return json({ok:true,email:!!(env.BREVO_API_KEY&&emailOK(frameSenderEmail(env))),
       google:!!(env.GOOGLE_CLIENT_ID&&env.GOOGLE_CLIENT_SECRET),
       apple:!!(env.APPLE_CLIENT_ID&&env.APPLE_TEAM_ID&&env.APPLE_KEY_ID&&env.APPLE_PRIVATE_KEY)});
     if(path==='oauth/google/start'&&request.method==='GET')return oauthStart(request,env,'google');
