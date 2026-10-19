@@ -169,6 +169,13 @@ export async function handlePersonalizedRecommendations(request, env) {
   const likedMovies = positives.filter(s => s.type === 'movie').sort((a,b)=>positiveSignalWeight(b.action,b.watched)-positiveSignalWeight(a.action,a.watched)).slice(0,2);
   const likedSeries = positives.filter(s => s.type === 'series').sort((a,b)=>positiveSignalWeight(b.action,b.watched)-positiveSignalWeight(a.action,a.watched)).slice(0,2);
   const likedPeople = positives.filter(s => s.type === 'person').sort((a,b)=>positiveSignalWeight(b.action,b.watched)-positiveSignalWeight(a.action,a.watched)).slice(0,2);
+  const signalReason=(signal,kind)=>{
+    if(!signal.title)return kind==='movie'?'Aus deinen Film-Vorlieben':'Aus deinen Serien-Vorlieben';
+    const title=signal.title.slice(0,65);
+    if(signal.watched)return 'Weil dir '+title+' gefallen hat';
+    if(signal.action==='save')return 'Weil du '+title+' gemerkt hast';
+    return 'Weil du '+title+' mit SUPER markiert hast';
+  };
 
   const movieGenreWeights = new Map();
   const tvGenreWeights = new Map();
@@ -232,11 +239,11 @@ export async function handlePersonalizedRecommendations(request, env) {
     .slice(0,2);
   likedMovies.forEach(signal => tasks.push(
     tmdb(`/movie/${signal.tmdbId}/recommendations`, env, {language:'de-DE', page:1})
-      .then(data => (data.results || []).slice(0,16).forEach(item => addCandidate(item,'movie',10, signal.title ? `Wegen ${signal.title}` : 'Aus deinen Film-Likes')))
+      .then(data => (data.results || []).slice(0,16).forEach(item => addCandidate(item,'movie',10,signalReason(signal,'movie'))))
   ));
   likedSeries.forEach(signal => tasks.push(
     tmdb(`/tv/${signal.tmdbId}/recommendations`, env, {language:'de-DE', page:1})
-      .then(data => (data.results || []).slice(0,16).forEach(item => addCandidate(item,'series',10, signal.title ? `Wegen ${signal.title}` : 'Aus deinen Serien-Likes')))
+      .then(data => (data.results || []).slice(0,16).forEach(item => addCandidate(item,'series',10,signalReason(signal,'series'))))
   ));
   likedPeople.forEach(signal => tasks.push(
     tmdb(`/person/${signal.tmdbId}/combined_credits`, env, {language:'de-DE'})
