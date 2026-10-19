@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#110f16"><meta name="description" content="Beta-Test und Feedback für FRAME"><link rel="icon" href="/icon.svg" type="image/svg+xml"><title>FRAME Beta · FRAME</title>
+<style>
+:root{color-scheme:dark;--bg:#110f16;--panel:#201b26;--line:rgba(255,255,255,.11);--text:#f7f0f4;--muted:#aea2b0;--pink:#f2a9c2}
+*{box-sizing:border-box}html{background:var(--bg)}body{margin:0;background:radial-gradient(ellipse at 90% -10%,rgba(240,137,183,.11),transparent 46%),var(--bg);color:var(--text);font:14px/1.6 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{width:min(100%,680px);margin:auto;padding:24px 18px calc(45px + env(safe-area-inset-bottom))}
+a{color:#ffc1d6}a.back{display:inline-block;text-decoration:none;color:var(--muted);font-size:12px;padding:10px 0 25px}
+.eyebrow{color:var(--pink);font-size:10px;font-weight:800;letter-spacing:.13em}
+h1,h2{font-family:Georgia,serif;letter-spacing:-.025em}h1{font-size:clamp(38px,9vw,56px);line-height:1.06;margin:8px 0 14px}h2{font-size:24px;line-height:1.16;margin:0 0 12px}h3{font-size:16px;line-height:1.35;margin:16px 0 4px}
+.intro{color:var(--muted);font-size:14px;margin:0 0 23px}
+.card{border:1px solid var(--line);background:linear-gradient(140deg,rgba(255,255,255,.065),rgba(255,255,255,.025));padding:20px;border-radius:20px;margin:14px 0}
+.card p,.card li{color:#c7bec9}p{margin:9px 0}ul{padding-left:20px}li{margin:6px 0}.notice{border-left:3px solid #eda4bf;padding:10px 12px;background:rgba(248,171,203,.08);border-radius:5px;color:#f5d6e2}
+.meta{font-size:11px;color:var(--muted)}footer{padding-top:28px;color:var(--muted);font-size:12px;display:flex;gap:16px;flex-wrap:wrap}
+button,input,select,textarea{font:inherit}button{cursor:pointer}button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid #ffb5d0;outline-offset:2px}
+label{display:block;color:#f3e7ee;font-weight:650;font-size:12px;margin:12px 0 5px}
+input:not([type=checkbox]),select,textarea{display:block;width:100%;background:#16121b;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:11px 12px;color:#fff;font-size:14px}
+input[type=checkbox]{accent-color:#e6a0b8;width:18px;height:18px;flex:none}
+textarea{min-height:118px;resize:vertical}
+.primary,.secondary{min-height:43px;padding:10px 15px;border-radius:12px;font-weight:750}
+.primary{background:#f1bed0;color:#231720;border:0}
+.secondary{border:1px solid rgba(255,255,255,.25);color:#f7e9f1;background:#2e2433}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.check{display:flex;align-items:start;gap:10px;border:1px solid rgba(255,255,255,.10);padding:12px;border-radius:12px;background:rgba(255,255,255,.03);font-size:13px;color:#dcd2dd}
+.check span{flex:1}
+#feedbackOutput{min-height:130px;white-space:pre-wrap}
+[hidden]{display:none!important}
+@media(max-width:390px){.grid{grid-template-columns:1fr}.card{padding:16px}}
+</style></head>
+<body><main><a class="back" href="/">← Zurück zu FRAME</a>
+<p class="eyebrow">FRAME · BETATEST</p><h1>Teste, was wirklich zählt.</h1>
+<p class="intro">Nicht einfach nur anschauen: Nutze FRAME, als würdest du morgen wiederkommen. Finde Fehler, teste echte Filmentscheidungen und sag uns, was dich stört.</p>
+<section class="card"><h2>Dein Test in 5 Minuten</h2><p class="meta">Hake die Punkte ab. Der Fortschritt bleibt nur auf dieser Seite und wird nicht hochgeladen.</p>
+<div id="betaChecks" class="grid">
+<label class="check"><input type="checkbox"><span>Framing: Drei Filme swipen und den letzten Swipe zurücknehmen.</span></label>
+<label class="check"><input type="checkbox"><span>Für dich: Einen Vorschlag merken und weitere Empfehlungen öffnen.</span></label>
+<label class="check"><input type="checkbox"><span>FRAMELOG: Gesuchten Film finden, als gesehen markieren und eine Notiz ergänzen.</span></label>
+<label class="check"><input type="checkbox"><span>Daily Frame: Auswahl öffnen und eine Entscheidung treffen.</span></label>
+<label class="check"><input type="checkbox"><span>FRAME Match: Mit einer zweiten Person eine gemeinsame Runde ausprobieren.</span></label>
+<label class="check"><input type="checkbox"><span>E-Mail-Login/Cloud: Auf zwei Geräten prüfen, ob die Merkliste übernommen wird.</span></label>
+</div><p id="testProgress" role="status">0 von 6 Schritten getestet.</p></section>
+<section class="card"><h2>Dein Feedback.</h2>
+<p>Was hat funktioniert, was war verwirrend und würdest du die App erneut öffnen?</p>
+<form id="betaForm">
+<label for="betaRating">Wie wahrscheinlich ist es, dass du FRAME erneut öffnest?</label>
+<select id="betaRating" required><option value="">Bitte auswählen</option><option value="Auf jeden Fall">Auf jeden Fall</option><option value="Vielleicht">Vielleicht</option><option value="Eher nicht">Eher nicht</option></select>
+<label for="betaArea">Wo ist dir etwas aufgefallen?</label>
+<select id="betaArea"><option>Gesamte App</option><option>Framing</option><option>Für dich</option><option>FRAMELOG</option><option>Daily Frame</option><option>FRAME Match</option><option>Login und Cloud</option></select>
+<label for="betaDevice">Gerät / Browser (freiwillig)</label>
+<input id="betaDevice" maxlength="100" placeholder="z. B. iPhone, Safari">
+<label for="betaText">Deine Beobachtung</label>
+<textarea id="betaText" required maxlength="1500" placeholder="Was hast du versucht? Was ist passiert? Was sollte anders sein?"></textarea>
+<p class="meta">Bitte keine E-Mail-Adressen, Anmeldecodes, privaten Filmtagebücher oder andere persönlichen Daten ins Feedback schreiben.</p>
+<div class="actions"><button type="submit" class="primary" id="betaShare">Feedback teilen</button><button type="button" class="secondary" id="betaCopy">Text kopieren</button></div>
+</form>
+<p id="betaStatus" role="status" aria-live="polite" class="meta">Dein Feedback wird hier nicht automatisch an FRAME gesendet. Du entscheidest selbst, mit wem du es teilst.</p>
+<label for="feedbackOutput">Fertiger Feedbacktext</label>
+<textarea id="feedbackOutput" readonly placeholder="Dein Feedback erscheint hier und kann kopiert werden."></textarea>
+</section>
+<section class="card"><h2>Was Beta bedeutet.</h2>
+<p>FRAME befindet sich noch in der Testphase. Inhalte, Synchronisierung und Streamingangaben können Fehler enthalten. Für wichtige persönliche Einträge nutze den JSON-Backup-Export unter <strong>Mein Frame</strong>.</p>
+<p>Vor einer breiten Veröffentlichung müssen insbesondere die Betreiberangaben, Datenschutzdokumentation und die Nutzungsrechte für externe Filmdaten abschließend geprüft werden.</p>
+</section>
+<script>
+(function(){
+'use strict';
+const checks=[...document.querySelectorAll('#betaChecks input')];
+const progress=document.getElementById('testProgress');
+function update(){const count=checks.filter(x=>x.checked).length;progress.textContent=count+' von '+checks.length+' Schritten getestet.';}
+checks.forEach(x=>x.addEventListener('change',update));update();
+const form=document.getElementById('betaForm'),out=document.getElementById('feedbackOutput');
+const status=document.getElementById('betaStatus');
+function message(){
+ const rating=document.getElementById('betaRating').value||'Nicht angegeben';
+ const area=document.getElementById('betaArea').value;
+ const device=document.getElementById('betaDevice').value.trim().slice(0,100);
+ const feedback=document.getElementById('betaText').value.trim().slice(0,1500);
+ if(!feedback){status.textContent='Bitte erst deine Beobachtung eintragen.';return null;}
+ const msg=['FRAME · Beta-Feedback','Wiederkommen: '+rating,'Bereich: '+area,
+  ...(device?['Gerät: '+device]:[]),'Getestet: '+checks.filter(x=>x.checked).length+' / '+checks.length,
+  'Beobachtung: '+feedback].join('\n');
+ out.value=msg;return msg;
+}
+async function copy(msg){
+ try{
+   if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(msg);status.textContent='Feedback kopiert. Teile es über deinen bevorzugten Kanal.';return;}
+ }catch{}
+ out.focus();out.select();status.textContent='Markiere den Text und wähle „Kopieren“.';
+}
+form.addEventListener('submit',async event=>{
+ event.preventDefault();const msg=message();if(!msg)return;
+ if(navigator.share){try{await navigator.share({title:'FRAME Beta-Feedback',text:msg});status.textContent='Teilen-Dialog abgeschlossen.';return;}
+ catch(e){if(e.name==='AbortError'){status.textContent='Teilen abgebrochen. Der Feedbacktext bleibt unten stehen.';return;}}}
+ await copy(msg);
+});
+document.getElementById('betaCopy').addEventListener('click',async()=>{const msg=message();if(msg)await copy(msg);});
+})();
+</script><footer><a href="/about.html">Datenquellen</a><a href="/datenschutz.html">Datenschutz</a><a href="/impressum.html">Impressum</a><a href="/beta.html">Beta-Test</a></footer></main></body></html>
