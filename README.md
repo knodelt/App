@@ -143,6 +143,48 @@ Zwei-Geräte-Synchronisierung, Konflikte und Löschung live prüfen, außerdem
 Impressum, vollständige Datenschutzerklärung/DSGVO und genutzte Filmrechte.
 
 
+## Phase 1 · Stabilität und Datensicherheit
+
+**Cloud-Daten:** FRAME verwendet den geschützten Durable-Object-Speicher für
+angemeldete Nutzer. Jeder Schreibzugriff enthält eine Revisionsnummer; bei
+gleichzeitigen Änderungen zweier Geräte wird nicht still überschrieben.
+Der Nutzer wählt, ob die Cloud- oder Gerätefassung erhalten bleiben soll.
+
+**Geräte-Backups:** In *Mein Frame → Dein FRAME-Konto* kann jeder Nutzer,
+auch ohne Anmeldung, ein JSON-Backup seines **aktuellen lokalen Bestands**
+herunterladen. Diese Sicherung ist besonders wichtig, wenn die Cloud offline
+oder ein Datenkonflikt noch ungeklärt ist. Backup-Dateien enthalten private
+Filmvorlieben und sollten entsprechend sicher aufbewahrt werden.
+
+**Offline:** FRAME bewahrt Änderungen lokal auf und versucht fehlgeschlagene
+Cloud-Uploads mit steigenden Abständen erneut, sobald die Verbindung wieder
+funktioniert. Eine beschädigte Cloud-Kopie wird vor dem Import geprüft.
+Beim Abmelden werden lokale Daten erst dann gelöscht, wenn ihre Synchronisierung
+abgeschlossen ist. Beim Kontolöschen gilt weiterhin die ausdrückliche
+Löschbestätigung.
+
+**Startverhalten:** Daily Frame und Taste-DNA schreiben bei unverändertem
+Zustand nicht mehr blind in den Browserspeicher. Der Service Worker cached
+keine Bilder fremder Anbieter mehr; wichtige Offline-Dateien bleiben erhalten.
+
+**Test vor öffentlichem Launch (auf echten Geräten):**
+
+1. Smartphone A: Mit E-Mail-Code anmelden, Film merken und als gesehen bewerten.
+2. Smartphone B: Mit derselben E-Mail anmelden, prüfen ob Merkliste und
+   Gesehen-Bewertung nach dem Cloud-Abgleich erscheinen.
+3. Smartphone B offline: Neue Änderung erstellen, online gehen und den
+   angezeigten Synchronisationsstatus kontrollieren.
+4. Smartphone A und B gleichzeitig verändern: Die zweite Speicherung muss
+   einen nachvollziehbaren Konflikt auslösen, niemals unbemerkt überschreiben.
+5. Backup auf beiden Geräten herunterladen, Cloud-Anmeldung beenden und
+   erneut anmelden; kontrollieren, ob alte Einträge vollständig erhalten sind.
+6. Website mehrfach neu laden sowie zwischen Tabs wechseln: keine
+   Reload-Endlosschleife und keine ungewollten Reset-Vorgänge.
+
+Diese Tests müssen mit dem live deployten Worker und den echten
+iOS-/Android-Browsern durchgeführt werden; Code- und Simulationstests
+sind dafür kein vollständiger Ersatz.
+
 ## TMDB aktivieren
 
 1. Bei TMDB anmelden und unter **Account Settings → API** eine Developer-API-Anwendung registrieren.
