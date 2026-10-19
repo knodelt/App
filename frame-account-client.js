@@ -47,6 +47,21 @@
     }
     return values;
   };
+  const validSnapshot=items=>{
+    if(!items||typeof items!=='object'||Array.isArray(items))return false;
+    const keys=Object.keys(items);
+    if(keys.some(key=>!KEYS.includes(key)))return false;
+    return keys.every(key=>{
+      const value=items[key];
+      if(typeof value!=='string'||value.length>650000)return false;
+      if(key==='frame-loop-mode-v1')return value==='user'||value==='partner';
+      if(key==='frame-recommendation-exclusions-v1')return true;
+      try{
+        const parsed=JSON.parse(value);
+        return parsed!==null&&typeof parsed==='object'&&!Array.isArray(parsed);
+      }catch{return false;}
+    });
+  };
   const serialized=s=>JSON.stringify(Object.fromEntries(Object.entries(s).sort(([a],[b])=>a.localeCompare(b))));
   const fingerprint=async values=>{
     const bytes=new TextEncoder().encode(serialized(values));
@@ -143,7 +158,7 @@
     lastHash=hash;revision=rev;
   };
   const restoreLocal=(items)=>{
-    if(!items||typeof items!=='object')throw Error('Ungültiger Cloud-Speicher');
+    if(!validSnapshot(items))throw Error('Die Cloud enthält beschädigte oder inkompatible Daten. Deine Gerätedaten wurden nicht verändert.');
     // Check total storage before modifying the real keys. Roll back on quota errors.
     const previous=snapshot(),written=[];
     try{
@@ -163,6 +178,9 @@
     }
   };
   async function upload(values,rev) {
+    if(!validSnapshot(values))throw Object.assign(
+      Error('Lokale Daten sind beschädigt. Bitte vor weiteren Schritten ein Geräte-Backup herunterladen.'),
+      {status:400});
     const before=await fingerprint(values);
     const result=await accountFetch('sync',{method:'PUT',body:JSON.stringify({revision:rev,data:values})});
     retainMarks(before,result.revision);
@@ -208,6 +226,10 @@
         clearRetry();
         paused=true;ready=false;
         syncStatus('Deine Sitzung ist abgelaufen. Bitte erneut anmelden. Lokale Daten bleiben erhalten.',true);
+      }else if(e.status===400||e.status===413){
+        clearRetry();
+        paused=true;ready=false;
+        syncStatus(e.message+' Lokale Daten bleiben erhalten.',true);
       }else{
         syncStatus('Offline oder Cloud nicht erreichbar. Lokale Änderungen bleiben erhalten; neuer Versuch folgt.',true);
         scheduleRetry();
@@ -288,7 +310,7 @@
     }catch(e){syncStatus((e.message||'Cloud nicht erreichbar.')+' Lokale Daten bleiben erhalten.',true);}
   }
   async function chooseRemote(){
-    if(!confirm('Die Daten dieses Geräts durch deine Cloud-Daten ersetzen? Nicht synchronisierte lokale Änderungen gehen dabei verloren.'))return;
+    if(!confirm('Die Daten dieses Geräts durch deine Cloud-Daten ersetzen? Lade vorher bei Bedarf ein Geräte-Backup herunter; nicht synchronisierte Änderungen gehen verloren.'))return;
     try{
       const cloud=await accountFetch('sync');
       if(!cloud.data)throw Error('Noch keine Cloud-Daten vorhanden.');
@@ -384,18 +406,24 @@
       toggleModal(false);location.reload();
     }catch(e){text('frameAccountDialogMessage',e.message);}
   });
-  pick('frameAccountDownload')?.addEventListener('click',async()=>{
+  const downloadLocalBackup=()=>{
     try{
-      // Always export the current local copy, including changes not yet in
-      // the cloud. Downloading the remote copy could silently omit them.
+      // Include unsynced local edits; never replace these with a remote copy.
       const data=snapshot();
-      const blob=new Blob([JSON.stringify({type:'frame-local-backup',savedAt:new Date().toISOString(),data},null,2)],{type:'application/json'});
+      const blob=new Blob([JSON.stringify({
+        type:'frame-local-backup',version:1,
+        savedAt:new Date().toISOString(),data
+      },null,2)],{type:'application/json'});
       const url=URL.createObjectURL(blob),a=document.createElement('a');
-      a.href=url;a.download='FRAME-Backup-'+new Date().toISOString().slice(0,10)+'.json';
+      a.href=url;a.download='FRAME-Geraete-Backup-'+new Date().toISOString().slice(0,10)+'.json';
       document.body.appendChild(a);a.click();a.remove();
       setTimeout(()=>URL.revokeObjectURL(url),60000);
+      syncStatus('Geräte-Backup erstellt. Bewahre die Datei sicher auf.');
     }catch(e){syncStatus(e.message,true);}
-  });
+  };
+  pick('frameAccountDownload')?.addEventListener('click',downloadLocalBackup);
+  pick('frameAccountDownloadGuest')?.addEventListener('click',downloadLocalBackup);
+  pick('frameAccountReload')?.addEventListener('click',()=>location.reload());
   pick('frameAccountUseCloud')?.addEventListener('click',()=>void chooseRemote());
   pick('frameAccountUseLocal')?.addEventListener('click',()=>void chooseLocal());
   pick('frameAccountSyncNow')?.addEventListener('click',()=>{
@@ -417,6 +445,17 @@
   window.addEventListener('online',()=>{
     if(ready&&!paused){clearRetry();queue();}
     else if(me?.authenticated)void reconcile({allowAutomaticRestore:false});
+  });
+  // A second tab has its own in-memory state. Never let the older tab
+  // overwrite newer data persisted by the other tab.
+  window.addEventListener('storage',event=>{
+    if(!me?.authenticated||event.storageArea!==localStorage||!KEYS.includes(event.key))return;
+    clearTimeout(timer);clearRetry();
+    paused=true;ready=false;
+    syncStatus('FRAME wurde in einem anderen Tab geändert. Bitte die Seite neu laden.',true);
+    text('frameAccountConflictMessage',
+      'Ein anderer FRAME-Tab hat die Gerätedaten geändert. Lade diese Seite neu, bevor du weitere Änderungen speicherst.');
+    show('frameAccountConflict',true);
   });
   window.FrameCloud={
     changed:queue,
