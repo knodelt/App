@@ -198,7 +198,16 @@ function validSyncData(data){
   if(!data||typeof data!=='object'||Array.isArray(data))return false;
   const keys=Object.keys(data);
   if(keys.length>ALLOWED_KEYS.size||keys.some(key=>!ALLOWED_KEYS.has(key)))return false;
-  return keys.every(key=>typeof data[key]==='string'&&data[key].length<=650000);
+  return keys.every(key=>{
+    const value=data[key];
+    if(typeof value!=='string'||value.length>650000)return false;
+    if(key==='frame-loop-mode-v1')return value==='user'||value==='partner';
+    if(key==='frame-recommendation-exclusions-v1')return true;
+    try{
+      const decoded=JSON.parse(value);
+      return decoded!==null&&typeof decoded==='object'&&!Array.isArray(decoded);
+    }catch{return false;}
+  });
 }
 export async function handleFrameAccount(request,env){
   const url=new URL(request.url),path=url.pathname.slice('/api/account/'.length);
