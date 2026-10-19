@@ -290,8 +290,17 @@ async function oauthCallback(req,env,provider){
   if(config.provider!==provider||config.exp<Date.now())return fail();
   let fields;
   try{
-    fields=req.method==='POST'?Object.fromEntries(await req.formData()):Object.fromEntries(new URL(req.url).searchParams);
-    if(!equal(String(fields.state||''),config.state)||!fields.code)return fail();
+    if(req.method==='POST'){
+      if(!(req.headers.get('content-type')||'').toLowerCase().startsWith('application/x-www-form-urlencoded'))
+        return fail();
+      if(Number(req.headers.get('content-length')||0)>16384)return fail();
+      const formBody=await req.text();
+      if(formBody.length>16384)return fail();
+      fields=Object.fromEntries(new URLSearchParams(formBody));
+    }else fields=Object.fromEntries(new URL(req.url).searchParams);
+    if(!equal(String(fields.state||''),config.state)||
+        typeof fields.code!=='string'||fields.code.length<1||fields.code.length>4096)
+      return fail();
     const clientId=provider==='google'?env.GOOGLE_CLIENT_ID:env.APPLE_CLIENT_ID;
     const idToken=await exchangeOAuth(provider,String(fields.code),new URL('/api/account/oauth/'+provider+'/callback',req.url).toString(),config.verifier,env);
     const email=await verifyJWT(idToken,provider,clientId,config.nonce);
