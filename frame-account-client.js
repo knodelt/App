@@ -15,7 +15,7 @@
   const show=(id,on)=>{const n=pick(id);if(n)n.hidden=!on;};
   const text=(id,val)=>{const n=pick(id);if(n)n.textContent=val;};
   let me=null,revision=0,ready=false,inflight=false,paused=false,timer=null,changedDuring=false;
-  let lastHash='',lastSentHash='',config={email:false,google:false,apple:false},initSerial=0;
+  let lastHash='',lastSentHash='',config={email:false},initSerial=0;
   let providerCheck=null,providerCheckId=0;
   const safeGet=key=>{try{return localStorage.getItem(key)}catch{return null}};
   const safeSet=(key,val)=>{try{localStorage.setItem(key,val)}catch{}};
@@ -88,9 +88,7 @@
   const renderProviders=(state='ready',message='')=>{
     const usable=state==='ready';
     show('frameAccountEmailLogin',usable&&Boolean(config.email));
-    show('frameAccountGoogle',usable&&Boolean(config.google));
-    show('frameAccountApple',usable&&Boolean(config.apple));
-    const none=!config.email&&!config.google&&!config.apple;
+    const none=!config.email;
     const explain=state!=='ready'||none;
     show('frameAccountProvidersDisabled',explain);
     show('frameAccountRetryProviders',explain&&state!=='loading');
@@ -109,11 +107,11 @@
         const response=await accountFetch('config');
         if(requestId!==providerCheckId)return;
         if(response.ok!==true)throw Error('Ungültige Antwort des Kontodienstes');
-        config={email:response.email===true,google:response.google===true,apple:response.apple===true};
+        config={email:response.email===true};
         renderProviders('ready');
       }catch(error){
         if(requestId!==providerCheckId)return;
-        config={email:false,google:false,apple:false};
+        config={email:false};
         renderProviders('error','FRAME kann die Anmeldemethoden gerade nicht abrufen. Prüfe die Verbindung und versuche es erneut.');
         console.warn('[FRAME ACCOUNT] Login-Konfiguration nicht erreichbar:',error?.message||error);
       }
@@ -124,26 +122,7 @@
     modal.hidden=!value;
     if(value){
       void refreshProviders();
-      if(config.email||config.google||config.apple)pick('frameAccountEmailInput')?.focus({preventScroll:true});
-    }
-  };
-  const showOAuthResult=()=>{
-    const search=new URLSearchParams(location.search||'');
-    const result=search.get('frame_auth');
-    if(result!=='failed'&&result!=='connected')return;
-    search.delete('frame_auth');
-    try{
-      history.replaceState(history.state,'',location.pathname+
-        (search.toString()?'?'+search.toString():'')+(location.hash||''));
-    }catch{}
-    if(result==='failed'){
-      toggleModal(true);
-      text('frameAccountDialogMessage','Die Anmeldung konnte nicht abgeschlossen werden. Bitte versuche es erneut.');
-    }else if(me?.authenticated){
-      status('Sicher angemeldet. Deine Cloud-Daten werden abgeglichen.');
-    }else{
-      toggleModal(true);
-      text('frameAccountDialogMessage','Die Anmeldung wurde nicht erkannt. Bitte erneut versuchen.');
+      if(config.email)pick('frameAccountEmailInput')?.focus({preventScroll:true});
     }
   };
   const clearCloudMarks=()=>{
@@ -331,7 +310,6 @@
     try{me=await accountFetch('me');}
     catch(e){status(e.message||'Anmeldung momentan nicht verfügbar.',true);return;}
     showPanel();
-    showOAuthResult();
     if(me.authenticated)await reconcile();
   }
   pick('frameHeaderLogin')?.addEventListener('click',()=>{
@@ -369,11 +347,6 @@
       toggleModal(false);location.reload();
     }catch(e){text('frameAccountDialogMessage',e.message);}
   });
-  for(const provider of ['Google','Apple']){
-    pick('frameAccount'+provider)?.addEventListener('click',()=>{
-      location.assign('/api/account/oauth/'+provider.toLowerCase()+'/start');
-    });
-  }
   pick('frameAccountDownload')?.addEventListener('click',async()=>{
     try{
       const data=me?.authenticated?(await accountFetch('sync')).data:snapshot();
