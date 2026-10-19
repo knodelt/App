@@ -2246,3 +2246,21 @@ h1 em {
   .topbar .brand-copy {min-width:0;}
   .topbar .brand-copy small {white-space:nowrap;}
 }
+
+
+/* FRAME LOGIN v113: clear retry state if the provider discovery request fails. */
+.frame-account-dialog #frameAccountRetryProviders[hidden] {display:none!important;}
+.frame-account-dialog .frame-account-provider-retry {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:39px;
+  padding:9px 15px;
+  margin:3px 0 7px;
+  border:1px solid rgba(243,183,207,.35);
+  border-radius:12px;
+  color:#ffe1ed;
+  background:rgba(245,165,193,.1);
+  font:750 12px/1.35 var(--font-ui,Manrope,system-ui,sans-serif);
+  cursor:pointer;
+}
