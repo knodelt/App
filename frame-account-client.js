@@ -74,6 +74,13 @@
     show('frameAccountGuest',!logged);
     show('frameAccountSigned',logged);
     text('frameAccountEmail',logged?me.email:'');
+    const headerLogin=pick('frameHeaderLogin');
+    if(headerLogin){
+      text('frameHeaderLoginText',logged?'Konto':'Login');
+      headerLogin.classList.toggle('is-logged-in',logged);
+      headerLogin.setAttribute('aria-label',logged?'FRAME-Konto verwalten':'Bei FRAME anmelden');
+      headerLogin.setAttribute('title',logged?'Dein FRAME-Konto':'Anmelden oder Konto erstellen');
+    }
     if(!logged)status('Noch ohne Konto. Deine Daten bleiben auf diesem Gerät.');
     else status('Du bist angemeldet.');
   };
@@ -273,6 +280,15 @@
     showPanel();
     if(me.authenticated)await reconcile();
   }
+  pick('frameHeaderLogin')?.addEventListener('click',()=>{
+    if(me?.authenticated){
+      // The signed-in account controls already exist in "Mein Frame".
+      switchView('taste');
+      panel.scrollIntoView({behavior:'smooth',block:'start'});
+    }else{
+      toggleModal(true);
+    }
+  });
   document.querySelector('#frameAccountOpen')?.addEventListener('click',()=>toggleModal(true));
   document.querySelector('#frameAccountModalClose')?.addEventListener('click',()=>toggleModal(false));
   modal.addEventListener('click',e=>{if(e.target===modal)toggleModal(false);});
