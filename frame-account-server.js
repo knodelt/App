@@ -70,24 +70,6 @@ async function issueSession(env,email,provider){
 async function hashCode(env,accountId,code){
   return hex(await hmac('email-code:'+accountId+':'+code,env.AUTH_SECRET));
 }
-async function startEmail(req,env){
-  const senderEmail=String(env.FRAME_EMAIL_FROM||'').trim();
-  if(!env.BREVO_API_KEY||!emailOK(senderEmail))return json({ok:false,error:'E-Mail-Versand ist noch nicht eingerichtet.'},503);
-  const {email:input}=await restrictedBody(req,4096);
-  const email=emailNormalize(input);
-  if(!emailOK(email))return json({ok:false,error:'Bitte eine gültige E-Mail-Adresse eingeben.'},400);
-  const id=await accountID(email,env);
-  // Check rate limits before sending. Uniform generic response avoids account enumeration.
-  const check=await cmd(env,id,'canCode');
-  if(!check.data.ok)return json({ok:false,error:'Bitte später erneut versuchen.'},429);
-  const ip=String(req.headers.get('cf-connecting-ip')||'unknown');
-  const ipKey=hex(await hmac('email-rate:'+ip,env.AUTH_SECRET));
-  const quota=await cmd(env,ipKey,'ipQuota');
-  if(!quota.data.ok)return json({ok:false,error:'Zu viele Anfragen. Bitte später versuchen.'},429);
-  const code=String(crypto.getRandomValues(new Uint32Array(1))[0]%1000000).padStart(6,'0');
-  const hash=await hashCode(env,id,code);
-  const prepared=await cmd(env,id,'startCode',{hash,expiresAt:Date.now()+CODE_EXP_MS});
-  if(!prepared.data.ok)return json({ok:false,error:'Bitte später erneut versuchen.'},429);
 // HTML + plain-text email: compatible with Outlook, Gmail and iOS Mail.
 // The code is copyable text; external image requests and webfonts are avoided.
 function buildFrameLoginEmail(code){
@@ -162,6 +144,24 @@ function buildFrameLoginEmail(code){
   return {subject,textContent,htmlContent};
 }
 
+async function startEmail(req,env){
+  const senderEmail=String(env.FRAME_EMAIL_FROM||'').trim();
+  if(!env.BREVO_API_KEY||!emailOK(senderEmail))return json({ok:false,error:'E-Mail-Versand ist noch nicht eingerichtet.'},503);
+  const {email:input}=await restrictedBody(req,4096);
+  const email=emailNormalize(input);
+  if(!emailOK(email))return json({ok:false,error:'Bitte eine gültige E-Mail-Adresse eingeben.'},400);
+  const id=await accountID(email,env);
+  // Check rate limits before sending. Uniform generic response avoids account enumeration.
+  const check=await cmd(env,id,'canCode');
+  if(!check.data.ok)return json({ok:false,error:'Bitte später erneut versuchen.'},429);
+  const ip=String(req.headers.get('cf-connecting-ip')||'unknown');
+  const ipKey=hex(await hmac('email-rate:'+ip,env.AUTH_SECRET));
+  const quota=await cmd(env,ipKey,'ipQuota');
+  if(!quota.data.ok)return json({ok:false,error:'Zu viele Anfragen. Bitte später versuchen.'},429);
+  const code=String(crypto.getRandomValues(new Uint32Array(1))[0]%1000000).padStart(6,'0');
+  const hash=await hashCode(env,id,code);
+  const prepared=await cmd(env,id,'startCode',{hash,expiresAt:Date.now()+CODE_EXP_MS});
+  if(!prepared.data.ok)return json({ok:false,error:'Bitte später erneut versuchen.'},429);
   // Brevo Transactional API works with Workers Free via ordinary HTTPS fetch.
   // No email credential is ever sent to the browser or committed to GitHub.
   let response;
