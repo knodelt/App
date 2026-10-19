@@ -1,6 +1,5 @@
-// FRAME accounts: email one-time code, Google OAuth, Apple OAuth, private
-// Durable Object storage. Credentials stay in Cloudflare Worker secrets.
-// Do not expose AUTH_SECRET, BREVO_API_KEY, OAuth private keys, or session IDs.
+// FRAME accounts: email one-time codes via Brevo and private Durable Object storage.
+// AUTH_SECRET, BREVO_API_KEY and session identifiers stay server-side.
 const DAY=86400000, SESSION_DAYS=30, CODE_EXP_MS=10*60000;
 const ALLOWED_KEYS=new Set([
   'frame-state','frame-taste-dna-v2','frame-online-learning-v1',
@@ -14,10 +13,6 @@ const json=(value,status=200,extra={})=>new Response(JSON.stringify(value),{
 const b64url=bytes=>{
   let s='';for(const b of bytes)s+=String.fromCharCode(b);
   return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-};
-const decodeB64=s=>{
-  const x=s.replace(/-/g,'+').replace(/_/g,'/');const raw=atob(x+'='.repeat((4-x.length%4)%4));
-  return Uint8Array.from(raw,c=>c.charCodeAt(0));
 };
 const rnd=(length=32)=>b64url(crypto.getRandomValues(new Uint8Array(length)));
 const textBytes=s=>new TextEncoder().encode(s);
@@ -36,7 +31,6 @@ const getCookie=(req,key)=>{
 };
 const sessionCookie=value=>'__Host-frame_session='+value+'; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age='+30*86400;
 const clearSession='__Host-frame_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0';
-const oauthCookie=(value,age)=>'__Host-frame_oauth='+value+'; Path=/; HttpOnly; Secure; SameSite=None; Max-Age='+age;
 const emailOK=v=>/^[^\s@]{1,100}@[^\s@]{1,190}\.[^\s@]{2,40}$/.test(v)&&v.length<=254;
 const emailNormalize=v=>String(v||'').trim().toLowerCase();
 // Public, verified sender. Keep the dashboard variable in sync with wrangler.jsonc.
@@ -200,120 +194,6 @@ async function verifyEmail(req,env) {
   const cookie=await issueSession(env,email,'email');
   return json({ok:true,email},200,{'set-cookie':cookie});
 }
-async function exchangeOAuth(provider,code,redirectUri,verifier,env) {
-  const google=provider==='google';
-  const clientId=google?env.GOOGLE_CLIENT_ID:env.APPLE_CLIENT_ID;
-  let secret=google?env.GOOGLE_CLIENT_SECRET:await appleClientSecret(env);
-  const body=new URLSearchParams({client_id:clientId,client_secret:secret,code,
-    grant_type:'authorization_code',redirect_uri:redirectUri});
-  if(google)body.set('code_verifier',verifier);
-  const result=await fetch(google?'https://oauth2.googleapis.com/token':'https://appleid.apple.com/auth/token',{
-    method:'POST',headers:{'content-type':'application/x-www-form-urlencoded'},body});
-  if(!result.ok)throw Error('OAUTH_TOKEN_EXCHANGE');
-  const data=await result.json();
-  if(!data.id_token)throw Error('MISSING_ID_TOKEN');
-  return data.id_token;
-}
-async function appleClientSecret(env){
-  if(!env.APPLE_PRIVATE_KEY||!env.APPLE_TEAM_ID||!env.APPLE_KEY_ID||!env.APPLE_CLIENT_ID)throw Error('APPLE_UNCONFIGURED');
-  const pem=env.APPLE_PRIVATE_KEY.replace(/\\n/g,'\n')
-    .replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|\s/g,'');
-  const pk=await crypto.subtle.importKey('pkcs8',decodeB64(pem),{name:'ECDSA',namedCurve:'P-256'},false,['sign']);
-  const now=Math.floor(Date.now()/1000);
-  const h=b64url(textBytes(JSON.stringify({alg:'ES256',kid:env.APPLE_KEY_ID,typ:'JWT'})));
-  const p=b64url(textBytes(JSON.stringify({iss:env.APPLE_TEAM_ID,iat:now,exp:now+3600,
-    aud:'https://appleid.apple.com',sub:env.APPLE_CLIENT_ID})));
-  const sig=await crypto.subtle.sign({name:'ECDSA',hash:'SHA-256'},pk,textBytes(h+'.'+p));
-  return h+'.'+p+'.'+b64url(new Uint8Array(sig));
-}
-async function verifyJWT(idToken,provider,clientId,nonce){
-  const parts=String(idToken).split('.');
-  if(parts.length!==3)throw Error('TOKEN_FORMAT');
-  const header=JSON.parse(new TextDecoder().decode(decodeB64(parts[0])));
-  const payload=JSON.parse(new TextDecoder().decode(decodeB64(parts[1])));
-  const google=provider==='google',issuer=google?'https://accounts.google.com':'https://appleid.apple.com';
-  if(header.alg!=='RS256'||typeof header.kid!=='string'||
-    !(google?['accounts.google.com','https://accounts.google.com'].includes(payload.iss):payload.iss===issuer)||
-    !(typeof payload.aud==='string'?payload.aud===clientId:Array.isArray(payload.aud)&&payload.aud.includes(clientId))||
-    !Number.isFinite(payload.exp)||payload.exp*1000<Date.now()||
-    !Number.isFinite(payload.iat)||payload.iat*1000>Date.now()+60000||
-    !equal(String(payload.nonce||''),nonce)||
-    !emailOK(emailNormalize(payload.email))||
-    ![true,'true'].includes(payload.email_verified))throw Error('TOKEN_CLAIMS');
-  const keysResponse=await fetch(google?'https://www.googleapis.com/oauth2/v3/certs':'https://appleid.apple.com/auth/keys');
-  if(!keysResponse.ok)throw Error('JWKS_UNAVAILABLE');
-  const jwks=await keysResponse.json();
-  const jwk=(jwks.keys||[]).find(k=>k.kid===header.kid && k.kty==='RSA' && (!k.alg||k.alg==='RS256'));
-  if(!jwk)throw Error('KEY_NOT_FOUND');
-  const pub=await crypto.subtle.importKey('jwk',jwk,{name:'RSASSA-PKCS1-v1_5',hash:'SHA-256'},false,['verify']);
-  const valid=await crypto.subtle.verify('RSASSA-PKCS1-v1_5',pub,decodeB64(parts[2]),textBytes(parts[0]+'.'+parts[1]));
-  if(!valid)throw Error('INVALID_SIGNATURE');
-  return emailNormalize(payload.email);
-}
-const sha256=async text=>new Uint8Array(await crypto.subtle.digest('SHA-256',textBytes(text)));
-async function oauthStart(req,env,provider){
-  const publicOrigin=String(env.FRAME_PUBLIC_ORIGIN||'https://framingapp.de').replace(/\/$/,'');
-  if(new URL(req.url).origin!==publicOrigin)
-    return new Response(null,{status:302,headers:{
-      location:publicOrigin+'/api/account/oauth/'+provider+'/start','cache-control':'no-store'
-    }});
-  const google=provider==='google';
-  const clientId=google?env.GOOGLE_CLIENT_ID:env.APPLE_CLIENT_ID;
-  if(!clientId||(google&&!env.GOOGLE_CLIENT_SECRET)||
-      (!google&&(!env.APPLE_TEAM_ID||!env.APPLE_KEY_ID||!env.APPLE_PRIVATE_KEY)))
-    return json({ok:false,error:'Dieser Login-Anbieter ist noch nicht eingerichtet.'},503);
-  const state=rnd(),nonce=rnd(),verifier=rnd(48),exp=Date.now()+10*60000;
-  const payload=b64url(textBytes(JSON.stringify({provider,state,nonce,verifier,exp})));
-  const sig=b64url(await hmac(payload,env.AUTH_SECRET));
-  const redirect=new URL('/api/account/oauth/'+provider+'/callback',publicOrigin).toString();
-  const url=new URL(google?'https://accounts.google.com/o/oauth2/v2/auth':'https://appleid.apple.com/auth/authorize');
-  const params={client_id:clientId,redirect_uri:redirect,response_type:'code',scope:google?'openid email':'name email',
-    state,nonce};
-  for(const [key,value] of Object.entries(params))url.searchParams.set(key,value);
-  if(google){
-    url.searchParams.set('code_challenge_method','S256');
-    url.searchParams.set('code_challenge',b64url(await sha256(verifier)));
-    url.searchParams.set('prompt','select_account');
-  }else url.searchParams.set('response_mode','form_post');
-  return new Response(null,{status:302,headers:{
-    'location':url.toString(),'cache-control':'no-store','set-cookie':oauthCookie(payload+'.'+sig,600)
-  }});
-}
-async function oauthCallback(req,env,provider){
-  const cookie=getCookie(req,'__Host-frame_oauth');
-  const parts=cookie.split('.');
-  const clear=oauthCookie('',0);
-  const fail=()=>new Response(null,{status:303,headers:{location:'/?frame_auth=failed','cache-control':'no-store','set-cookie':clear}});
-  if(parts.length!==2||!equal(parts[1],b64url(await hmac(parts[0],env.AUTH_SECRET))))return fail();
-  let config;
-  try{config=JSON.parse(new TextDecoder().decode(decodeB64(parts[0])));}catch{return fail();}
-  if(config.provider!==provider||config.exp<Date.now())return fail();
-  let fields;
-  try{
-    if(req.method==='POST'){
-      if(!(req.headers.get('content-type')||'').toLowerCase().startsWith('application/x-www-form-urlencoded'))
-        return fail();
-      if(Number(req.headers.get('content-length')||0)>16384)return fail();
-      const formBody=await req.text();
-      if(formBody.length>16384)return fail();
-      fields=Object.fromEntries(new URLSearchParams(formBody));
-    }else fields=Object.fromEntries(new URL(req.url).searchParams);
-    if(!equal(String(fields.state||''),config.state)||
-        typeof fields.code!=='string'||fields.code.length<1||fields.code.length>4096)
-      return fail();
-    const clientId=provider==='google'?env.GOOGLE_CLIENT_ID:env.APPLE_CLIENT_ID;
-    const idToken=await exchangeOAuth(provider,String(fields.code),new URL('/api/account/oauth/'+provider+'/callback',req.url).toString(),config.verifier,env);
-    const email=await verifyJWT(idToken,provider,clientId,config.nonce);
-    const session=await issueSession(env,email,provider);
-    // Response may carry two Set-Cookie headers; do not combine comma-separated values.
-    const headers=new Headers({'location':'/?frame_auth=connected','cache-control':'no-store'});
-    headers.append('set-cookie',clear);headers.append('set-cookie',session);
-    return new Response(null,{status:303,headers});
-  }catch(error){
-    console.error('[FRAME AUTH] OAuth login failed:',String(error?.message||'unknown'));
-    return fail();
-  }
-}
 function validSyncData(data){
   if(!data||typeof data!=='object'||Array.isArray(data))return false;
   const keys=Object.keys(data);
@@ -325,13 +205,10 @@ export async function handleFrameAccount(request,env){
   if(!env.FRAME_ACCOUNTS||!env.AUTH_SECRET||env.AUTH_SECRET.length<32)
     return json({ok:false,error:'Konten werden noch eingerichtet.'},503);
   try{
-    if(path==='config'&&request.method==='GET')return json({ok:true,email:!!(env.BREVO_API_KEY&&emailOK(frameSenderEmail(env))),
-      google:!!(env.GOOGLE_CLIENT_ID&&env.GOOGLE_CLIENT_SECRET),
-      apple:!!(env.APPLE_CLIENT_ID&&env.APPLE_TEAM_ID&&env.APPLE_KEY_ID&&env.APPLE_PRIVATE_KEY)});
-    if(path==='oauth/google/start'&&request.method==='GET')return oauthStart(request,env,'google');
-    if(path==='oauth/apple/start'&&request.method==='GET')return oauthStart(request,env,'apple');
-    if(path==='oauth/google/callback'&&['GET','POST'].includes(request.method))return oauthCallback(request,env,'google');
-    if(path==='oauth/apple/callback'&&['GET','POST'].includes(request.method))return oauthCallback(request,env,'apple');
+    if(path==='config'&&request.method==='GET')
+      return json({ok:true,email:!!(env.BREVO_API_KEY&&emailOK(frameSenderEmail(env)))});
+    // Social sign-in has been removed by choice. Do not route old OAuth URLs.
+    if(path.startsWith('oauth/'))return json({ok:false,error:'Nicht gefunden.'},404);
     if(request.method==='POST'&&!originOK(request))return json({ok:false,error:'Ungültige Anfrage.'},403);
     if(path==='email/start'&&request.method==='POST')return startEmail(request,env);
     if(path==='email/verify'&&request.method==='POST')return verifyEmail(request,env);
