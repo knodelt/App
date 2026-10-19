@@ -2296,3 +2296,78 @@ h1 em {
 
 /* Phase 1: Hidden restore file picker must not occupy layout space. */
 .frame-account-card #frameAccountImportFile[hidden]{display:none!important;}
+
+
+/* FRAME Phase 2 · weekly journal and searchable archive */
+#frameLogView .frame-log-week{
+  border:1px solid rgba(235,164,193,.23);
+  background:linear-gradient(140deg,rgba(244,150,187,.115),rgba(255,255,255,.028) 68%);
+  border-radius:20px;padding:17px 16px;margin:3px 0 23px;
+}
+#frameLogView .frame-log-week-top{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  color:#e8abc4;letter-spacing:.09em;
+  font:800 9px/1.3 var(--font-ui,Manrope,system-ui,sans-serif);
+}
+#frameLogView .frame-log-week-top span:last-child{color:#a89ca8;letter-spacing:.04em;}
+#frameLogView .frame-log-week h2{
+  margin:10px 0 15px;color:#f7edf2;
+  font:650 23px/1.13 var(--font-display,Fraunces,Georgia,serif);
+}
+#frameLogView .frame-log-week-numbers{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;
+}
+#frameLogView .frame-log-week-numbers>div{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:62px;padding:9px 3px;border-radius:13px;
+  border:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.13);
+}
+#frameLogView .frame-log-week-numbers strong{
+  color:#f6dce6;font:700 24px/1 var(--font-display,Fraunces,Georgia,serif);
+  font-variant-numeric:tabular-nums;
+}
+#frameLogView .frame-log-week-numbers span{
+  margin-top:6px;color:#bab0ba;font:650 10px/1.3 var(--font-ui,Manrope,system-ui,sans-serif);
+  text-align:center;
+}
+#frameLogView #frameLogWeekHighlight{
+  margin:13px 0 0;color:#d8c8d2;
+  font:600 11px/1.55 var(--font-ui,Manrope,system-ui,sans-serif);
+}
+#frameLogView .frame-log-tools{
+  display:grid;grid-template-columns:minmax(0,1fr) 128px;align-items:stretch;
+  gap:8px;margin-bottom:13px;
+}
+#frameLogView .frame-log-search-box{
+  display:flex;align-items:center;gap:7px;padding:0 11px;
+  min-width:0;border:1px solid rgba(255,255,255,.17);
+  border-radius:12px;background:rgba(255,255,255,.055);
+  color:#c0b4c0;
+}
+#frameLogView .frame-log-search-box svg{flex:0 0 16px;}
+#frameLogView #frameLogSearch{
+  min-width:0;width:100%;height:44px;padding:0;border:0;outline:0;
+  background:transparent;color:#f4ebf0;font:600 12px/1.3 var(--font-ui,Manrope,system-ui,sans-serif);
+}
+#frameLogView #frameLogSearch::placeholder{color:#8d838e;opacity:1;}
+#frameLogView .frame-log-sort-box{
+  display:flex;flex-direction:column;justify-content:center;gap:2px;
+  min-width:0;padding:5px 10px;border-radius:12px;
+  border:1px solid rgba(255,255,255,.17);background:rgba(255,255,255,.055);
+}
+#frameLogView .frame-log-sort-box>span{
+  color:#ac9eac;font:750 9px/1.2 var(--font-ui,Manrope,system-ui,sans-serif);
+}
+#frameLogView #frameLogSort{
+  color:#f3eaf0;background:transparent;border:0;outline:0;
+  width:100%;min-width:0;min-height:23px;
+  font:750 12px/1.3 var(--font-ui,Manrope,system-ui,sans-serif);
+}
+#frameLogView .frame-log-search-box:focus-within,#frameLogView .frame-log-sort-box:focus-within{
+  border-color:#e9adc2;
+}
+@media(max-width:365px){
+  #frameLogView .frame-log-tools{grid-template-columns:minmax(0,1fr) 114px;gap:6px;}
+  #frameLogView .frame-log-search-box{padding:0 8px;}
+  #frameLogView #frameLogSearch{font-size:11px;}
+}
