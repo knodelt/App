@@ -188,6 +188,40 @@ Diese Tests müssen mit dem live deployten Worker und den echten
 iOS-/Android-Browsern durchgeführt werden; Code- und Simulationstests
 sind dafür kein vollständiger Ersatz.
 
+## Phase 2 · Persönliche Entdeckung und Filmgeschichte
+
+### FRAMELOG
+- Suche im bestehenden Archiv nach Titeln, Serien, Genres und eigenen Notizen.
+  Die Suche ignoriert Akzente und kann mit den bisherigen Statusfiltern
+  kombiniert werden.
+- Sortierung nach neuestem/ältestem Eintrag, Titel, Erscheinungsjahr oder
+  Gesehen-Datum. Es werden keine Einträge umgeschrieben oder dupliziert.
+- **Deine Filmwoche** zeigt rückblickend die letzten sieben Kalendertage:
+  tatsächlich gesehene Titel, Gefallen-Bewertungen und Einträge mit Notiz.
+  Alle Werte werden aus vorhandenen Gesehen-Daten und manuellen Filmdaten
+  berechnet, ohne eigene Telemetrie oder künstliche Aktivitätszahlen.
+
+### Für dich
+- **Dein Wochen-Fokus** nimmt jeden Montag einen anderen Titel aus den
+  vier bestplatzierten vorhandenen Empfehlungen. Es werden dabei keine
+  unbestätigten „brandneuen“ Titel versprochen.
+- **Weitere passende Empfehlungen anzeigen** blendet schrittweise alle
+  bereits vom Server gelieferten Vorschläge ein, statt nach sechs Titeln
+  aufzuhören.
+- MERKEN in „Für dich“ wird sofort als neues Signal für die nächste,
+  im Hintergrund geladene Empfehlungsliste berücksichtigt.
+- Die Begründungen unterscheiden ausdrücklich bereits als **gesehen und
+  gefallen** markierte Titel, SUPER und Merkliste. „Gesehen“ wird höher
+  gewichtet als oberflächliches Swipe-Interesse.
+
+Bestehende persönliche Daten bleiben im bisherigen `frame-state`.
+Die neuen Ansichten und Filter benötigen keine neue Datenbank und
+keinen zusätzlichen Login-Anbieter.
+
+**Live-Test:** FRAMELOG-Suche und -Filter auf kleinen iPhones,
+Wochenwechsel am Montag, lange Filmtitel, Merken/Gesehen aus „Für dich“,
+Cache-Update sowie die Darstellung bei noch leerem FRAMELOG.
+
 ## TMDB aktivieren
 
 1. Bei TMDB anmelden und unter **Account Settings → API** eine Developer-API-Anwendung registrieren.
