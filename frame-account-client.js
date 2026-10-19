@@ -474,7 +474,12 @@
     void (async()=>{
       // Pending local edits must be uploaded (with revision check) before
       // attempting a fresh cloud pull when returning to the app.
-      if(ready&&!paused&&(await fingerprint(snapshot()))!==lastHash)await push();
+      if(ready&&!paused&&(await fingerprint(snapshot()))!==lastHash){
+        await push();
+        // If still dirty, the upload failed. Leave the offline retry running;
+        // a cloud read must not interrupt it or mark local data as a conflict.
+        if((await fingerprint(snapshot()))!==lastHash)return;
+      }
       if(ready&&!paused&&!inflight)await reconcile({allowAutomaticRestore:false});
     })();
   });
