@@ -2390,3 +2390,34 @@ h1 em {
 #personalizedView .for-you-more:focus-visible{
   outline:2px solid #efabc7;outline-offset:3px;
 }
+
+
+/* FRAME Phase 3: discreet beta-feedback entry and legal links in Mein Frame. */
+#tasteView .frame-beta-entry{
+  display:flex;align-items:center;gap:13px;text-decoration:none;
+  min-height:75px;margin:13px 0;padding:15px;border:1px solid rgba(241,175,201,.24);
+  border-radius:17px;background:linear-gradient(120deg,rgba(245,150,190,.10),rgba(255,255,255,.024));
+  color:#f6e9f0;
+}
+#tasteView .frame-beta-entry-mark{
+  display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;
+  color:#f3c2d5;background:rgba(239,167,195,.13);border-radius:11px;font-size:21px;
+}
+#tasteView .frame-beta-entry-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:2px;}
+#tasteView .frame-beta-entry-copy strong{
+  font:760 14px/1.25 var(--font-ui,Manrope,system-ui,sans-serif);
+}
+#tasteView .frame-beta-entry-copy small{
+  color:#bcb1bd;font:550 11px/1.4 var(--font-ui,Manrope,system-ui,sans-serif);
+}
+#tasteView .frame-beta-entry-arrow{color:#e7abc1;font-size:19px;}
+#tasteView .frame-legal-links{
+  display:flex;justify-content:center;flex-wrap:wrap;gap:8px 17px;
+  margin:18px 0 3px;padding:0 7px;
+}
+#tasteView .frame-legal-links a{
+  color:#b9a9b4;text-decoration:underline;text-underline-offset:3px;
+  font:650 11px/1.5 var(--font-ui,Manrope,system-ui,sans-serif);
+}
+.frame-account-dialog .frame-auth-legal{font-size:10px;line-height:1.5;margin-top:4px;}
+.frame-account-dialog .frame-auth-legal a{color:#f2bdd2;}
