@@ -1,6 +1,6 @@
 // FRAME accounts: email one-time code, Google OAuth, Apple OAuth, private
 // Durable Object storage. Credentials stay in Cloudflare Worker secrets.
-// Do not expose AUTH_SECRET, RESEND_API_KEY, OAuth private keys, or session IDs.
+// Do not expose AUTH_SECRET, BREVO_API_KEY, OAuth private keys, or session IDs.
 const DAY=86400000, SESSION_DAYS=30, CODE_EXP_MS=10*60000;
 const ALLOWED_KEYS=new Set([
   'frame-state','frame-taste-dna-v2','frame-online-learning-v1',
@@ -71,7 +71,8 @@ async function hashCode(env,accountId,code){
   return hex(await hmac('email-code:'+accountId+':'+code,env.AUTH_SECRET));
 }
 async function startEmail(req,env){
-  if(!env.RESEND_API_KEY||!env.FRAME_EMAIL_FROM)return json({ok:false,error:'E-Mail-Versand ist noch nicht eingerichtet.'},503);
+  const senderEmail=String(env.FRAME_EMAIL_FROM||'').trim();
+  if(!env.BREVO_API_KEY||!emailOK(senderEmail))return json({ok:false,error:'E-Mail-Versand ist noch nicht eingerichtet.'},503);
   const {email:input}=await restrictedBody(req,4096);
   const email=emailNormalize(input);
   if(!emailOK(email))return json({ok:false,error:'Bitte eine gültige E-Mail-Adresse eingeben.'},400);
@@ -87,14 +88,32 @@ async function startEmail(req,env){
   const hash=await hashCode(env,id,code);
   const prepared=await cmd(env,id,'startCode',{hash,expiresAt:Date.now()+CODE_EXP_MS});
   if(!prepared.data.ok)return json({ok:false,error:'Bitte später erneut versuchen.'},429);
-  const response=await fetch('https://api.resend.com/emails',{
-    method:'POST',headers:{'authorization':'Bearer '+env.RESEND_API_KEY,'content-type':'application/json'},
-    body:JSON.stringify({from:env.FRAME_EMAIL_FROM,to:[email],subject:'Dein FRAME Anmeldecode',
-      text:'Dein FRAME-Code lautet: '+code+'. Er gilt 10 Minuten. Falls du ihn nicht angefordert hast, kannst du diese Nachricht ignorieren.'})
-  });
-  if(!response.ok){
+  // Brevo Transactional API works with Workers Free via ordinary HTTPS fetch.
+  // No email credential is ever sent to the browser or committed to GitHub.
+  let response;
+  try{
+    response=await fetch('https://api.brevo.com/v3/smtp/email',{
+      method:'POST',
+      headers:{'api-key':env.BREVO_API_KEY,'accept':'application/json',
+        'content-type':'application/json'},
+      body:JSON.stringify({
+        sender:{name:'FRAME',email:senderEmail},
+        to:[{email}],
+        subject:'Dein FRAME-Anmeldecode',
+        textContent:'Dein FRAME-Anmeldecode: '+code+
+          '\\nGültig für 10 Minuten und nur einmal verwendbar.'+
+          '\\nFalls du ihn nicht angefordert hast, ignoriere diese Nachricht.'
+      })
+    });
+  }catch(error){
+    console.error('[FRAME AUTH] Brevo nicht erreichbar');
     await cmd(env,id,'cancelCode',{hash});
-    return json({ok:false,error:'Der Code konnte nicht versendet werden.'},502);
+    return json({ok:false,error:'Der E-Mail-Versand ist momentan nicht erreichbar.'},502);
+  }
+  if(!response.ok){
+    console.error('[FRAME AUTH] Brevo HTTP status',response.status);
+    await cmd(env,id,'cancelCode',{hash});
+    return json({ok:false,error:'Der Code konnte nicht versendet werden. Prüfe die Absenderfreigabe bei Brevo.'},502);
   }
   return json({ok:true});
 }
@@ -224,7 +243,7 @@ export async function handleFrameAccount(request,env){
   if(!env.FRAME_ACCOUNTS||!env.AUTH_SECRET||env.AUTH_SECRET.length<32)
     return json({ok:false,error:'Konten werden noch eingerichtet.'},503);
   try{
-    if(path==='config'&&request.method==='GET')return json({ok:true,email:!!(env.RESEND_API_KEY&&env.FRAME_EMAIL_FROM),
+    if(path==='config'&&request.method==='GET')return json({ok:true,email:!!(env.BREVO_API_KEY&&emailOK(String(env.FRAME_EMAIL_FROM||'').trim())),
       google:!!(env.GOOGLE_CLIENT_ID&&env.GOOGLE_CLIENT_SECRET),
       apple:!!(env.APPLE_CLIENT_ID&&env.APPLE_TEAM_ID&&env.APPLE_KEY_ID&&env.APPLE_PRIVATE_KEY)});
     if(path==='oauth/google/start'&&request.method==='GET')return oauthStart(request,env,'google');
