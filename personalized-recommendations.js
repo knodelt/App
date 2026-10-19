@@ -5,7 +5,19 @@
   let lastSignature = '';
   let requestSerial = 0;
   let cachedItems = [];
+  let lastSignalCount = 0;
+  let shownRecommendations = 6;
   let loading = false;
+  function weeklySelection(items){
+    if(!Array.isArray(items)||items.length<2)return [...(items||[])];
+    // Pick within the top four ranked recommendations. Rotation changes
+    // each Monday; high-affinity titles remain in the full list.
+    const now=new Date();
+    const monday=new Date(now.getFullYear(),now.getMonth(),now.getDate()-(now.getDay()+6)%7);
+    const week=Math.floor(Date.UTC(monday.getFullYear(),monday.getMonth(),monday.getDate())/(7*86400000));
+    const index=((week%Math.min(items.length,4))+Math.min(items.length,4))%Math.min(items.length,4);
+    return [items[index],...items.filter((item,i)=>i!==index)];
+  }
   const READY_ANNOUNCED_KEY = 'frame-for-you-ready-announced-v1';
   const READY_VIEWED_KEY = 'frame-for-you-ready-viewed-v1';
   let readyNoticeReturnFocus = null;
@@ -16,6 +28,7 @@
     ++requestSerial;
     loading = false;
     cachedItems = [];
+    shownRecommendations = 6;
     lastSignature = '';
   }
 
@@ -499,6 +512,8 @@
   }
 
   function renderPersonalized(items, signalCount) {
+    lastSignalCount=Number(signalCount)||0;
+    const ordered=weeklySelection(items);
     const heroHost = document.querySelector('#recommendHero');
     const listHost = document.querySelector('#recommendList');
     const reasonHost = document.querySelector('#reasonChips');
@@ -513,12 +528,13 @@
       return;
     }
 
-    const hero = items[0];
+    const hero = ordered[0];
     setDataset(heroHost, hero);
     const heroImage = imageUrl(hero.backdrop || hero.poster, 'w780');
     heroHost.innerHTML = `
       <div class="rec-art" style="${heroImage ? `background-image:linear-gradient(180deg,rgba(0,0,0,.02) 18%,rgba(0,0,0,.18) 48%,rgba(0,0,0,.9) 100%),url('${heroImage}')` : 'background:linear-gradient(145deg,#37342f,#17171a 55%,#09090b)'}"></div>
       <div class="rec-copy">
+        <span class="frame-weekly-pick">DEIN WOCHEN-FOKUS · WECHSELT MONTAGS</span>
         <span class="rec-score">${hero.match}% MATCH</span>
         <h2>${escapeHtml(hero.title)}</h2>
         <p>${hero.type === 'series' ? 'Serie' : 'Film'} · ${escapeHtml(hero.year || '—')}</p>
@@ -535,7 +551,7 @@
     reasonHost.innerHTML = (reasons.length ? reasons : ['Aus deinem Swipe-Profil'])
       .map(reason => `<span>${escapeHtml(reason)}</span>`).join('');
 
-    listHost.innerHTML = items.slice(1,7).map(item => {
+    listHost.innerHTML = ordered.slice(1,shownRecommendations).map(item => {
       const poster = imageUrl(item.poster, 'w342');
       const fallback = imageUrl(item.backdrop, 'w342');
       const image = poster || fallback;
@@ -560,6 +576,13 @@
         <span class="rec-row-score">${item.match}%</span>
       </article>`;
     }).join('');
+    if(ordered.length>shownRecommendations){
+      const remaining=ordered.length-shownRecommendations;
+      listHost.insertAdjacentHTML('beforeend',
+        '<button id="forYouShowMore" type="button" class="for-you-more" '+
+        'aria-label="Weitere persönliche Filmempfehlungen anzeigen">'+
+        'Weitere '+remaining+' passende '+(remaining===1?'Empfehlung':'Empfehlungen')+' anzeigen <span aria-hidden="true">↓</span></button>');
+    }
 
     let note = document.querySelector('#recommendSignalNote');
     if (!note) {
@@ -836,6 +859,7 @@
       if (serial !== requestSerial) return [];
 
       cachedItems = data.items;
+      shownRecommendations=6;
       lastSignature = signature;
       if (recommendationSurfaceVisible()) {
         renderPersonalized(cachedItems, data.profileSignals ?? payload.signals.length);
@@ -970,6 +994,12 @@
     else probeReadyInBackground();
   });
   recommendSurface?.addEventListener('click', event => {
+    if(event.target.closest('#forYouShowMore')){
+      event.preventDefault();
+      shownRecommendations=Math.min(shownRecommendations+6,cachedItems.length);
+      renderPersonalized(cachedItems,lastSignalCount);
+      return;
+    }
     const actionButton = event.target.closest('[data-rec-action]');
     if (actionButton) {
       event.preventDefault();
