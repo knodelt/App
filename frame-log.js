@@ -24,6 +24,8 @@
   };
 
   let filter='all';
+  let search='';
+  let order='recent';
   let displayed=35;
   let selectedId=null;
   let focusBeforeDetail=null;
@@ -131,6 +133,51 @@
     if(filter==='dislike')return entry.swipe==='dislike';
     return true;
   }
+  const searchable=text=>String(text||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('de').trim();
+  function matchesSearch(entry){
+    if(!search)return true;
+    const fields=[
+      entry.item.title,entry.item.year,labelType(entry.item.type),
+      ...(entry.item.tags||[]),entry.note,
+      entry.watched==='like'?'gefallen':'',
+      entry.watched==='dislike'?'nicht gefallen':''
+    ];
+    return searchable(fields.join(' ')).includes(search);
+  }
+  function sortRecords(items){
+    const rows=[...items];
+    if(order==='title')return rows.sort((a,b)=>a.item.title.localeCompare(b.item.title,'de')||b.sortAt-a.sortAt);
+    if(order==='oldest')return rows.sort((a,b)=>a.sortAt-b.sortAt||a.item.title.localeCompare(b.item.title,'de'));
+    if(order==='year')return rows.sort((a,b)=>(Number(b.item.year)||0)-(Number(a.item.year)||0)||b.sortAt-a.sortAt);
+    if(order==='watched')return rows.sort((a,b)=>String(b.watchedOn||'').localeCompare(String(a.watchedOn||''))||b.sortAt-a.sortAt);
+    return rows.sort((a,b)=>b.sortAt-a.sortAt||a.item.title.localeCompare(b.item.title,'de'));
+  }
+  function renderWeekly(all){
+    const now=new Date();
+    const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    const start=new Date(today.getFullYear(),today.getMonth(),today.getDate()-6);
+    const dayKey=date=>[date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-');
+    const first=dayKey(start),last=dayKey(today);
+    const entries=all.filter(entry=>entry.watched&&/^\d{4}-\d{2}-\d{2}$/.test(entry.watchedOn)&&
+      entry.watchedOn>=first&&entry.watchedOn<=last);
+    const liked=entries.filter(entry=>entry.watched==='like');
+    const noted=entries.filter(entry=>entry.note.trim());
+    const latestLiked=[...liked].sort((a,b)=>b.watchedOn.localeCompare(a.watchedOn))[0];
+    const values=[
+      ['#frameLogWeekSeen',entries.length],
+      ['#frameLogWeekLiked',liked.length],
+      ['#frameLogWeekNotes',noted.length]
+    ];
+    for(const [selector,count] of values){
+      const node=$(selector);if(node)node.textContent=String(count);
+    }
+    const note=$('#frameLogWeekHighlight');
+    if(note)note.textContent=latestLiked
+      ? 'Zuletzt gefallen: '+latestLiked.item.title+'.'
+      : entries.length
+        ? 'Dein letzter Filmabend ist festgehalten. Dein Filmgeschmack lernt weiter.'
+        : 'Noch kein gesehener Titel in den letzten 7 Tagen. Dein nächster Filmabend kann kommen.';
+  }
   function status(entry){
     if(entry.watched)return {
       cls:entry.watched==='like'?'liked':'disliked',
@@ -213,7 +260,8 @@
   }
 
   function render(){
-    const all=records(),found=all.filter(inTab);
+    const all=records(),found=sortRecords(all.filter(entry=>inTab(entry)&&matchesSearch(entry)));
+    renderWeekly(all);
     const seen=all.filter(entry=>entry.watched);
     const saved=all.filter(entry=>entry.saved);
     const liked=seen.filter(entry=>entry.watched==='like');
@@ -251,8 +299,11 @@
         (entry.note?'<span class="frame-log-note-indicator">✎ Mit Notiz</span>':'')+
         '<button type="button" class="frame-log-item-action" data-frame-log-open="'+escapeHtml(entry.id)+'">Details &amp; bearbeiten <span aria-hidden="true">→</span></button>'+
         '</div></article>';
-    }).join(''):'<div class="frame-log-empty"><span>✦</span><strong>Hier beginnt deine Filmgeschichte.</strong><p>'+
-      (filter==='all'?'Swipe einen Film, speichere etwas für später oder bewerte einen bereits gesehenen Titel.':
+    }).join(''):'<div class="frame-log-empty"><span>✦</span><strong>'+
+      (all.length&&search?'Keine Treffer gefunden.':'Hier beginnt deine Filmgeschichte.')+
+      '</strong><p>'+
+      (all.length&&search?'Probiere einen anderen Suchbegriff oder lösche den Text im Suchfeld.':
+        filter==='all'?'Swipe einen Film, speichere etwas für später oder bewerte einen bereits gesehenen Titel.':
         filter==='watched'?'Noch kein Film als gesehen bewertet. Tippe bei einer Filmkarte auf „Gesehen?“.':
         filter==='saved'?'Deine Merkliste ist noch leer. Merke dir einen Film in Framing oder „Für dich“.':
         'Hier erscheinen deine '+(filter==='like'?'SUPER-':'MIST-')+'Bewertungen.')+'</p></div>';
@@ -410,6 +461,17 @@
     });
     render();
   }
+  root.querySelector('#frameLogSearch')?.addEventListener('input',event=>{
+    search=searchable(event.target.value).slice(0,160);
+    displayed=35;
+    render();
+  });
+  root.querySelector('#frameLogSort')?.addEventListener('change',event=>{
+    order=['recent','oldest','title','year','watched'].includes(event.target.value)
+      ? event.target.value:'recent';
+    displayed=35;
+    render();
+  });
   root.querySelector('#frameLogTabs')?.addEventListener('click',event=>{
     const tab=event.target.closest('[data-frame-log-tab]');
     if(tab)setTab(tab.dataset.frameLogTab);
@@ -442,7 +504,10 @@
   document.addEventListener('frame:swipe-undone',render);
   document.addEventListener('frame:feed-loaded',render);
   document.addEventListener('frame:taste-reset',()=>{
-    filter='all';displayed=35;
+    filter='all';search='';order='recent';displayed=35;
+    const input=$('#frameLogSearch'),select=$('#frameLogSort');
+    if(input)input.value='';
+    if(select)select.value='recent';
     setTab('all');render();
   });
   document.addEventListener('frame:view-changed',event=>{
