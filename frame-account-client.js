@@ -228,7 +228,9 @@
       }else if(e.status===401){
         clearRetry();
         paused=true;ready=false;
-        syncStatus('Deine Sitzung ist abgelaufen. Bitte erneut anmelden. Lokale Daten bleiben erhalten.',true);
+        me={authenticated:false};
+        showPanel();
+        status('Deine Sitzung ist abgelaufen. Melde dich erneut an. Deine Gerätedaten bleiben erhalten.',true);
       }else if(e.status===400||e.status===413){
         clearRetry();
         paused=true;ready=false;
@@ -319,7 +321,13 @@
       // Both copies contain changes; never silently discard one.
       syncStatus('Auf diesem Gerät und in der Cloud liegen unterschiedliche Daten vor.',true);
       show('frameAccountConflict',true);
-    }catch(e){syncStatus((e.message||'Cloud nicht erreichbar.')+' Lokale Daten bleiben erhalten.',true);}
+    }catch(e){
+      if(e.status===401){
+        me={authenticated:false};
+        showPanel();
+        status('Deine Sitzung ist abgelaufen. Bitte erneut anmelden. Deine Gerätedaten bleiben erhalten.',true);
+      }else syncStatus((e.message||'Cloud nicht erreichbar.')+' Lokale Daten bleiben erhalten.',true);
+    }
   }
   async function chooseRemote(){
     if(!confirm('Die Daten dieses Geräts durch deine Cloud-Daten ersetzen? Lade vorher bei Bedarf ein Geräte-Backup herunter; nicht synchronisierte Änderungen gehen verloren.'))return;
@@ -431,7 +439,8 @@
       a.href=url;a.download='FRAME-Geraete-Backup-'+new Date().toISOString().slice(0,10)+'.json';
       document.body.appendChild(a);a.click();a.remove();
       setTimeout(()=>URL.revokeObjectURL(url),60000);
-      syncStatus('Geräte-Backup erstellt. Bewahre die Datei sicher auf.');
+      if(me?.authenticated)syncStatus('Geräte-Backup erstellt. Bewahre die Datei sicher auf.');
+      else status('Geräte-Backup erstellt. Bewahre die Datei sicher auf.');
     }catch(e){syncStatus(e.message,true);}
   };
   pick('frameAccountDownload')?.addEventListener('click',downloadLocalBackup);
