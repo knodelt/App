@@ -229,11 +229,11 @@ Cache-Update sowie die Darstellung bei noch leerem FRAMELOG.
 - **Beta-Testseite `/beta.html`:** sechs überprüfbare Alltagstests,
   Rückkehrabsicht, getesteter Bereich, freiwillige Geräteinformation und
   Freitext. Feedback wird im Browser zusammengestellt und kann über
-  das Betriebssystem geteilt oder kopiert werden. **Keine automatische
-  Übermittlung, kein zusätzlicher Datenbankeintrag, kein Feedback-Tracking.**
+  das E-Mail-Programm mit vorbereitetem Empfänger geöffnet oder der Text kopiert
+  werden. **Kein automatisches Absenden, kein Feedback-Tracking.**
 - **`/impressum.html` und `/datenschutz.html`:** technische Entwürfe mit
-  sichtbarem Hinweis auf fehlende Pflichtangaben. Keine ausgedachten
-  Betreiberadressen oder angeblichen Datenschutz-Zertifizierungen.
+  Angabe von Betreibername, Anschrift und E-Mail. Offene rechtliche
+  Datenschutz- und Lizenzprüfungen bleiben kenntlich.
 - **Mein Frame** verlinkt Beta, Datenschutz, Impressum und Datenquellen.
   Der Login-Dialog enthält einen Datenschutz-Link. Die bisherige
   E-Mail-Anmeldung und Cloud-Speicherung bleiben unverändert.
@@ -243,15 +243,15 @@ Cache-Update sowie die Darstellung bei noch leerem FRAMELOG.
 
 - [x] **Anbieter/Impressum:** Thomas Knodel, Oberkorbecke 23, 58540
       Meinerzhagen, vom Betreiber für die Veröffentlichung übermittelt.
-- [ ] **E-Mail-Pflichtangabe:** Empfangsfähige Kontakt-E-Mail für Impressum,
-      Datenschutz und Beta-Rückmeldungen bestimmen und Postfach / Weiterleitung
-      auf tatsächlichen Empfang testen. `login@framingapp.de` ist derzeit nur
-      als Brevo-Versandadresse bekannt.
+- [x] **Kontakt-E-Mail angegeben:** `knodelthomas@googlemail.com` im
+      Impressum, Datenschutz und Beta-Feedback. **Offener Praxistest:** Eine
+      E-Mail an diese Adresse empfangen und beantworten. `login@framingapp.de`
+      bleibt nur die Brevo-Versandadresse.
 - [ ] **Weitere Pflichtangaben:** Bei tatsächlich bestehender
       Registereintragung oder Steuerkennzeichen ggf. ergänzen.
       Rechtsgrundlage: https://www.gesetze-im-internet.de/ddg/__5.html
 - [x] **DSGVO:** Verantwortliche Stelle und ladungsfähige Anschrift eingetragen.
-- [ ] **DSGVO – weitere Freigabe:** Kontakt-E-Mail, Art.-13-Detailprüfung,
+- [ ] **DSGVO – weitere Freigabe:** Art.-13-Detailprüfung,
       Rechtsgrundlagen, Cloudflare-/Brevo-Auftragsverarbeitung,
       Aufbewahrungsfristen, mögliche Drittland-Transfers abschließend prüfen.
       Die Datenschutzhinweise sind noch keine fertige juristische Freigabe.
@@ -283,10 +283,10 @@ Cache-Update sowie die Darstellung bei noch leerem FRAMELOG.
 ### Beta-Auswertung
 
 Testpersonen über https://framingapp.de/beta.html einladen.
-Den per Teilen-Funktion verschickten Text sammeln und Probleme nach
+Die per E-Mail eingehenden Tester-Rückmeldungen sammeln und Probleme nach
 **Blocker / schwer / kosmetisch** sowie nach App-Bereich einordnen.
-Der Beta-Test ist kein automatischer E-Mail-Sender oder dauerhafter
-Feedback-Speicher; dazu wäre ein späteres separates Opt-in nötig.
+Der Beta-Test öffnet nur das E-Mail-Programm der Testperson. Erst wenn sie
+selbst auf „Senden“ tippt, wird Feedback übermittelt. FRAME speichert keine separaten Feedbackdaten.
 
 ## TMDB aktivieren
 
