@@ -13,7 +13,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
   <link rel="stylesheet" href="/app-layout.css" />
-  <link rel="stylesheet" href="/frame-reboot.css?v=120" />
+  <link rel="stylesheet" href="/frame-reboot.css?v=121" />
   <link rel="stylesheet" href="/frame-loop.css" />
   <link rel="stylesheet" href="/hidden-match.css" />
   <link rel="stylesheet" href="/trailer-preview.css" />
@@ -56,9 +56,6 @@
             <path d="M5.5 20c0-4 2.6-6.3 6.5-6.3s6.5 2.3 6.5 6.3"/>
           </svg>
           <span id="frameHeaderLoginText">Login</span>
-        </button>
-        <button class="profile-chip" id="profileShortcut" type="button" aria-label="Geschmacksprofil öffnen">
-          <span class="profile-ring"><span id="tastePercent">0</span>%</span>
         </button>
       </div>
     </header>
@@ -433,18 +430,6 @@
           <span class="film-counter"><b id="swipeCount">0</b><small>Swipes</small></span>
         </div>
 
-        <article class="dna-card">
-          <div class="dna-topline">
-            <span>Profilstärke</span>
-            <span id="frameIndex">000</span>
-          </div>
-          <div class="dna-score">
-            <strong id="dnaScore">0</strong><span>%</span>
-          </div>
-          <p>Je unterschiedlicher du bewertest, desto besser versteht FRAME deinen persönlichen Film- und Seriengeschmack.</p>
-          <div class="progress-track"><span id="dnaProgress"></span></div>
-        </article>
-
         <div class="taste-section">
           <div class="taste-title"><span>Das magst du</span><small>Positiv</small></div>
           <div class="tag-cloud" id="positiveTags"></div>
@@ -595,14 +580,14 @@
 
   <div class="toast" id="toast" role="status"></div>
   <script src="/viewport-lock.js" defer></script>
-  <script src="/app.js" defer></script>
+  <script src="/app.js?v=121" defer></script>
   <script src="/mood-filter.js" defer></script>
   <script src="/tmdb-feed.js" defer></script>
   <script src="/trailer-preview.js" defer></script>
   <script src="/card-details.js" defer></script>
   <script src="/watchlist-controls.js" defer></script>
   <script src="/taste-dna.js" defer></script>
-  <script src="/personalized-recommendations.js?v=119" defer></script>
+  <script src="/personalized-recommendations.js?v=121" defer></script>
   <script src="/taste-learning.js" defer></script>
   <script src="/frame-watched.js" defer></script>
   <script src="/frame-log.js?v=119" defer></script>
