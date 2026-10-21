@@ -300,29 +300,6 @@
     queueMicrotask(() => refreshRecommendations({background:true}));
   }
 
-  function profileStrength() {
-    const actions = Object.keys(state.swipes || {}).length;
-    const answers = Number(window.getFrameTasteDNA?.().answeredCount || 0);
-    const effectiveSignals = actions + answers * 2.2;
-    if (!effectiveSignals) return 0;
-    return Math.min(99, Math.round(100 * (1 - Math.exp(-effectiveSignals / 55))));
-  }
-
-  function updateProfileStrength() {
-    const strength = profileStrength();
-    const taste = document.querySelector('#tastePercent');
-    const dna = document.querySelector('#dnaScore');
-    const progress = document.querySelector('#dnaProgress');
-    if (taste) taste.textContent = strength;
-    if (dna) dna.textContent = strength;
-    if (progress) progress.style.width = `${strength}%`;
-
-    const label = document.querySelector('.dna-topline span:first-child');
-    if (label) label.textContent = 'PROFILSTÄRKE';
-    const copy = document.querySelector('.dna-card > p');
-    if (copy) copy.textContent = 'Wie sicher FRAME deinen Geschmack einschätzen kann. Das Profil wird mit unterschiedlichen Swipes langsam präziser.';
-  }
-
   function injectStyles() {
     if (document.querySelector('#framePersonalizedRecommendationStyles')) return;
     const style = document.createElement('style');
@@ -668,7 +645,7 @@
     saveHistory();
     renderWatchlist();
     renderTaste();
-    updateProfileStrength();
+
     updateReadyIndicator();
     updateSaveButtons();
     showToast('Gemerkt. FRAME berücksichtigt das für neue Vorschläge.');
@@ -699,7 +676,7 @@
     saveHistory();
     cachedItems = cachedItems.filter(entry => recommendationKey(entry) !== recommendationKey(item));
     lastSignature = '';
-    updateProfileStrength();
+
     try { renderTaste(); } catch {}
     showToast('Entfernt. Dein Geschmack wurde angepasst.');
     document.dispatchEvent(new CustomEvent('frame:recommendation-rejected', {detail:{item}}));
@@ -928,7 +905,7 @@
       try { showToast('Für dich: Dein Profil wird ausgewertet …'); } catch {}
     }
     readyProbeAttempts = 0;
-    updateProfileStrength();
+
     updateReadyIndicator();
     if (recommendationSurfaceVisible()) {
       queueMicrotask(() => refreshRecommendations({force:true}));
@@ -937,18 +914,9 @@
     }
   };
 
-  const originalRenderTaste = renderTaste;
-  renderTaste = function frameRenderTasteWithStrength() {
-    originalRenderTaste();
-    updateProfileStrength();
-  };
-
   renderRecommendations = function frameRenderPersonalizedRecommendations() {
-    updateProfileStrength();
     if (recommendationSurfaceVisible()) queueMicrotask(() => refreshRecommendations());
   };
-
-  updateProfileStrength();
   // Existing users with a trained profile should be informed after a fresh
   // verification, without requiring an extra swipe.
   window.addEventListener('load', () => scheduleReadyProbe(850));
@@ -1049,7 +1017,7 @@
 
   document.addEventListener('frame:taste-dna-changed', () => {
     invalidateRecommendations();
-    updateProfileStrength();
+
     if (recommendationSurfaceVisible()) {
       queueMicrotask(() => refreshRecommendations({force:true}));
     } else {
@@ -1069,7 +1037,7 @@
   document.addEventListener('frame:swipe-undone', () => {
     syncHistory();
     invalidateRecommendations();
-    updateProfileStrength();
+
     updateReadyIndicator();
     hideReadyNotice();
     try { renderTaste(); } catch {}
@@ -1100,7 +1068,7 @@
     if (event.key === 'frame-state' || event.key === HISTORY_KEY) {
       history = loadHistory();
       invalidateRecommendations();
-      updateProfileStrength();
+
       updateReadyIndicator();
       scheduleReadyProbe();
     }
