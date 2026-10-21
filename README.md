@@ -222,7 +222,7 @@ keinen zusätzlichen Login-Anbieter.
 Wochenwechsel am Montag, lange Filmtitel, Merken/Gesehen aus „Für dich“,
 Cache-Update sowie die Darstellung bei noch leerem FRAMELOG.
 
-## Phase 3 · Beta und Veröffentlichungs-Checkliste (Stand 19.10.2026)
+## Phase 3 · Beta und Veröffentlichungs-Checkliste (Stand 21.10.2026)
 
 ### Umgesetzt
 
@@ -241,14 +241,20 @@ Cache-Update sowie die Darstellung bei noch leerem FRAMELOG.
 
 ### Sperrpunkte vor breiter Veröffentlichung – NICHT freigegeben
 
-- [ ] **Anbieter/Impressum:** Name bzw. Unternehmensbezeichnung,
-      ladungsfähige Anschrift, empfangsfähige E-Mail-Adresse sowie ggf.
-      Rechtsform, Registerangaben und Steuerkennzeichen vom Betreiber
-      autorisiert. Rechtsgrundlage: https://www.gesetze-im-internet.de/ddg/__5.html
-- [ ] **DSGVO:** Verantwortliche Stelle und Kontakt, Art.-13-Pflichtinformationen,
-      Rechtsgrundlagen, Dienstleister-/Auftragsverarbeiterverträge,
-      Aufbewahrungsfristen und Transfers dokumentiert. Die aktuelle
-      Datenschutzerklärung ist ein **Entwurf**, keine fertige Freigabe.
+- [x] **Anbieter/Impressum:** Thomas Knodel, Oberkorbecke 23, 58540
+      Meinerzhagen, vom Betreiber für die Veröffentlichung übermittelt.
+- [ ] **E-Mail-Pflichtangabe:** Empfangsfähige Kontakt-E-Mail für Impressum,
+      Datenschutz und Beta-Rückmeldungen bestimmen und Postfach / Weiterleitung
+      auf tatsächlichen Empfang testen. `login@framingapp.de` ist derzeit nur
+      als Brevo-Versandadresse bekannt.
+- [ ] **Weitere Pflichtangaben:** Bei tatsächlich bestehender
+      Registereintragung oder Steuerkennzeichen ggf. ergänzen.
+      Rechtsgrundlage: https://www.gesetze-im-internet.de/ddg/__5.html
+- [x] **DSGVO:** Verantwortliche Stelle und ladungsfähige Anschrift eingetragen.
+- [ ] **DSGVO – weitere Freigabe:** Kontakt-E-Mail, Art.-13-Detailprüfung,
+      Rechtsgrundlagen, Cloudflare-/Brevo-Auftragsverarbeitung,
+      Aufbewahrungsfristen, mögliche Drittland-Transfers abschließend prüfen.
+      Die Datenschutzhinweise sind noch keine fertige juristische Freigabe.
 - [ ] **TMDB-Nutzungsrechte:** Die aktuellen TMDB-API-Bedingungen untersagen
       in ihrem Wortlaut den Einsatz von TMDB APIs/Inhalten in Verbindung mit
       ML-/KI-basierten Anwendungen. FRAME verwendet Taste-DNA/Online-Lernen
