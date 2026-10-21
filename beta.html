@@ -51,15 +51,16 @@ textarea{min-height:118px;resize:vertical}
 <label for="betaText">Deine Beobachtung</label>
 <textarea id="betaText" required maxlength="1500" placeholder="Was hast du versucht? Was ist passiert? Was sollte anders sein?"></textarea>
 <p class="meta">Bitte keine E-Mail-Adressen, Anmeldecodes, privaten Filmtagebücher oder andere persönlichen Daten ins Feedback schreiben.</p>
-<div class="actions"><button type="submit" class="primary" id="betaShare">Feedback teilen</button><button type="button" class="secondary" id="betaCopy">Text kopieren</button></div>
+<div class="actions"><button type="submit" class="primary" id="betaShare">Feedback per E-Mail senden</button><button type="button" class="secondary" id="betaCopy">Text kopieren</button></div>
 </form>
-<p id="betaStatus" role="status" aria-live="polite" class="meta">Dein Feedback wird hier nicht automatisch an FRAME gesendet. Du entscheidest selbst, mit wem du es teilst.</p>
+<p id="betaStatus" role="status" aria-live="polite" class="meta">Der Button öffnet dein E-Mail-Programm mit vorbereiteter Nachricht. Erst wenn du dort auf „Senden“ tippst, wird das Feedback verschickt.</p>
+<p class="meta">Kontakt für Rückmeldungen: <a href="mailto:knodelthomas@googlemail.com">knodelthomas@googlemail.com</a></p>
 <label for="feedbackOutput">Fertiger Feedbacktext</label>
 <textarea id="feedbackOutput" readonly placeholder="Dein Feedback erscheint hier und kann kopiert werden."></textarea>
 </section>
 <section class="card"><h2>Was Beta bedeutet.</h2>
 <p>FRAME befindet sich noch in der Testphase. Inhalte, Synchronisierung und Streamingangaben können Fehler enthalten. Für wichtige persönliche Einträge nutze den JSON-Backup-Export unter <strong>Mein Frame</strong>.</p>
-<p>FRAME wird von Thomas Knodel betrieben; die Anschrift steht im <a href="/impressum.html">Impressum</a>. Vor einer breiten Veröffentlichung müssen insbesondere eine empfangsfähige Kontakt-E-Mail, die Datenschutznachweise und die Nutzungsrechte für das lernende Empfehlungssystem geklärt werden.</p>
+<p>FRAME wird von Thomas Knodel betrieben; die Anschrift steht im <a href="/impressum.html">Impressum</a>. Vor einer breiten Veröffentlichung müssen insbesondere die Datenschutznachweise und die Nutzungsrechte für das lernende Empfehlungssystem geklärt werden.</p>
 </section>
 <script>
 (function(){
@@ -87,11 +88,12 @@ async function copy(msg){
  }catch{}
  out.focus();out.select();status.textContent='Markiere den Text und wähle „Kopieren“.';
 }
-form.addEventListener('submit',async event=>{
+form.addEventListener('submit',event=>{
  event.preventDefault();const msg=message();if(!msg)return;
- if(navigator.share){try{await navigator.share({title:'FRAME Beta-Feedback',text:msg});status.textContent='Teilen-Dialog abgeschlossen.';return;}
- catch(e){if(e.name==='AbortError'){status.textContent='Teilen abgebrochen. Der Feedbacktext bleibt unten stehen.';return;}}}
- await copy(msg);
+ const subject='FRAME Beta-Feedback · '+document.getElementById('betaArea').value;
+ const url='mailto:knodelthomas@googlemail.com?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(msg);
+ status.textContent='Öffne dein E-Mail-Programm und tippe dort auf „Senden“. Falls kein E-Mail-Programm erscheint, nutze „Text kopieren“.';
+ window.location.href=url;
 });
 document.getElementById('betaCopy').addEventListener('click',async()=>{const msg=message();if(msg)await copy(msg);});
 })();
