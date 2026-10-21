@@ -538,12 +538,7 @@ function renderTaste() {
   $('#negativeTags').innerHTML = negatives.length ? negatives.map(([t,v])=>`<span>${t} ${v}</span>`).join('') : '<span>Noch keine Cuts</span>';
 
   const actions = Object.values(state.swipes);
-  const progress = Math.min(100, 12 + actions.length * 5);
-  $('#dnaScore').textContent = progress;
-  $('#tastePercent').textContent = progress;
-  $('#dnaProgress').style.width = progress + '%';
   $('#swipeCount').textContent = actions.length;
-  $('#frameIndex').textContent = String(actions.length * 24).padStart(3,'0');
   $('#likedStat').textContent = actions.filter(a=>a==='like').length;
   $('#savedStat').textContent = (state.saved || []).length;
   $('#dislikedStat').textContent = actions.filter(a=>a==='dislike').length;
@@ -583,7 +578,6 @@ if (frameShell) {
   }, true);
 }
 $$('.nav-item').forEach(n=>n.addEventListener('click',()=>switchView(n.dataset.target)));
-$('#profileShortcut').addEventListener('click',()=>switchView('taste'));
 // FRAMELOG owns the single film journal entry point and its back action.
 $$('.filter').forEach(btn=>btn.addEventListener('click',()=>{
   state.filter = btn.dataset.filter; persist();
