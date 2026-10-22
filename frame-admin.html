@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#130f19">
+<title>FRAME · Admin Analytics</title><link rel="icon" href="/icon.svg" type="image/svg+xml">
+<style>
+:root{color-scheme:dark;--bg:#100e15;--pane:#211b27;--line:#3e3445;--muted:#aaa0ae;--pink:#e9a9c7}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 85% -10%,#442536 0,transparent 45%),var(--bg);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;color:#f9f3f7}
+a{color:#f6bdd6;text-decoration:none}
+.shell{width:min(1100px,100%);padding:24px 22px 60px;margin:auto}
+.top{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:46px}
+.logo{font-size:20px;font-weight:900;letter-spacing:.16em}.logo i{font-style:normal;color:var(--pink)}
+.back{border:1px solid var(--line);padding:10px 14px;border-radius:12px;color:#e6dae6}
+.eyebrow{color:var(--pink);font-weight:800;font-size:11px;letter-spacing:.15em}
+h1{font:600 clamp(35px,6vw,64px)/1.05 Georgia,serif;letter-spacing:-.04em;margin:10px 0}
+.lead{color:#bcaebd;max-width:730px;margin:14px 0 26px}
+.header-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:20px}
+button{font:700 13px system-ui;cursor:pointer}
+button:focus-visible,a:focus-visible,select:focus-visible{outline:2px solid #fbc6dd;outline-offset:3px}
+select,button{background:#29212f;color:#fff;border:1px solid var(--line);border-radius:12px;padding:11px 14px}
+#refresh{background:#f2bad1;color:#2c1724;border:0}
+#state{color:var(--muted);font-size:12px}
+[hidden]{display:none!important}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px 0}
+.card{background:linear-gradient(140deg,rgba(255,255,255,.065),rgba(255,255,255,.015));border:1px solid var(--line);border-radius:20px;padding:21px}
+.metric-label{color:#c1b3c1;font-size:12px}.metric-value{font-size:clamp(32px,5vw,47px);font-weight:800;letter-spacing:-.05em;font-variant-numeric:tabular-nums;margin-top:7px;line-height:1.18}
+.metric-note{color:#938895;font-size:11px;margin-top:9px}.online-dot{display:inline-block;width:8px;height:8px;border-radius:100%;background:#78d9aa;margin-right:5px}
+.section{margin:29px 0 0}.section-header{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+h2{font:600 26px/1.1 Georgia,serif;letter-spacing:-.025em;margin:0 0 14px}
+.muted{color:var(--muted)}.small{font-size:12px}
+#bars{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:9px;height:174px;align-items:end;padding:20px 0 24px;border-bottom:1px solid var(--line)}
+.bar-col{height:100%;display:flex;flex-direction:column;justify-content:end;gap:5px;align-items:center;min-width:0}
+.bar{width:min(100%,38px);min-height:3px;border-radius:6px 6px 1px 1px;background:linear-gradient(0deg,#89556f,#f4afca)}
+.bar-date{font-size:10px;color:var(--muted);white-space:nowrap}
+.events{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:15px}
+.event{padding:13px 16px;border:1px solid var(--line);border-radius:12px;background:#1a1520}
+.event span{display:block;color:var(--muted);font-size:11px}.event strong{display:block;font-size:23px;font-variant-numeric:tabular-nums;margin-top:3px}
+.list{overflow-x:auto;border:1px solid var(--line);border-radius:17px}
+table{width:100%;border-collapse:collapse;min-width:530px}
+th{text-align:left;color:#b9aaba;font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;padding:14px 18px;background:#231d29}
+td{padding:12px 18px;border-top:1px solid var(--line);font-size:13px}
+tbody tr:hover{background:#241d2a}.type{font-size:10px;letter-spacing:.08em;color:#b7a5b4;text-transform:uppercase}
+.footnote{font-size:12px;color:var(--muted);line-height:1.6;padding-top:25px}
+#warning{border:1px solid #916b61;background:#342324;border-radius:14px;padding:15px;color:#f5dad3;margin-bottom:18px}
+@media(max-width:680px){.shell{padding:16px 13px 45px}.top{margin-bottom:29px}.stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.card{padding:15px}.events{grid-template-columns:repeat(2,minmax(0,1fr))}.bar-date{font-size:8px}#bars{gap:4px}.section-header{display:block}}
+</style></head><body>
+<main class="shell">
+  <header class="top"><div class="logo">FRA<i>ME</i> <span class="type">/ CONTROL ROOM</span></div><a class="back" href="/">← Zurück zu FRAME</a></header>
+  <div class="eyebrow">FRAME / INTERNES DASHBOARD</div>
+  <h1>Dein FRAME.<br>In Zahlen.</h1>
+  <p class="lead">Anonyme und angemeldete Beta-Nutzung mit freiwilliger Statistik-Einwilligung. Die Daten sind ausschließlich für dein verifiziertes Administratorkonto abrufbar.</p>
+  <div id="warning" hidden role="alert"></div>
+  <div class="header-actions"><button id="refresh" type="button">↻ Aktualisieren</button><span id="state" role="status">Verbindung wird geprüft …</span></div>
+  <div id="dashboard" hidden>
+  <div class="stats">
+    <div class="card"><div class="metric-label"><span class="online-dot"></span>Jetzt aktiv</div><div class="metric-value" id="online">–</div><div class="metric-note">Letzte 5 Minuten</div></div>
+    <div class="card"><div class="metric-label">Heute aktiv</div><div class="metric-value" id="today">–</div><div class="metric-note">Kalendertag · Berlin</div></div>
+    <div class="card"><div class="metric-label">Letzte 7 Tage</div><div class="metric-value" id="seven">–</div><div class="metric-note">Aktive Geräte</div></div>
+    <div class="card"><div class="metric-label">Letzte 30 Tage</div><div class="metric-value" id="thirty">–</div><div class="metric-note">Aktive Geräte</div></div>
+    <div class="card"><div class="metric-label">Erfasste Geräte</div><div class="metric-value" id="total">–</div><div class="metric-note">Innerhalb von 90 Tagen</div></div>
+    <div class="card"><div class="metric-label">Angemeldete Nutzer</div><div class="metric-value" id="registered">–</div><div class="metric-note">Mit Statistik-Einwilligung</div></div>
+  </div>
+  <section class="section"><div class="section-header"><h2>Aktivität im Verlauf</h2><span class="small muted">Aktive Geräte · letzte 14 Tage</span></div><div class="card"><div id="bars" aria-label="Aktive Geräte je Tag"></div></div></section>
+  <section class="section"><div class="section-header"><h2>Was wird genutzt?</h2><span class="small muted">Aktionen der letzten 30 Tage</span></div><div class="events" id="events"></div></section>
+  <section class="section"><div class="section-header"><h2>Zuletzt aktiv</h2><span class="small muted">Bis zu 60 zuletzt aktive Geräte</span></div>
+  <div class="list"><table><thead><tr><th>Nutzer</th><th>Letzter Besuch</th><th>Aufrufe</th><th>Swipes</th></tr></thead><tbody id="people"></tbody></table></div></section>
+  </div>
+  <p class="footnote">Zahlen starten erst ab Einführung der Statistik und enthalten ausschließlich freiwillig zustimmende Geräte. Ein Nutzer auf zwei Geräten kann doppelt gezählt werden. „Jetzt aktiv“ bedeutet Aktivität in den letzten fünf Minuten und ist keine sekundengenaue Präsenzanzeige. Für die Zeit vor der Einführung liegen hier keine rückwirkenden Daten vor. Einwilligungen können jederzeit in <a href="/datenschutz.html">Datenschutz</a> widerrufen werden; Daten werden maximal 90 Tage aufbewahrt.</p>
+</main>
+<script>
+(()=>{
+'use strict';
+const el=id=>document.getElementById(id);
+const number=n=>new Intl.NumberFormat('de-DE').format(Number(n)||0);
+const date=ts=>ts?new Date(ts).toLocaleString('de-DE',{dateStyle:'short',timeStyle:'short',timeZone:'Europe/Berlin'}):'–';
+const categories={open:'App-Aufrufe',swipe:'Film-Swipes',save:'Zur Merkliste',personalized:'Für dich',daily:'Daily Frame',framelog:'FRAMELOG',match:'Frame Match geöffnet'};
+const showError=msg=>{el('warning').hidden=false;el('warning').textContent=msg;};
+let working=false;
+async function reload(){
+ if(working)return;
+ working=true;el('refresh').disabled=true;el('state').textContent='Lade aktuelle Daten …';
+ try{
+  const response=await fetch('/api/analytics/admin',{credentials:'same-origin',cache:'no-store'});
+  const data=await response.json();
+  if(!response.ok)throw Error(response.status===403?'Kein Admin-Zugang. Melde dich in FRAME zuerst mit deinem freigegebenen E-Mail-Konto an.':data.error||'Statistik nicht erreichbar.');
+  el('warning').hidden=true;el('dashboard').hidden=false;
+  for(const key of ['online','today','seven','thirty','total','registered'])el(key).textContent=number(data[key]);
+  const max=Math.max(1,...data.series.map(s=>s.users||0));
+  el('bars').replaceChildren();
+  for(const s of data.series){
+    const wrap=document.createElement('div');wrap.className='bar-col';
+    const bar=document.createElement('div');bar.className='bar';bar.style.height=Math.max(3,Math.round((s.users||0)/max*125))+'px';
+    bar.title=s.date+': '+s.users+' aktive Geräte';
+    const label=document.createElement('div');label.className='bar-date';label.textContent=s.date.slice(8)+'.'+s.date.slice(5,7)+'.';
+    wrap.append(bar,label);el('bars').append(wrap);
+  }
+  el('events').replaceChildren();
+  for(const [key,title] of Object.entries(categories)){
+    const node=document.createElement('div');node.className='event';
+    const caption=document.createElement('span');caption.textContent=title;
+    const count=document.createElement('strong');count.textContent=number(data.events[key]);
+    node.append(caption,count);el('events').append(node);
+  }
+  el('people').replaceChildren();
+  if(!data.people.length){
+    const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=4;td.textContent='Noch keine Einwilligungen oder Aktivitäten erfasst.';tr.append(td);el('people').append(tr);
+  }
+  for(const p of data.people){
+    const tr=document.createElement('tr');
+    const user=document.createElement('td');user.textContent=p.label;
+    const kind=document.createElement('div');kind.className='type';kind.textContent=p.kind==='account'?'E-Mail-Konto':'Gast';user.append(kind);
+    tr.append(user);
+    for(const value of [date(p.lastSeen),number(p.opens),number(p.swipes)]){
+      const td=document.createElement('td');td.textContent=value;tr.append(td);
+    }
+    el('people').append(tr);
+  }
+  el('state').textContent='Stand: '+date(data.generatedAt)+' · Aktualisierung alle 30 Sek.';
+ }catch(err){showError(err.message||'Daten konnten nicht geladen werden.');el('state').textContent='Verbindung fehlgeschlagen';}
+ finally{working=false;el('refresh').disabled=false;}
+}
+el('refresh').addEventListener('click',reload);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)reload();});
+setInterval(()=>{if(!document.hidden)reload();},30000);
+reload();
+})();
+</script>
+</body></html>
