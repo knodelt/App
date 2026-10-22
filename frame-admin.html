@@ -81,7 +81,26 @@ async function reload(){
  try{
   const response=await fetch('/api/analytics/admin',{credentials:'same-origin',cache:'no-store'});
   const data=await response.json();
-  if(!response.ok)throw Error(response.status===403?'Kein Admin-Zugang. Melde dich in FRAME zuerst mit deinem freigegebenen E-Mail-Konto an.':data.error||'Statistik nicht erreichbar.');
+  if(!response.ok){
+    let explanation=data.error||'Statistik nicht erreichbar.';
+    if(response.status===401 || response.status===403){
+      // Compare with the same auth endpoint the FRAME account panel uses.
+      try{
+        const auth=await fetch('/api/account/me',{credentials:'same-origin',cache:'no-store'});
+        const current=await auth.json();
+        if(!current.authenticated){
+          explanation='Auf '+location.host+' ist keine gültige FRAME-Anmeldung vorhanden. Öffne FRAME über „Zurück zu FRAME“, melde dich dort mit deiner E-Mail an und öffne danach die Statistik auf derselben Domain. Bei www. und ohne www. sind die Anmeldungen getrennt.';
+        }else if(response.status===403){
+          explanation='Angemeldet als '+current.email+', aber für dieses Konto ist kein Admin-Zugriff freigegeben. Vorgesehen ist knodelthomas@googlemail.com.';
+        }else{
+          explanation='Anmeldung wurde erkannt, aber der Admin-Endpunkt konnte sie nicht bestätigen. Bitte Seite aktualisieren.';
+        }
+      }catch{
+        explanation='FRAME-Anmeldung konnte nicht überprüft werden. Bitte über „Zurück zu FRAME“ erneut anmelden.';
+      }
+    }
+    throw Error(explanation);
+  }
   el('warning').hidden=true;el('dashboard').hidden=false;
   for(const key of ['online','today','seven','thirty','total','registered'])el(key).textContent=number(data[key]);
   const max=Math.max(1,...data.series.map(s=>s.users||0));
