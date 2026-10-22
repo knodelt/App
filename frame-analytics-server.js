@@ -68,7 +68,7 @@ export async function handleAnalyticsObject(storage,action,p){
   const now=Date.now();
   if(action==='analytics-track'){
     if(!VALID_ID.test(p.id||''))return response({ok:false},400);
-    return storage.transaction(async tx=>{
+    const result=await storage.transaction(async tx=>{
       const key='stats:'+p.id;
       const row=cleanStats(await tx.get(key)||{id:p.id,firstSeen:now,lastSeen:0,email:null,days:{}},now);
       // A very short duplicate/abuse guard, without limiting normal swiping.
@@ -83,6 +83,8 @@ export async function handleAnalyticsObject(storage,action,p){
       await tx.put(key,row);
       return response({ok:true});
     });
+    if(await storage.getAlarm()===null)await storage.setAlarm(now+86400000);
+    return result;
   }
   if(action==='analytics-forget'){
     if(!VALID_ID.test(p.id||''))return response({ok:false},400);
@@ -98,6 +100,16 @@ export async function handleAnalyticsObject(storage,action,p){
       if(row?.email===target){await storage.delete(key);deleted++;}
     }
     return response({ok:true,deleted});
+  }
+  if(action==='analytics-cleanup'){
+    const all=await storage.list({prefix:'stats:'});
+    let kept=0;
+    for(const [key,row] of all){
+      if(!row||row.lastSeen<now-RETAIN_MS){await storage.delete(key);continue;}
+      await storage.put(key,cleanStats(row,now));kept++;
+    }
+    if(kept)await storage.setAlarm(now+86400000);
+    return response({ok:true,kept});
   }
   if(action==='analytics-report'){
     const all=await storage.list({prefix:'stats:'});
