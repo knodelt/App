@@ -42,6 +42,7 @@
     }
   ],
   "vars": {
-    "FRAME_EMAIL_FROM": "login@framingapp.de"
+    "FRAME_EMAIL_FROM": "login@framingapp.de",
+    "FRAME_ADMIN_EMAIL": "knodelthomas@googlemail.com"
   }
 }
