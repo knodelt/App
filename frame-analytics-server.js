@@ -2,6 +2,12 @@
 // dedicated singleton instance. No IP addresses, cookies or movie IDs are recorded here.
 const RETAIN_MS = 90*86400000;
 const TYPES = ['open','swipe','save','daily','personalized','framelog','match'];
+// This owner email is a public account identifier, NOT an access token.
+// The dashboard still requires a live, server-validated email-login session.
+// Use an explicit default because some Cloudflare dashboard builds omit vars
+// from wrangler.jsonc even though the code and static admin page are deployed.
+const FRAME_OWNER_EMAIL='knodelthomas@googlemail.com';
+const ownerEmail=env=>String(env.FRAME_ADMIN_EMAIL||FRAME_OWNER_EMAIL).trim().toLowerCase();
 const VALID_ID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const dayOf = ms => new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Berlin',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(ms));
 const response=(v,status=200)=>new Response(JSON.stringify(v),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff'}});
@@ -26,14 +32,14 @@ export async function handleFrameAnalytics(req,env,getVerifiedSession){
   if(req.method==='POST' && !sameOrigin(req))return response({ok:false,error:'Ungültige Herkunft.'},403);
   if(action==='role' && req.method==='GET'){
     const me=await getVerifiedSession(req,env);
-    const owner=String(env.FRAME_ADMIN_EMAIL||'').trim().toLowerCase();
-    return response({ok:true,admin:!!(owner&&me?.email?.toLowerCase()===owner)});
+    const owner=ownerEmail(env);
+    return response({ok:true,authenticated:!!me,admin:!!(me&&me.email.toLowerCase()===owner)});
   }
   if(action==='admin' && req.method==='GET'){
-    const owner=String(env.FRAME_ADMIN_EMAIL||'').trim().toLowerCase();
-    if(!owner)return response({ok:false,error:'Administrator nicht konfiguriert.'},503);
     const me=await getVerifiedSession(req,env);
-    if(!me || me.email.toLowerCase()!==owner)return response({ok:false,error:'Zugriff nur für FRAME-Administrator.'},403);
+    if(!me)return response({ok:false,code:'LOGIN_REQUIRED',error:'Bitte mit deinem FRAME-Konto auf dieser Domain anmelden.'},401);
+    if(me.email.toLowerCase()!==ownerEmail(env))
+      return response({ok:false,code:'ADMIN_REQUIRED',error:'Dieses FRAME-Konto ist nicht als Administrator freigeschaltet.'},403);
     return call(env,'analytics-report');
   }
   if(action==='track' && req.method==='POST'){
