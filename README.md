@@ -288,6 +288,41 @@ Die per E-Mail eingehenden Tester-Rückmeldungen sammeln und Probleme nach
 Der Beta-Test öffnet nur das E-Mail-Programm der Testperson. Erst wenn sie
 selbst auf „Senden“ tippt, wird Feedback übermittelt. FRAME speichert keine separaten Feedbackdaten.
 
+## FRAME Admin · Beta-Nutzungsstatistik (22.10.2026)
+
+Die freiwillige Nutzungsstatistik liegt unter **/frame-admin.html** und ist nur nach
+verifiziertem E-Mail-Login als `FRAME_ADMIN_EMAIL` (in `wrangler.jsonc`)
+über `/api/analytics/admin` abrufbar. Ein Link erscheint nur für das
+verifizierte Admin-Konto in „Mein Frame“. Die URL selbst ersetzt **keine**
+Zugriffskontrolle. Es ist kein zusätzlicher Admin-Zugang mit statischem Passwort nötig.
+
+- Die öffentliche App zeigt ein einmaliges, freiwilliges **Opt-in** für Statistik.
+  Ohne Zustimmung werden keine Analytics-Ereignisse an FRAME gesendet.
+- Einmalige Gerätekennung im lokalen Browser-Speicher; beim angemeldeten Konto
+  kann nach Zustimmung die verifizierte E-Mail-Adresse im Admin-Bereich erscheinen.
+- Live-Aktivität = sichtbare und vor Kurzem aktive App (letzte fünf Minuten),
+  keine sekundengenaue Präsenz. Zählung ist gerätebezogen, keine exakte Personenzahl.
+- Gezählt werden App-Aufrufe, Swipes und das Öffnen von Daily Frame,
+  „Für dich“, FRAMELOG und Frame Match; nicht die Inhalte der Filmlisten.
+- Für die Auswertung wird eine separate `FRAME_ACCOUNTS`-Durable-Object-Instanz
+  mit dem Namen `frame-private-analytics-v1` verwendet. Sie ist nicht aus dem
+  Browser direkt erreichbar. Alte Datensätze werden täglich über DO-Alarme
+  nach 90 Tagen entfernt. Bei Konto-Löschung werden zugeordnete Einträge gelöscht.
+- Unter `/datenschutz.html` kann die Statistik erlaubt oder widerrufen werden,
+  inklusive Löschung der Daten der lokalen Gerätekennung.
+- Der Dashboard-Endpunkt `/api/analytics/admin` verlangt eine gültige FRAME-Session
+  **und** den Vergleich mit `FRAME_ADMIN_EMAIL`. Clients übermitteln keine E-Mail
+  für Tracking; bei Login bestimmt allein der Worker die verifizierte Adresse.
+- Es existieren keine rückwirkenden Daten für Zeiten vor Einführung der Statistik.
+  Cloudflare Web Analytics / Worker Metrics sind hiervon unabhängig.
+
+**Live-Test nach Deployment:** Mit der Admin-E-Mail einloggen und
+`/frame-admin.html` öffnen. Im selben Browser Statistik erlauben, FRAME
+nutzen und nach einigen Sekunden aktualisieren. Ohne Anmeldung / mit anderer
+E-Mail muss der API-Endpunkt 403 liefern. Einwilligung widerrufen und prüfen,
+ob der betreffende Datensatz im Dashboard verschwindet. Offline,
+Mehrfach-Tabs und Konto-Löschung ebenfalls testen.
+
 ## TMDB aktivieren
 
 1. Bei TMDB anmelden und unter **Account Settings → API** eine Developer-API-Anwendung registrieren.
