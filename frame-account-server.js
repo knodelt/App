@@ -1,3 +1,4 @@
+import { handleAnalyticsObject, forgetFrameAccountAnalytics } from './frame-analytics-server.js';
 // FRAME accounts: email one-time codes via Brevo and private Durable Object storage.
 // AUTH_SECRET, BREVO_API_KEY and session identifiers stay server-side.
 const DAY=86400000, SESSION_DAYS=30, CODE_EXP_MS=10*60000;
@@ -57,6 +58,10 @@ async function session(req,env){
   const result=await cmd(env,raw[0],'validate',{id:raw[1]});
   if(!result.data.ok)return null;
   return {accountId:raw[0],sid:raw[1],email:result.data.email};
+}
+export async function getVerifiedFrameSession(req,env){
+  if(!env.FRAME_ACCOUNTS||!env.AUTH_SECRET||env.AUTH_SECRET.length<32)return null;
+  return session(req,env);
 }
 async function issueSession(env,email,provider){
   const id=await accountID(email,env),sid=rnd();
@@ -246,6 +251,7 @@ export async function handleFrameAccount(request,env){
       return json({ok:true},200,{'set-cookie':clearSession});
     }
     if(path==='delete'&&request.method==='POST'){
+      await forgetFrameAccountAnalytics(env,me.email);
       await cmd(env,me.accountId,'deleteAccount');
       return json({ok:true},200,{'set-cookie':clearSession});
     }
@@ -263,6 +269,7 @@ export class FrameAccount {
     const action=new URL(request.url).pathname.slice(1);
     let p={};
     try{p=await request.json()}catch{return json({ok:false},400);}
+    if(action.startsWith('analytics-'))return handleAnalyticsObject(this.ctx.storage,action,p);
     return this.ctx.storage.transaction(async txn=>{
       const now=Date.now();
       const data=await txn.get('account')||{email:null,rev:0,cloud:null,sessions:{},challenge:null,attempts:[],lastCodeAt:0};
