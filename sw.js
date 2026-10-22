@@ -1,5 +1,5 @@
-const CACHE = 'frame-v123-beta-contact';
-const ASSETS = ['/', '/index.html', '/about.html', '/beta.html', '/datenschutz.html', '/impressum.html', '/styles.css', '/app-layout.css', '/frame-reboot.css', '/frame-loop.css', '/viewport-lock.js', '/app.js', '/mood-filter.js', '/tmdb-feed.js', '/card-details.js', '/watchlist-controls.js', '/taste-dna.js', '/personalized-recommendations.js', '/taste-learning.js', '/frame-watched.js', '/frame-log.js', '/streaming-availability.js', '/swipe-guidance.js', '/manifest.webmanifest', '/icon.svg', '/onboarding-tutorial.js', '/frame-loop.js', '/hidden-match.css', '/trailer-preview.js', '/trailer-preview.css', '/hidden-match-client.js', '/frame-account-client.js', '/vendor-qrcode.js'];
+const CACHE = 'frame-v124-private-analytics';
+const ASSETS = ['/', '/index.html', '/about.html', '/beta.html', '/datenschutz.html', '/impressum.html', '/styles.css', '/app-layout.css', '/frame-reboot.css', '/frame-loop.css', '/viewport-lock.js', '/app.js', '/mood-filter.js', '/tmdb-feed.js', '/card-details.js', '/watchlist-controls.js', '/taste-dna.js', '/personalized-recommendations.js', '/taste-learning.js', '/frame-watched.js', '/frame-log.js', '/streaming-availability.js', '/swipe-guidance.js', '/manifest.webmanifest', '/icon.svg', '/onboarding-tutorial.js', '/frame-loop.js', '/hidden-match.css', '/trailer-preview.js', '/trailer-preview.css', '/hidden-match-client.js', '/frame-account-client.js', '/frame-analytics-client.js', '/vendor-qrcode.js'];
 
 self.addEventListener('install', event => {
   event.waitUntil((async()=>{
