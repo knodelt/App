@@ -37,7 +37,15 @@
   function decide(yes){
     if(!put(CONSENT,yes?'yes':'no'))return;
     document.getElementById('frameAnalyticsPrompt')?.remove();
-    if(yes)begin();
+    if(yes){begin();return;}
+    // Revoking consent immediately stops this tab and removes its server record.
+    active=false;pending={};clearTimeout(timer);timer=null;
+    const old=id||read(VISITOR);id=null;
+    if(old&&valid(old)){
+      fetch('/api/analytics/forget',{method:'POST',credentials:'same-origin',cache:'no-store',
+        headers:{'content-type':'application/json'},body:JSON.stringify({id:old})}).catch(()=>{});
+    }
+    try{localStorage.removeItem(VISITOR);}catch{}
   }
   function consentUI(){
     if(read(CONSENT)==='yes'){begin();return;}
@@ -95,5 +103,10 @@
       panel.appendChild(a);
     }).catch(()=>{});
   consentUI();
+  window.addEventListener('storage',event=>{
+    if(event.key===CONSENT&&event.newValue!=='yes'){
+      active=false;pending={};clearTimeout(timer);timer=null;id=null;
+    }else if(event.key===CONSENT&&event.newValue==='yes')begin();
+  });
   window.FrameAnalytics={consent:()=>read(CONSENT),allow:()=>decide(true),deny:()=>decide(false)};
 })();
