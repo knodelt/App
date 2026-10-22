@@ -29,7 +29,7 @@ textarea{min-height:118px;resize:vertical}
 </style></head>
 <body><main><a class="back" href="/">← Zurück zu FRAME</a>
 <p class="eyebrow">DEINE DATEN</p><h1>Datenschutz.</h1>
-<p class="intro">Wie FRAME derzeit technische Verbindungen und persönliche Filmdaten verarbeitet. Stand: 21. Oktober 2026.</p>
+<p class="intro">Wie FRAME derzeit technische Verbindungen und persönliche Filmdaten verarbeitet. Stand: 22. Oktober 2026.</p>
 <div class="notice"><strong>Hinweis zur rechtlichen Prüfung:</strong> Betreiber- und Kontaktdaten sind veröffentlicht. Vor einer breiten öffentlichen Veröffentlichung müssen insbesondere Dienstleisterverträge, Datenübermittlungen, Löschfristen und Rechtsgrundlagen abschließend geprüft werden. Dieser Text ist ein noch zu prüfender Datenschutzhinweis.</div>
 <section class="card"><h2>1 · Verantwortliche Stelle</h2>
 <p><strong>Thomas Knodel</strong><br>Oberkorbecke 23<br>58540 Meinerzhagen<br>Deutschland</p>
@@ -50,7 +50,44 @@ textarea{min-height:118px;resize:vertical}
 <p><strong>Freiwilliges Konto:</strong> E-Mail-Adresse, Anmeldecode und technische Sitzungsdaten dienen der gewünschten Anmeldung und Kontoführung (Art. 6 Abs. 1 lit. b DSGVO). Ohne Konto bleiben persönliche Listen und Geschmacksdaten grundsätzlich im Browser; bei angemeldeten Nutzern werden sie zur angeforderten Cloud-Synchronisierung verarbeitet (Art. 6 Abs. 1 lit. b DSGVO).</p>
 <p><strong>Empfehlungsfunktionen:</strong> Die Filmvorlieben werden im Rahmen der angeforderten FRAME-Funktionen ausgewertet. Art, Umfang und gegebenenfalls weitere rechtliche Anforderungen an diese Verarbeitung werden vor einer allgemeinen Freigabe überprüft.</p>
 <p>Auftragsverarbeiterverträge, mögliche Übermittlungen in Drittländer sowie die konkreten Speicher- und Löschfristen beim jeweiligen Anbieter müssen vor einer allgemeinen Freigabe abschließend überprüft und dokumentiert werden.</p></section>
-<section class="card"><h2>5 · Deine Rechte</h2>
+<section class="card"><h2>5 · Freiwillige Nutzungsstatistik</h2>
+<p>FRAME bietet eine freiwillige Beta-Nutzungsstatistik an. <strong>Ohne deine ausdrückliche Zustimmung wird kein FRAME-Analytics-Ereignis übermittelt.</strong> Beim ersten Besuch kannst du diese Erfassung ablehnen oder erlauben. Deine Entscheidung wird im lokalen Browserspeicher unter <code>frame-analytics-consent-v1</code> hinterlegt.</p>
+<p>Wenn du zustimmst, erzeugt der Browser eine zufällige Gerätekennung und zählt App-Aufrufe, Swipes, das Merken von Titeln sowie Aufrufe der Bereiche Daily Frame, Für dich, FRAMELOG und Frame Match. Es werden dafür <strong>keine Film-IDs, Filmtitel, persönlichen Filmhistorien oder IP-Adressen im Statistikdatensatz</strong> gespeichert. Bei angemeldeten Konten wird die verifizierte E-Mail-Adresse zugeordnet und ist ausschließlich im geschützten Administratorbereich für den Betreiber sichtbar. Bei Gästen erscheint nur „Gast (anonym)“.</p>
+<p>Die Rechtsgrundlage für diese freiwillige Statistik ist deine Einwilligung (Art. 6 Abs. 1 lit. a DSGVO; für nicht erforderliches lokales Speichern bzw. Auslesen gilt ergänzend § 25 TDDDG). Die Daten werden in Cloudflare Durable Objects aufbewahrt und nach spätestens 90 Tagen ohne Aktivität gelöscht; ältere Tagesdaten werden ebenfalls auf maximal 90 Tage begrenzt. Eine Abmeldung beendet nicht automatisch die Einwilligung auf dem Gerät. Beim Löschen des Kontos werden zugeordnete Statistikdaten gelöscht.</p>
+<p>Du kannst deine Einwilligung jederzeit hier für die Zukunft widerrufen und die mit diesem Gerät verknüpften Statistikdaten löschen. Bereits gebildete Auswertungen sind nicht als persönliche Profile gespeichert. Ohne Einwilligung funktionieren die Filmfunktionen weiterhin.</p>
+<div class="actions"><button type="button" class="primary" id="frameStatsAllow">Statistik erlauben</button><button type="button" class="secondary" id="frameStatsRevoke">Einwilligung widerrufen &amp; Gerätedaten löschen</button></div>
+<p class="meta" id="frameStatsStatus" role="status"></p>
+</section>
+<section class="card"><h2>6 · Deine Rechte</h2>
 <p>Im Rahmen der gesetzlichen Voraussetzungen bestehen Rechte auf Auskunft (Art. 15 DSGVO), Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung der Verarbeitung (Art. 18), Datenübertragbarkeit (Art. 20) und Widerspruch (Art. 21). Einwilligungen können für die Zukunft widerrufen werden. Anfragen können an <a href="mailto:knodelthomas@googlemail.com">knodelthomas@googlemail.com</a> oder schriftlich an die oben genannte Anschrift gerichtet werden.</p>
 <p>Außerdem kannst du dich an eine zuständige Datenschutzaufsichtsbehörde wenden, beispielsweise an die <a href="https://www.ldi.nrw.de/" target="_blank" rel="noopener noreferrer">Landesbeauftragte für Datenschutz und Informationsfreiheit Nordrhein-Westfalen</a>.</p>
-<p><a href="https://eur-lex.europa.eu/eli/reg/2016/679/oj" target="_blank" rel="noopener noreferrer">DSGVO im Original ↗</a></p></section><footer><a href="/about.html">Datenquellen</a><a href="/datenschutz.html">Datenschutz</a><a href="/impressum.html">Impressum</a><a href="/beta.html">Beta-Test</a></footer></main></body></html>
+<p><a href="https://eur-lex.europa.eu/eli/reg/2016/679/oj" target="_blank" rel="noopener noreferrer">DSGVO im Original ↗</a></p></section><footer><a href="/about.html">Datenquellen</a><a href="/datenschutz.html">Datenschutz</a><a href="/impressum.html">Impressum</a><a href="/beta.html">Beta-Test</a></footer></main>
+<script>
+(()=>{
+'use strict';
+const C='frame-analytics-consent-v1',V='frame-analytics-visitor-v1';
+const status=document.getElementById('frameStatsStatus');
+const show=msg=>{status.textContent=msg;};
+const update=()=>{show(localStorage.getItem(C)==='yes'?'Statistik ist aktuell erlaubt.':'Statistik ist derzeit nicht erlaubt.');};
+document.getElementById('frameStatsAllow').addEventListener('click',()=>{
+ try{
+  if(!localStorage.getItem(V))localStorage.setItem(V,crypto.randomUUID());
+  localStorage.setItem(C,'yes');
+  update();
+ }catch{show('Diese Browsereinstellungen lassen sich hier nicht speichern.');}
+});
+document.getElementById('frameStatsRevoke').addEventListener('click',async()=>{
+ const id=localStorage.getItem(V);
+ try{localStorage.setItem(C,'no');}catch{}
+ if(!id){update();return;}
+ try{
+  const res=await fetch('/api/analytics/forget',{method:'POST',credentials:'same-origin',cache:'no-store',
+    headers:{'content-type':'application/json'},body:JSON.stringify({id})});
+  if(!res.ok)throw Error();
+  localStorage.removeItem(V);
+  show('Einwilligung widerrufen. Die erfassten Daten dieses Geräts wurden gelöscht.');
+ }catch{show('Einwilligung widerrufen. Die serverseitige Löschung konnte nicht bestätigt werden. Bitte erneut versuchen oder uns kontaktieren.');}
+});
+try{update();}catch{show('Statistik ist nicht aktiviert.');}
+})();
+</script></body></html>
