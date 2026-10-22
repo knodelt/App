@@ -265,6 +265,7 @@ export async function handleFrameAccount(request,env){
 
 export class FrameAccount {
   constructor(ctx,env){this.ctx=ctx;this.env=env;}
+  async alarm(){await handleAnalyticsObject(this.ctx.storage,'analytics-cleanup',{});}
   async fetch(request){
     const action=new URL(request.url).pathname.slice(1);
     let p={};
