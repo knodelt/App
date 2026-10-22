@@ -16,8 +16,8 @@ async function call(env,action,payload={}){
 }
 export async function forgetFrameAccountAnalytics(env,email){
   if(!env.FRAME_ACCOUNTS || !email)return;
-  try{await internal(env,'analytics-forget-account',{email:String(email).toLowerCase()});}
-  catch(err){console.warn('[FRAME ANALYTICS] Account erasure retry needed:',String(err));}
+  const result=await internal(env,'analytics-forget-account',{email:String(email).toLowerCase()});
+  if(!result.ok)throw Error('FRAME analytics deletion failed');
 }
 export async function handleFrameAnalytics(req,env,getVerifiedSession){
   if(!env.FRAME_ACCOUNTS || !env.AUTH_SECRET || env.AUTH_SECRET.length<32)
