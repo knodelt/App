@@ -29,16 +29,14 @@
   letter-spacing:-.035em !important;
   color:var(--text,#f7f5f2);
 }
-#tonightView .tonight-back{
-  flex:0 0 auto;
-  align-self:center;
-  min-height:38px;
-  border:1px solid rgba(255,255,255,.15);
-  background:rgba(255,255,255,.055);
-  color:#eee1e8;
-  border-radius:12px;
-  padding:9px 12px;
-  font:750 11px/1.25 var(--font-ui,Manrope,system-ui,sans-serif);
+#tonightView .tonight-nav-mark{
+  flex:0 0 42px;width:42px;height:42px;
+  display:grid;place-items:center;
+  border-radius:15px;
+  color:var(--accent,#ff4d5f);
+  background:rgba(255,77,95,.09);
+  border:1px solid rgba(255,77,95,.25);
+  font:750 25px/1 var(--font-ui,Manrope,system-ui,sans-serif);
 }
 #tonightView .tonight-intro{
   margin:0 0 5px;
@@ -253,49 +251,8 @@
   font:550 10px/1.6 var(--font-ui,Manrope,system-ui,sans-serif);
 }
 #tonightView button:focus-visible,
-#frameTonightShortcut:focus-visible,
-#frameTonightQuickOpen:focus-visible{
+{
   outline:2px solid #e9adc2;outline-offset:3px;
-}
-/* Entry points remain visually native to the existing FRAME areas. */
-#discoverView .tonight-quick{
-  flex:0 0 auto;
-  border:1px solid rgba(239,179,202,.31);
-  background:rgba(234,161,192,.11);
-  color:#f1c4d5;
-  border-radius:999px;
-  padding:8px 12px;
-  font:800 10px/1.3 var(--font-ui,Manrope,system-ui,sans-serif);
-  white-space:nowrap;
-}
-#personalizedView .tonight-entry{
-  display:flex;align-items:center;justify-content:space-between;gap:12px;
-  width:100%;
-  min-height:68px;
-  margin:0 0 13px;
-  padding:13px 15px;
-  flex:0 0 auto;
-  border:1px solid rgba(239,179,202,.23);
-  border-radius:17px;
-  background:linear-gradient(120deg,rgba(245,150,190,.10),rgba(255,255,255,.024));
-  color:#f6e9f0;
-  text-align:left;
-}
-#personalizedView .tonight-entry strong{
-  display:block;
-  font:650 21px/1.15 var(--font-display,Fraunces,Georgia,serif);
-  letter-spacing:-.02em;
-}
-#personalizedView .tonight-entry small{
-  display:block;
-  color:#e8a6bf;
-  margin-bottom:5px;
-  font:800 9px/1.3 var(--font-ui,Manrope,system-ui,sans-serif);
-  letter-spacing:.1em;
-}
-#personalizedView .tonight-entry .tonight-arrow{
-  font:700 19px/1 var(--font-ui,Manrope,system-ui,sans-serif);
-  color:#f1c4d5;
 }
 @media(max-width:365px){
   #tonightView{padding-left:12px;padding-right:12px}
