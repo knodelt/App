@@ -323,6 +323,27 @@ E-Mail muss der API-Endpunkt 403 liefern. Einwilligung widerrufen und prüfen,
 ob der betreffende Datensatz im Dashboard verschwindet. Offline,
 Mehrfach-Tabs und Konto-Löschung ebenfalls testen.
 
+## Trakt-Test für FRAME (31.10.2026)
+
+FRAME besitzt eine **rein interne** Trakt-Teststrecke, ohne den TMDB-Feed oder Nutzerhistorien umzustellen.
+
+- In Cloudflare Workers & Pages beim Worker `app` das Secret `TRAKT_CLIENT_ID` hinterlegen (Client ID, **nicht** Client Secret).
+- Sicherstellen, dass die neue Worker-Version deployt ist und die Secret-Variable in der passenden Umgebung liegt.
+- In FRAME mit dem verifizierten Admin-Konto anmelden, dann `https://framingapp.de/frame-trakt-test.html` öffnen.
+- Auf **Verbindung jetzt prüfen** drücken. Die Route `GET /api/trakt/diagnostics` prüft genau
+  `/movies/trending?limit=5` und `/shows/trending?limit=5` beim offiziellen `api.trakt.tv`.
+- Die Antworten zeigen nur Status und bis zu fünf Titel/Jahre/IDs je Endpunkt. API-Secret und
+  Drittanbieter-Tokens werden nicht an den Browser geliefert. Die Route verlangt eine gültige
+  FRAME-Sitzung mit der freigegebenen Admin-E-Mail. Ohne Anmeldung HTTP 401, mit fremdem
+  Konto HTTP 403, ohne Client-ID HTTP 503.
+- Trakt Development-Zugang ist **nicht** auf den öffentlichen FRAME-Feed geschaltet.
+  Keine Trakt-Bilder anzeigen oder massenweise importieren, bevor Rechte und Production-Zugang geklärt sind.
+- Öffentliche API-Abfragen benötigen `trakt-api-key` und `trakt-api-version: 2`; die
+  beiden Diagnose-Abfragen werden nur auf Klick des Administrators ausgelöst.
+
+Offizielle Quellen: https://developer.trakt.tv/docs/authentication-oauth ,
+https://developer.trakt.tv/docs/api-use-policy und https://developer.trakt.tv/docs/rate-limiting .
+
 ## TMDB aktivieren
 
 1. Bei TMDB anmelden und unter **Account Settings → API** eine Developer-API-Anwendung registrieren.
