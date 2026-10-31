@@ -3,7 +3,7 @@
 (()=>{
   'use strict';
   const CONSENT='frame-analytics-consent-v1', VISITOR='frame-analytics-visitor-v1';
-  const allowed=new Set(['open','swipe','save','daily','personalized','framelog','match']);
+  const allowed=new Set(['open','swipe','save','daily','personalized','framelog','match','tonight']);
   const read=k=>{try{return localStorage.getItem(k)}catch{return null;}};
   const put=(k,v)=>{try{localStorage.setItem(k,v);return true;}catch{return false;}};
   const valid=id=>/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id||'');
@@ -77,7 +77,7 @@
   });
   document.addEventListener('frame:view-changed',ev=>{
     const target=ev.detail?.target;
-    if(['daily','personalized','framelog','recommend'].includes(target)){
+    if(['daily','personalized','framelog','recommend','tonight'].includes(target)){
       event(target==='recommend'?'match':target);
     }
   });
