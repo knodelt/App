@@ -169,6 +169,7 @@ body {
 #recommendView,
 #dailyFrameView,
 #personalizedView,
+#tonightView,
 #tasteView,
 #frameLogView {
   overflow-y: auto;
