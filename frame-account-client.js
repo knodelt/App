@@ -2,9 +2,15 @@
   'use strict';
   const KEYS=[
     'frame-state','frame-taste-dna-v2','frame-online-learning-v1',
-    'frame-recommendation-history-v1','frame-loop-v1','frame-loop-mode-v1',
+    'frame-recommendation-history-v1',
     'frame-mood-v1','frame-recommendation-exclusions-v1','frame-tonight-v1'
   ];
+  // Old cloud revisions may include retired Daily Frame keys; allow reading
+  // them for migration but never restore, upload, or track them again.
+  const LEGACY_KEYS=new Set(['frame-loop-v1','frame-loop-mode-v1']);
+  const activeSnapshot=data=>Object.fromEntries(
+    Object.entries(data||{}).filter(([key])=>KEYS.includes(key))
+  );
   const OWNER='frame-cloud-owner-v1',HASH='frame-cloud-hash-v1',REV='frame-cloud-revision-v1';
   // Survives location.reload() but not a fresh browser session. Prevents a
   // cloud restore from triggering unbounded reloads on mobile browsers.
@@ -52,7 +58,7 @@
   const validSnapshot=items=>{
     if(!items||typeof items!=='object'||Array.isArray(items))return false;
     const keys=Object.keys(items);
-    if(keys.some(key=>!KEYS.includes(key)))return false;
+    if(keys.some(key=>!KEYS.includes(key)&&!LEGACY_KEYS.has(key)))return false;
     return keys.every(key=>{
       const value=items[key];
       if(typeof value!=='string'||value.length>650000)return false;
@@ -74,8 +80,7 @@
     if(!s||!Object.keys(s).length)return false;
     const parse=key=>{try{return JSON.parse(s[key]||'{}')}catch{return {}}};
     const local=parse('frame-state'),dna=parse('frame-taste-dna-v2'),
-      online=parse('frame-online-learning-v1'),history=parse('frame-recommendation-history-v1'),
-      loop=parse('frame-loop-v1');
+      online=parse('frame-online-learning-v1'),history=parse('frame-recommendation-history-v1');
     return Object.keys(local.swipes||{}).length>0 ||
       (local.saved||[]).length>0 ||
       Object.keys(local.watched||{}).length>0 ||
@@ -83,8 +88,7 @@
       Object.keys(local.frameLogMeta||{}).length>0 ||
       Object.keys(dna.items||{}).length>0 ||
       (online.examples||[]).length>0 ||
-      Object.keys(history||{}).length>0 ||
-      (loop.pickHistory||[]).length>0;
+      Object.keys(history||{}).length>0;
   };
   const status=(value,bad=false)=>{
     text('frameAccountStatus',value);
@@ -257,14 +261,18 @@
     try{
       const cloud=await accountFetch('sync');
       if(serial!==initSerial)return;
-      const remote=cloud.data||{},local=snapshot();
+      const remote=activeSnapshot(cloud.data||{}),local=snapshot();
+      const obsoleteCloudFields=Object.keys(cloud.data||{}).some(key=>LEGACY_KEYS.has(key));
       revision=cloud.revision;
       const [remoteHash,localHash]=await Promise.all([fingerprint(remote),fingerprint(local)]);
       const sameOwner=safeGet(OWNER)===me.email;
       const baseline=sameOwner?safeGet(HASH):null;
       if(serial!==initSerial)return;
       if(remoteHash===localHash){
-        retainMarks(remoteHash,revision);
+        // Drop unused Daily Frame cloud fields once the remaining FRAME data
+        // are identical. This is a metadata-only migration, not a film-history reset.
+        if(obsoleteCloudFields){await upload(local,revision);}
+        else retainMarks(remoteHash,revision);
         try{localStorage.removeItem(IMPORT_PENDING)}catch{}
         sessionClear(RESTORE_GUARD);
         paused=false;ready=true;
@@ -334,8 +342,9 @@
     try{
       const cloud=await accountFetch('sync');
       if(!cloud.data)throw Error('Noch keine Cloud-Daten vorhanden.');
-      const hash=await fingerprint(cloud.data);
-      restoreLocal(cloud.data);
+      const current=activeSnapshot(cloud.data);
+      const hash=await fingerprint(current);
+      restoreLocal(current);
       if(await fingerprint(snapshot())!==hash)
         throw Error('Cloud-Daten konnten nicht vollständig übernommen werden.');
       retainMarks(hash,cloud.revision);
