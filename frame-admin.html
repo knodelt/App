@@ -72,7 +72,7 @@ tbody tr:hover{background:#241d2a}.type{font-size:10px;letter-spacing:.08em;colo
 const el=id=>document.getElementById(id);
 const number=n=>new Intl.NumberFormat('de-DE').format(Number(n)||0);
 const date=ts=>ts?new Date(ts).toLocaleString('de-DE',{dateStyle:'short',timeStyle:'short',timeZone:'Europe/Berlin'}):'–';
-const categories={open:'App-Aufrufe',swipe:'Film-Swipes',save:'Zur Merkliste',personalized:'Für dich',daily:'Daily Frame',framelog:'FRAMELOG',match:'Frame Match geöffnet',tonight:'FRAME TONIGHT geöffnet'};
+const categories={open:'App-Aufrufe',swipe:'Film-Swipes',save:'Zur Merkliste',personalized:'Für dich',framelog:'FRAMELOG',match:'Frame Match geöffnet',tonight:'FRAME TONIGHT geöffnet'};
 const showError=msg=>{el('warning').hidden=false;el('warning').textContent=msg;};
 let working=false;
 async function reload(){
