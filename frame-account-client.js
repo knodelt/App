@@ -3,7 +3,7 @@
   const KEYS=[
     'frame-state','frame-taste-dna-v2','frame-online-learning-v1',
     'frame-recommendation-history-v1','frame-loop-v1','frame-loop-mode-v1',
-    'frame-mood-v1','frame-recommendation-exclusions-v1'
+    'frame-mood-v1','frame-recommendation-exclusions-v1','frame-tonight-v1'
   ];
   const OWNER='frame-cloud-owner-v1',HASH='frame-cloud-hash-v1',REV='frame-cloud-revision-v1';
   // Survives location.reload() but not a fresh browser session. Prevents a
