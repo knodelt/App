@@ -41,7 +41,7 @@ h1{font:600 clamp(42px,7vw,78px)/.98 Georgia,serif;letter-spacing:-.055em;margin
 .no-poster{height:100%;display:grid;place-content:center;text-align:center;gap:10px}
 .no-poster strong{font:600 clamp(25px,4vw,42px)/1 Georgia,serif;color:#f2d3df;letter-spacing:.2em}
 .no-poster span{color:#b5a4b2;font-size:10px;letter-spacing:.16em;font-weight:750}
-.corner{position:absolute;z-index:1;left:14px;top:14px;background:rgba(18,12,19,.75);border:1px solid rgba(255,255,255,.24);backdrop-filter:blur(9px);font-size:9px;font-weight:800;letter-spacing:.08em;padding:6px 9px;border-radius:9px}
+.corner{position:absolute;z-index:1;left:14px;top:14px;background:rgba(18,12,19,.75);border:1px solid rgba(255,255,255,.24);backdrop-filter:blur(9px);font-size:9px;font-weight:800;letter-spacing:.08em;padding:6px 9px;border-radius:9px;max-width:calc(100% - 78px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .corner.german{color:#d9ffc8}
 .rating{position:absolute;z-index:1;right:14px;top:14px;border-radius:9px;background:rgba(15,11,16,.77);padding:6px 9px;font-size:11px;font-weight:800}
 .copy{padding:19px 18px 20px}
@@ -127,7 +127,7 @@ function card(item){
     fallback.append(add('strong','','FRAME'),add('span','','KEIN TRAKT-POSTER'));
     poster.append(fallback);
   }
-  poster.append(add('div','corner'+(item.translated?' german':''),item.translated?'DEUTSCHE BESCHREIBUNG':'ORIGINALSPRACHE'));
+  poster.append(add('div','corner'+(item.translated?' german':''),item.translated?'DEUTSCH':'ORIGINAL'));
   if(item.rating!==null && item.rating!==undefined)poster.append(add('div','rating','★ '+Number(item.rating).toFixed(1)+' / 10'));
   article.append(poster);
   const body=add('div','copy');
