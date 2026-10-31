@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="de"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#110e15">
+<link rel="icon" href="/icon.svg" type="image/svg+xml"><title>FRAME · Trakt Test</title>
+<style>
+:root{color-scheme:dark;--bg:#110e15;--panel:#201a26;--line:rgba(255,255,255,.13);--text:#f9f0f6;--sub:#b5a5b4;--accent:#f2b5cf}
+*{box-sizing:border-box}html{background:var(--bg)}
+body{background:radial-gradient(ellipse at 85% -20%,rgba(222,112,173,.17),transparent 50%),var(--bg);color:var(--text);font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;margin:0;min-height:100dvh}
+main{max-width:900px;margin:0 auto;padding:22px 18px 65px}
+header{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:55px}
+.logo{font-size:19px;font-weight:900;letter-spacing:.22em}.logo span{color:var(--accent)}
+a{color:var(--accent);text-decoration:none}
+.headerlink{color:#e7cfdd;border:1px solid var(--line);padding:10px 15px;border-radius:12px;font-size:12px}
+.eyebrow{color:#efaecb;font-size:11px;font-weight:800;letter-spacing:.17em}
+h1{font:600 clamp(36px,7vw,66px)/1.05 Georgia,serif;letter-spacing:-.035em;margin:12px 0 16px}
+.desc{max-width:670px;color:var(--sub);font-size:14px;margin:0 0 28px}
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0}
+.card{background:linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.015));border:1px solid var(--line);border-radius:19px;padding:20px}
+.card h2{font:600 24px Georgia,serif;margin:0 0 7px}
+.tag{font-size:11px;color:#c6b9c7;text-transform:uppercase;letter-spacing:.13em}
+#summary{color:#dbc7d4;line-height:1.5}
+button{background:#f2bad2;color:#211521;border:0;border-radius:13px;padding:14px 20px;font:800 13px system-ui;cursor:pointer;min-height:45px}
+button:disabled{opacity:.55;cursor:wait}
+button:focus-visible,a:focus-visible{outline:2px solid #ffd4e3;outline-offset:3px}
+.toolbar{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+#state{color:#ab9caa;font-size:12px}
+.status{font-size:12px;color:#c9b5c3;margin:7px 0 13px}
+.status.ok{color:#88ddb2}.status.bad{color:#f0a6a6}
+ul{list-style:none;margin:0;padding:0}
+li{padding:9px 0;border-top:1px solid var(--line);display:flex;gap:10px;align-items:baseline;justify-content:space-between}
+li b{font-size:13px;font-weight:650}
+li span{font-size:11px;color:var(--sub);flex:none}
+.note{border-left:2px solid #db96b7;color:#cbbdcc;padding:11px 14px;background:#231b28;border-radius:4px;font-size:12px;margin-top:28px}
+[hidden]{display:none!important}
+@media(max-width:650px){header{margin-bottom:35px}.panels{grid-template-columns:1fr}.card{padding:17px}}
+</style></head>
+<body><main>
+<header><div class="logo">FRA<span>ME</span> <span class="tag">/ LAB</span></div><a class="headerlink" href="/frame-admin.html">← Control Room</a></header>
+<p class="eyebrow">DATENQUELLEN / ENTWICKLUNGSTEST</p><h1>Trakt.<br>Verbindungstest.</h1>
+<p class="desc">Teste die neue Film- und Serien-API, ohne den bisherigen FRAME-Feed oder bestehende Filmdaten zu verändern. Der Zugriff funktioniert nur über dein verifiziertes FRAME-Administratorkonto.</p>
+<div class="toolbar"><button id="test" type="button">Verbindung jetzt prüfen</button><span id="state" role="status">Bereit für den Test</span></div>
+<div class="card" id="overview"><p class="tag">Status</p><p id="summary">Starte den Test. FRAME überprüft den Cloudflare-Schlüssel und ruft eine kleine Auswahl öffentlicher Titel bei Trakt ab.</p></div>
+<div class="panels" id="results" hidden>
+ <div class="card"><p class="tag">API-Endpunkt</p><h2>Filme</h2><div class="status" id="movieStatus">–</div><ul id="movies"></ul></div>
+ <div class="card"><p class="tag">API-Endpunkt</p><h2>Serien</h2><div class="status" id="showStatus">–</div><ul id="shows"></ul></div>
+</div>
+<p class="note">Entwicklungstest: Der Trakt-Zugang ist noch keine öffentliche Production-Freigabe. Es erfolgt keine Änderung am aktuellen TMDB-Feed, kein Import von Filmplakaten und keine Übertragung privater FRAME-Filmhistorien. Die Client-ID wird nicht im Browser angezeigt.</p>
+</main>
+<script>
+(()=>{
+'use strict';
+const id=x=>document.getElementById(x);
+const button=id('test'),state=id('state'),summary=id('summary');
+function draw(list,statusElement,result){
+  const ul=id(list),line=id(statusElement);
+  ul.replaceChildren();
+  if(!result){line.textContent='Keine Antwort';line.className='status bad';return;}
+  line.textContent=result.ok?'✓ Verbunden · HTTP '+result.status:(result.message||'Nicht erreichbar')+(result.status?' · HTTP '+result.status:'');
+  line.className='status '+(result.ok?'ok':'bad');
+  for(const movie of result.titles||[]){
+    const li=document.createElement('li'),name=document.createElement('b'),year=document.createElement('span');
+    name.textContent=movie.title;year.textContent=movie.year||'–';li.append(name,year);ul.append(li);
+  }
+}
+button.addEventListener('click',async()=>{
+  button.disabled=true;state.textContent='Frage Trakt über Cloudflare ab …';id('results').hidden=true;
+  try{
+    const response=await fetch('/api/trakt/diagnostics',{credentials:'same-origin',cache:'no-store'});
+    const data=await response.json();
+    if(!response.ok)throw new Error(data.error||'Verbindungstest nicht verfügbar.');
+    id('results').hidden=false;
+    draw('movies','movieStatus',data.movies);draw('shows','showStatus',data.shows);
+    summary.textContent=data.explanation||'Prüfung abgeschlossen.';
+    state.textContent='Geprüft: '+new Date(data.checkedAt).toLocaleString('de-DE');
+  }catch(e){
+    summary.textContent=(e.message||'Unbekannter Fehler')+' Falls die Anmeldung fehlt, bitte in FRAME mit der Administrator-E-Mail anmelden und diesen Test erneut öffnen.';
+    state.textContent='Test fehlgeschlagen';
+  }finally{button.disabled=false;}
+});
+})();
+</script></body></html>
