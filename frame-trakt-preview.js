@@ -207,7 +207,7 @@ async function cachedPoster(request){
       details.contentType=String(res.headers.get('content-type')||'').split(';')[0].slice(0,70);
       if([301,302,303,307,308].includes(res.status)){
         const location=res.headers.get('location')||'';
-        const target=posterSource(location);
+        const target=posterSource(location.startsWith('/')&&!location.startsWith('//')?'https://'+source.host+location:location);
         details.redirected=true;
         if(hop===1||!target)return reply('CDN_REDIRECT','Trakt leitet auf einen nicht freigegebenen Bildpfad um.');
         source=target;
