@@ -5,7 +5,7 @@ const DAY=86400000, SESSION_DAYS=30, CODE_EXP_MS=10*60000;
 const ALLOWED_KEYS=new Set([
   'frame-state','frame-taste-dna-v2','frame-online-learning-v1',
   'frame-recommendation-history-v1','frame-loop-v1','frame-loop-mode-v1',
-  'frame-mood-v1','frame-recommendation-exclusions-v1'
+  'frame-mood-v1','frame-recommendation-exclusions-v1','frame-tonight-v1'
 ]);
 const json=(value,status=200,extra={})=>new Response(JSON.stringify(value),{
   status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store',
