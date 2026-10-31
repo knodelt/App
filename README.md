@@ -336,7 +336,8 @@ Die neuen Worker-Routen `/api/trakt/preview?type=movies|shows` sowie
 `/api/trakt/poster?asset=...` erfordern jeweils eine gültige verifizierte
 FRAME-Admin-Session. Trakt-Zugangsdaten werden nicht zum Browser übertragen.
 
-- Für je bis zu sechs Titel je Tab werden Trakt-Listen (mit `extended=full`),
+- Für je bis zu fünf Titel je Tab werden zunächst die öffentlichen Trakt-Listen (ohne `extended`) abgerufen. Erst danach versucht FRAME die dokumentierten erweiterten Detailabfragen für einzelne Titel. Eine 403-Ablehnung blockiert nicht mehr die Basisvorschau und verhindert weitere Detail-Abfragen desselben Typs.
+  Bei zugelassenen Detailabfragen werden Trakt-Listen,
   Detailinformationen und deutsche Übersetzungen per API abgefragt.
   Fehlende Übersetzungen werden als Originalsprache gekennzeichnet.
 - Bild-URLs stammen ausschließlich aus Trakt-`images.poster`, werden serverseitig
