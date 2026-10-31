@@ -23,20 +23,23 @@ const mapItem=(entry,type)=>{
 };
 async function probe(resource,clientID){
   const timer=new AbortController();
-  const timeout=setTimeout(()=>timer.abort('timeout'),8500);
+  const timeout=setTimeout(()=>timer.abort(),8500);
   try{
     // Host and paths are constant: this endpoint is not an open proxy.
     const upstream=await fetch('https://api.trakt.tv/'+resource+'?limit=5',{
-      method:'GET',signal:timer.signal,redirect:'error',
+      method:'GET',signal:timer.signal,redirect:'manual',
       headers:{
         'accept':'application/json',
+        'content-type':'application/json',
+        'user-agent':'FRAME/1.0 (Trakt developer connectivity test)',
         'trakt-api-version':'2',
         'trakt-api-key':clientID
       }
     });
     const result={status:upstream.status,ok:upstream.ok,titles:[]};
     if(!upstream.ok){
-      result.message=upstream.status===401?'Client-ID ungültig oder nicht aktiviert.'
+      result.message=[301,302,303,307,308].includes(upstream.status)?'Trakt hat die Anfrage umgeleitet; Redirect wurde aus Sicherheitsgründen nicht weiterverfolgt.'
+        :upstream.status===401?'Client-ID ungültig oder nicht aktiviert.'
         :upstream.status===403?'Trakt hat diesen Aufruf nicht freigegeben (Development-Zugang prüfen).'
         :upstream.status===429?'Trakt-Limit erreicht; später erneut testen.'
         :'Trakt hat den Abruf abgelehnt.';
@@ -50,7 +53,9 @@ async function probe(resource,clientID){
     result.titles=data.slice(0,5).map(x=>mapItem(x,resource.startsWith('movies')?'movie':'show'));
     return result;
   }catch(error){
-    return {ok:false,status:null,message:error?.name==='AbortError'?'Trakt antwortet zu langsam.':'Netzwerkverbindung zu Trakt fehlgeschlagen.'};
+    const timedOut=timer.signal.aborted;
+    console.warn('[FRAME TRAKT TEST]',timedOut?'Request timeout':String(error?.name||'Unknown'),String(error?.message||'').slice(0,160));
+    return {ok:false,status:null,message:timedOut?'Trakt antwortet zu langsam.':error?.name==='TypeError'?'Trakt-Anfrage konnte vom Cloudflare Worker nicht ausgeführt werden.':'Netzwerkverbindung zu Trakt fehlgeschlagen.'};
   }finally{clearTimeout(timeout);}
 }
 export async function handleTraktDiagnostics(request,env,getVerifiedFrameSession){
