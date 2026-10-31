@@ -6,6 +6,7 @@ import { handleFrameAccount, getVerifiedFrameSession } from './frame-account-ser
 import { handleFrameAnalytics } from './frame-analytics-server.js';
 import { handleTraktDiagnostics } from './frame-trakt-test.js';
 import { handleTraktPreview } from './frame-trakt-preview.js';
+import { handleFrameTonight } from './frame-tonight-server.js';
 export { HiddenMatchRoom } from './hidden-match-server.js';
 export { FrameAccount } from './frame-account-server.js';
 
@@ -16,6 +17,7 @@ export default {
     if (url.pathname.startsWith('/api/analytics/')) return handleFrameAnalytics(request, env, getVerifiedFrameSession);
     if (url.pathname === '/api/trakt/diagnostics') return handleTraktDiagnostics(request, env, getVerifiedFrameSession);
     if (url.pathname === '/api/trakt/preview' || url.pathname === '/api/trakt/poster') return handleTraktPreview(request, env, getVerifiedFrameSession);
+    if (url.pathname === '/api/tonight') return handleFrameTonight(request, env);
     if (url.pathname.startsWith('/api/hidden-match/')) {
       return handleHiddenMatch(request, env);
     }
