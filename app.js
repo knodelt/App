@@ -548,7 +548,8 @@ function updateUI() { renderWatchlist(); renderRecommendations(); renderTaste();
 
 function switchView(target) {
   $$('.view').forEach(v=>v.classList.toggle('active', v.dataset.view===target));
-  $$('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.target===(['watchlist','watched'].includes(target)?'taste':target)));
+  const navTarget=target==='tonight'?'personalized':(['watchlist','watched'].includes(target)?'taste':target);
+  $('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.target===navTarget));
   if (target !== 'discover') updateUI();
   document.dispatchEvent(new CustomEvent('frame:view-changed', { detail:{ target } }));
   window.scrollTo({top:0, behavior:'smooth'});
