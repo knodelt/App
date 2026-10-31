@@ -17,7 +17,7 @@ FRAME ist ein Mobile-first-Prototyp für eine Film- und Serien-Discovery-App. St
 - getrennte Speicherung von Swipe-Interesse und echten Gesehen-Bewertungen
 - realer Überblick über gesehene Titel, Gefallen und Merkliste, mit Datum/Notiz je gesehenem Titel
 - lokale Merkliste (jetzt integriert in FRAMELOG)
-- **Daily Frame** mit sieben täglichen Vorschlägen
+- **Frame Tonight** mit drei persönlichen Filmen passend zu Stimmung und verfügbarer Zeit
 - **Frame Match** mit serverseitig synchronisierten 10er-Runden für zwei Geräte
 - nach Zustimmung beider Seiten: bis zu 90 Tage gespeicherte Filmpartner
 - gemeinsame Filmliste aus enthüllten Matches und neue genregewichtete Vorschläge für beide
@@ -132,7 +132,7 @@ Eine Versandadresse ist nicht automatisch ein empfangsbereites Postfach.
 - Parallel bearbeitete Daten werden nicht automatisch überschrieben; FRAME
   verlangt eine bewusste Entscheidung zwischen Gerät und Cloud.
 - Gespeichert werden FRAME-State (Swipes, Merkliste, Gesehen, FRAMELOG),
-  Taste-DNA, Online-Lernen, Empfehlungshistorie, Daily Frame und Stimmungsfilter.
+  Taste-DNA, Online-Lernen, Empfehlungshistorie, Frame Tonight und Stimmungsfilter.
 - Frame-Match-Raumcodes/Sitzungsschlüssel werden nicht mit Cloud synchronisiert.
 - Abmelden entfernt die private lokale Kopie; die Cloud bleibt erhalten.
 - Die Kontolöschung entfernt den privaten Cloud-Datensatz und alle Sessions.
@@ -166,7 +166,7 @@ Beim Abmelden werden lokale Daten erst dann gelöscht, wenn ihre Synchronisierun
 abgeschlossen ist. Beim Kontolöschen gilt weiterhin die ausdrückliche
 Löschbestätigung.
 
-**Startverhalten:** Daily Frame und Taste-DNA schreiben bei unverändertem
+**Startverhalten:** Frame Tonight und Taste-DNA schreiben bei unverändertem
 Zustand nicht mehr blind in den Browserspeicher. Der Service Worker cached
 keine Bilder fremder Anbieter mehr; wichtige Offline-Dateien bleiben erhalten.
 
@@ -273,7 +273,7 @@ Cache-Update sowie die Darstellung bei noch leerem FRAMELOG.
       Backups und Verantwortlichkeiten prüfen.
 - [ ] **Beta-Praxistest:** 5–10 freiwillige Personen, iPhone/Android,
       verschiedene Browser. Login-Code, Cloud-Sync auf zwei Geräten,
-      Framing, Für dich, FRAMELOG, Daily Frame, Frame Match, Offline
+      Framing, Für dich, FRAMELOG, Frame Tonight, Frame Match, Offline
       und Datenlöschung nachvollziehbar testen. Keine Codes oder
       privaten Filmhistorien in Feedback-Nachrichten erbitten.
 - [ ] **Release-Entscheid:** kritisch gemeldete Fehler behoben,
@@ -302,7 +302,7 @@ Zugriffskontrolle. Es ist kein zusätzlicher Admin-Zugang mit statischem Passwor
   kann nach Zustimmung die verifizierte E-Mail-Adresse im Admin-Bereich erscheinen.
 - Live-Aktivität = sichtbare und vor Kurzem aktive App (letzte fünf Minuten),
   keine sekundengenaue Präsenz. Zählung ist gerätebezogen, keine exakte Personenzahl.
-- Gezählt werden App-Aufrufe, Swipes und das Öffnen von Daily Frame,
+- Gezählt werden App-Aufrufe, Swipes und das Öffnen von Frame Tonight,
   „Für dich“, FRAMELOG und Frame Match; nicht die Inhalte der Filmlisten.
 - Für die Auswertung wird eine separate `FRAME_ACCOUNTS`-Durable-Object-Instanz
   mit dem Namen `frame-private-analytics-v1` verwendet. Sie ist nicht aus dem
@@ -323,57 +323,42 @@ E-Mail muss der API-Endpunkt 403 liefern. Einwilligung widerrufen und prüfen,
 ob der betreffende Datensatz im Dashboard verschwindet. Offline,
 Mehrfach-Tabs und Konto-Löschung ebenfalls testen.
 
-## FRAME TONIGHT · persönliche Filmauswahl (31.10.2026)
+## FRAME TONIGHT · Haupt-Tab statt Daily Frame (31.10.2026)
 
-Neue Filmabend-Funktion **innerhalb der bestehenden sechs Tabs**, erreichbar über
-den **TONIGHT**-Schnellzugriff im Framing-Feed und den prominenten Einstieg
-unter **Für dich**. Die Sekundäransicht verwendet jetzt konsequent
-FRAME-typische Überschriften (gleiche `section-head compact`-Struktur wie
-„Für dich“), rosa Akzentfarben, dunkle Panels und kompakte Auswahl-Chips.
-Der übergroße eigene Hero und die lachsfarbenen Buttons wurden entfernt.
-Die **Für dich**-Navigation bleibt dabei aktiv; ein Fehler in `switchView`
-(`querySelector` statt `querySelectorAll` für aktive Tabs) wurde behoben.
-Die Sekundäransicht liegt in `index.html`; die getrennten
-Dateien sind `frame-tonight.js` und `frame-tonight.css`.
+**Frame Tonight hat den bisherigen Daily-Frame-Tab vollständig ersetzt** und
+ist direkt als dritter der sechs Navigationspunkte unten erreichbar.
+Die frühere Siebener-Daily-Auswahl, ihre Abstimmungen, Fortschrittsanzeige,
+das dazugehörige `frame-loop.js` sowie der ungenutzte Solo-Picker wurden
+aus der App entfernt. Frame Match (eigene Room-Logik in
+`hidden-match-client.js`) ist weiterhin unabhängig verfügbar.
+Die doppelten TONIGHT-Einstiege in Framing und Für dich sind ebenfalls entfernt.
 
-- Stimmung wählen: Offen, Runterkommen, Spannung, Lachen, Kopfkino, Überraschung.
-- Zeit: Egal, 90 / 120 / 150 / 180 Minuten. Unter einer gewählten Grenze
-  werden nur Filme mit **bekannter Laufzeit** berücksichtigt; unbekannte
-  Laufzeiten werden nicht als passend behauptet.
-- Bis zu drei Vorschläge aus dem bestehenden lokalen FRAME-Katalog,
-  Merkliste und FRAMELOG-Snapshots **plus** einem gezielten Filmabruf beim
-  Erstellen der Abend-Auswahl. `GET /api/tonight?minutes=90|120|150|180|0&mood=...`
-  nutzt den bestehenden TMDB-Worker-Secret, filtert `discover/movie` mit
-  `with_runtime.lte` und **verifiziert die Minuten per `movie/{id}`**.
-  Im normalen Feed stehen lediglich Bewertungen statt Laufzeiten; deswegen
-  waren 90 und 120 Minuten vorher häufig leer. Keine LLM-Abfrage, kein
-  Training, keine erfundenen Laufzeiten oder Match-Prozente.
-- Regelbasierte Bewertung nach Genre/Stimmung, bekannten SUPER/MIST-Signalen,
-  bestehender Merkliste, Diversity und stabiler Tagesreihenfolge.
-  Bereits gesehene, abgelehnte und „Nicht heute“ ausgeschlossene Titel fallen weg.
-  Bei weniger als drei Treffern wird die tatsächliche Anzahl angezeigt.
-- Aktionen: **Merken** ergänzt die bestehende FRAMELOG-Merkliste, **Gesehen?**
-  startet den existierenden Bewertungsdialog, **Nicht heute** ersetzt den
-  betreffenden Vorschlag ohne eine dauerhafte Negativbewertung.
-- Tagesauswahl, Präferenzen und eine kleine Anzahl verifizierter
-  Film-Snapshots liegen in `frame-tonight-v1` und sind in Konto-Backup/
-  Cloud-Sync freigeschaltet. Kein Schreiben beim Laden, damit keine neue
-  Cloud-Reload-Schleife entsteht. Es werden keine persönlichen
-  Geschmackssignale an den neuen Filmdaten-Endpunkt gesendet.
-  `Nicht heute` kann bei Bedarf die nächste Filmseite nachladen.
-- Mit freiwilliger Analytics-Einwilligung zählt der Control Room
-  Aufrufe der TONIGHT-Ansicht, ohne individuelle Film-IDs aufzuzeichnen.
-- Technisch **datenanbieterneutraler Auswahlalgorithmus**; Bildpfade und
-  bestehende Movie-Snapshots können momentan aber noch TMDB-basiert sein.
-  Vor einem öffentlichen Launch weiterhin die Nutzungs- und Bildrechte
-  und Trakt Production-Zugang klären.
+- Stimmung: Offen für alles, Runterkommen, Spannung, Lachen, Kopfkino,
+  Überrasch mich.
+- Zeit: Egal, maximal 90, 120, 150 oder 180 Minuten.
+- Bis zu drei Filme aus dem vorhandenen Katalog, FRAMELOG und einem
+  bei Auswahl angeforderten Feed mit **verifizierter Laufzeit**.
+  `/api/tonight` verwendet den bestehenden TMDB-Schlüssel serverseitig
+  und prüft per Detailabruf jede Laufzeit. Die Standard-Filmkarten
+  enthalten dagegen Bewertungen anstelle der Laufzeit.
+- Die Auswahl nutzt vorhandene SUPER/MIST-Signale und Taste-DNA,
+  schließt abgelehnte/gesehene Filme aus und erklärt ihre Gründe.
+  Keine KI-Datenweitergabe und keine erfundenen Filmlängen.
+- **Merken**, **Gesehen?** und **Nicht heute** verwenden bestehende
+  FRAMELOG-Funktionen bzw. laden neue passende Titel nach.
+- Tagesauswahl und kleine geprüfte Titel-Snapshots werden in
+  `frame-tonight-v1` gespeichert und mit dem Konto synchronisiert.
+- Die Cloud ignoriert ältere Daily-Drop-Felder aus vorigen Backups
+  und übernimmt die weiterhin gültigen Nutzer-/Filmdaten. Die alten
+  Datenfelder werden nicht mehr in neue Backups aufgenommen.
+- Eine freiwillige Nutzungsstatistik zählt Aufrufe des Tabs.
+- Trakt bleibt weiterhin im Entwickler-Testmodus; die öffentliche
+  Filmdatenquelle wurde für diese Umstellung nicht gewechselt.
 
-Tests: Auf iPhone, Tablet und Desktop TONIGHT öffnen; sechs Navigationspunkte
-müssen einzeilig bleiben. 90 Minuten dürfen keinen 120-Minuten-Film
-ausgeben. Bereits gesehene/abgelehnte Titel bleiben ausgeschlossen,
-„Nicht heute“ liefert andere Vorschläge (soweit verfügbar), „Merken“
-erscheint in FRAMELOG und in der Cloud. Ohne genug Filmmaterial werden
-keine erfundenen Ergebnisse dargestellt.
+**Manuelle Prüfung nach Deployment:** Alle sechs Tabs, iPhone-Navigation,
+keine Daily-Frame-Reste, Auswahl 90/120 Minuten, Merken / Gesehen? /
+Nicht heute, FRAMELOG, Frame Match, Cloud-Anmeldung und Starttutorial.
+
 
 ## Trakt-Karten-Vorschau (31.10.2026)
 
@@ -480,7 +465,7 @@ Ohne lokales Worker-Runtime-Setup läuft dabei nur der Seed-Katalog. Für das ko
 4. E-Mail-Login über Brevo und Cloudflare-Secrets verlässlich betreiben
 5. Konten mit zwei Smartphones live testen und bei Bedarf verbessern
 6. optional bestehende Frame-Match-Partnerschaften mit Accounts verknüpfen
-7. Push/Reminder für neue Daily Drops und neue gemeinsame Matches
+7. Push/Reminder für neue Frame-Tonight-Filmabende und gemeinsame Matches
 8. später optional Capacitor für native iOS-/Android-Builds
 
 ---
