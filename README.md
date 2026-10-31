@@ -327,7 +327,13 @@ Mehrfach-Tabs und Konto-Löschung ebenfalls testen.
 
 Neue Filmabend-Funktion **innerhalb der bestehenden sechs Tabs**, erreichbar über
 den **TONIGHT**-Schnellzugriff im Framing-Feed und den prominenten Einstieg
-unter **Für dich**. Die Sekundäransicht liegt in `index.html`; die getrennten
+unter **Für dich**. Die Sekundäransicht verwendet jetzt konsequent
+FRAME-typische Überschriften (gleiche `section-head compact`-Struktur wie
+„Für dich“), rosa Akzentfarben, dunkle Panels und kompakte Auswahl-Chips.
+Der übergroße eigene Hero und die lachsfarbenen Buttons wurden entfernt.
+Die **Für dich**-Navigation bleibt dabei aktiv; ein Fehler in `switchView`
+(`querySelector` statt `querySelectorAll` für aktive Tabs) wurde behoben.
+Die Sekundäransicht liegt in `index.html`; die getrennten
 Dateien sind `frame-tonight.js` und `frame-tonight.css`.
 
 - Stimmung wählen: Offen, Runterkommen, Spannung, Lachen, Kopfkino, Überraschung.
