@@ -273,17 +273,21 @@ function renderInputs(){
   qs('frameTonightGo').textContent=ready?'Neu auswählen':'Meine drei Filme finden';
 }
 function resetChoice(){
-  requestId++;form.picks=[];form.excluded=[];form.cards=[];remoteItems=[];
+  requestId++;working=false;
+  qs('frameTonightGo').disabled=false;
+  form.picks=[];form.excluded=[];form.cards=[];remoteItems=[];
   remotePage=1;remoteHasMore=false;ready=false;lastError='';
   savePref();renderInputs();renderResults();
 }
 // The standard Discover feed has ratings but no runtime. Ask the Worker for
 // time-filtered movies and verify their actual lengths before recommending.
 async function fetchVerifiedMovies(page=1,replace=true){
-  const r=await fetch('/api/tonight?minutes='+form.limit+'&mood='+encodeURIComponent(form.mood)+'&page='+page,{
+  const expectedMood=form.mood,expectedMinutes=form.limit,stamp=requestId;
+  const r=await fetch('/api/tonight?minutes='+expectedMinutes+'&mood='+encodeURIComponent(expectedMood)+'&page='+page,{
     headers:{accept:'application/json'},cache:'no-store'
   });
   const data=await r.json().catch(()=>({}));
+  if(stamp!==requestId||form.mood!==expectedMood||form.limit!==expectedMinutes)return false;
   if(!r.ok||!data.ok||!Array.isArray(data.items)||!data.verifiedRuntimes)
     throw Error(data.error||'Filmquelle gerade nicht erreichbar.');
   const incoming=data.items.map(normalize).filter(item=>item&&item.minutes!==null
@@ -296,6 +300,7 @@ async function fetchVerifiedMovies(page=1,replace=true){
   remoteHasMore=!!data.hasMore;
   remotePage=page;
   form.cards=remoteItems;
+  return true;
 }
 async function generate(){
   const stamp=++requestId;
