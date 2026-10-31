@@ -340,9 +340,14 @@ Dateien sind `frame-tonight.js` und `frame-tonight.css`.
 - Zeit: Egal, 90 / 120 / 150 / 180 Minuten. Unter einer gewählten Grenze
   werden nur Filme mit **bekannter Laufzeit** berücksichtigt; unbekannte
   Laufzeiten werden nicht als passend behauptet.
-- Bis zu drei Vorschläge aus dem **bereits geladenen lokalen FRAME-Katalog**,
-  den gespeicherten Titeln und FRAMELOG-Snapshots. Kein neuer API-Endpunkt,
-  keine LLM-Abfrage, kein Training, keine erfundenen Match-Prozente.
+- Bis zu drei Vorschläge aus dem bestehenden lokalen FRAME-Katalog,
+  Merkliste und FRAMELOG-Snapshots **plus** einem gezielten Filmabruf beim
+  Erstellen der Abend-Auswahl. `GET /api/tonight?minutes=90|120|150|180|0&mood=...`
+  nutzt den bestehenden TMDB-Worker-Secret, filtert `discover/movie` mit
+  `with_runtime.lte` und **verifiziert die Minuten per `movie/{id}`**.
+  Im normalen Feed stehen lediglich Bewertungen statt Laufzeiten; deswegen
+  waren 90 und 120 Minuten vorher häufig leer. Keine LLM-Abfrage, kein
+  Training, keine erfundenen Laufzeiten oder Match-Prozente.
 - Regelbasierte Bewertung nach Genre/Stimmung, bekannten SUPER/MIST-Signalen,
   bestehender Merkliste, Diversity und stabiler Tagesreihenfolge.
   Bereits gesehene, abgelehnte und „Nicht heute“ ausgeschlossene Titel fallen weg.
@@ -350,9 +355,12 @@ Dateien sind `frame-tonight.js` und `frame-tonight.css`.
 - Aktionen: **Merken** ergänzt die bestehende FRAMELOG-Merkliste, **Gesehen?**
   startet den existierenden Bewertungsdialog, **Nicht heute** ersetzt den
   betreffenden Vorschlag ohne eine dauerhafte Negativbewertung.
-- Tagesauswahl und Präferenzen liegen in `frame-tonight-v1` und sind in
-  Konto-Backup/Cloud-Sync freigeschaltet. Kein Schreiben beim Laden,
-  damit keine neue Cloud-Reload-Schleife entsteht.
+- Tagesauswahl, Präferenzen und eine kleine Anzahl verifizierter
+  Film-Snapshots liegen in `frame-tonight-v1` und sind in Konto-Backup/
+  Cloud-Sync freigeschaltet. Kein Schreiben beim Laden, damit keine neue
+  Cloud-Reload-Schleife entsteht. Es werden keine persönlichen
+  Geschmackssignale an den neuen Filmdaten-Endpunkt gesendet.
+  `Nicht heute` kann bei Bedarf die nächste Filmseite nachladen.
 - Mit freiwilliger Analytics-Einwilligung zählt der Control Room
   Aufrufe der TONIGHT-Ansicht, ohne individuelle Film-IDs aufzuzeichnen.
 - Technisch **datenanbieterneutraler Auswahlalgorithmus**; Bildpfade und
