@@ -1,7 +1,7 @@
 // Private Trakt discovery preview. Development credentials never reach the browser.
 // Existing TMDB feed, accounts, user film state and swipes remain unchanged.
 const PREVIEW_OWNER = 'knodelthomas@googlemail.com';
-const PREVIEW_LIMIT = 6;
+const PREVIEW_LIMIT = 5;
 const MEDIA_TYPES = {movies:'movie',shows:'show'};
 const JSON_HEADERS = {'content-type':'application/json; charset=utf-8','cache-control':'private, no-store','x-content-type-options':'nosniff'};
 const respond = (data,status=200)=>new Response(JSON.stringify(data),{status,headers:JSON_HEADERS});
@@ -31,6 +31,8 @@ async function traktGET(path,key){
       method:'GET',redirect:'manual',signal:abort.signal,
       headers:{
         'accept':'application/json',
+        'content-type':'application/json',
+        'user-agent':'FRAME/1.0 (Trakt developer connectivity test)',
         'trakt-api-version':'2',
         'trakt-api-key':key
       }
@@ -38,6 +40,8 @@ async function traktGET(path,key){
     if(!res.ok){
       const error=Error('Trakt antwortet mit HTTP '+res.status);
       error.status=res.status;
+      error.endpoint=path.split('?')[0];
+      error.retryAfter=Number(res.headers.get('retry-after')||0)||null;
       throw error;
     }
     const data=await res.json();
@@ -68,32 +72,64 @@ function normalize(media,type,translation){
     hasPoster:!!imageFrom(media)
   };
 }
-async function previewOne(item,type,key){
-  const partial=item?.[type]||{};
-  const traktId=partial?.ids?.trakt;
-  if(!Number.isInteger(traktId)||traktId<=0)return normalize(partial,type,null);
-  let media=partial,translation=null;
-  // List results sometimes have stale, minimal embedded metadata.
-  const result=await Promise.allSettled([
-    traktGET((type==='movie'?'movies/':'shows/')+traktId+'?extended=full',key),
-    traktGET((type==='movie'?'movies/':'shows/')+traktId+'/translations/de',key)
-  ]);
-  if(result[0].status==='fulfilled' && result[0].value && typeof result[0].value==='object')
-    media={...partial,...result[0].value};
-  if(result[1].status==='fulfilled'&&Array.isArray(result[1].value)){
-    translation=result[1].value.find(x=>x?.language==='de'&&x?.country==='de'&&x?.overview)||
-      result[1].value.find(x=>x?.language==='de'&&x?.overview)||null;
-  }
-  return normalize(media,type,translation);
-}
+// Start with the exact public request already proven to work in the connection
+// test. Then attempt documented extra detail endpoints individually. A 403
+// disables further requests to the affected endpoint family for this preview.
 async function previewList(section,key){
   const type=MEDIA_TYPES[section];
-  const items=await traktGET(section+'/trending?limit='+PREVIEW_LIMIT+'&page=1&extended=full',key);
+  // Matches the working developer diagnostics: no extended parameter,
+  // no extra page selector, and no burst of requests on initial load.
+  const items=await traktGET(section+'/trending?limit='+PREVIEW_LIMIT,key);
   if(!Array.isArray(items))throw Error('Trakt lieferte kein erwartetes Listenformat.');
-  const cards=await Promise.all(items.slice(0,PREVIEW_LIMIT).map(item=>previewOne(item,type,key)));
+  const cards=[],warnings=[];
+  const access={trending:'ok',details:'not-tested',translations:'not-tested'};
+  let detailsRestricted=false, translationsRestricted=false;
+  const prefix=type==='movie'?'movies/':'shows/';
+  const statusMessage=(part,e)=>part+' nicht verfügbar ('+(e?.status?'HTTP '+e.status:'Verbindungsfehler')+').';
+
+  for(const item of items.slice(0,PREVIEW_LIMIT)){
+    const partial=item?.[type]||{};
+    const id=partial?.ids?.trakt;
+    let media=partial,translation=null;
+    if(Number.isInteger(id)&&id>0&&!detailsRestricted){
+      try{
+        const full=await traktGET(prefix+id+'?extended=full',key);
+        if(full && typeof full==='object'&&!Array.isArray(full)){
+          media={...partial,...full};
+          access.details='available';
+        }
+      }catch(error){
+        access.details=error?.status===403?'restricted':error?.status===429?'rate-limited':'unavailable';
+        if(warnings.length<3)warnings.push(statusMessage('Erweiterte Filmdaten',error));
+        // Do not repeatedly retry endpoints which are explicitly denied.
+        detailsRestricted=true;
+      }
+    }
+    if(Number.isInteger(id)&&id>0&&!translationsRestricted&&!detailsRestricted){
+      try{
+        const values=await traktGET(prefix+id+'/translations/de',key);
+        if(Array.isArray(values)){
+          translation=values.find(v=>v?.language==='de'&&v?.country==='de'&&v?.overview)||
+            values.find(v=>v?.language==='de'&&v?.overview)||null;
+          access.translations='available';
+        }
+      }catch(error){
+        if(error?.status===403||error?.status===401||error?.status===429){
+          translationsRestricted=true;
+          access.translations=error.status===429?'rate-limited':'restricted';
+          if(warnings.length<3)warnings.push(statusMessage('Deutsche Übersetzungen',error));
+        }else if(error?.status!==404 && warnings.length<3){
+          warnings.push(statusMessage('Einzelne deutsche Übersetzung',error));
+        }
+      }
+    }
+    cards.push(normalize(media,type,translation));
+  }
+  if(access.details==='not-tested'){
+    warnings.push('Trakt hat nur die öffentliche Titelliste geliefert. Zusätzliche Details wurden nicht angefragt.');
+  }
   return {
-    type,items:cards,
-    count:cards.length,
+    type,items:cards,count:cards.length,access,warnings,
     coverage:{
       posters:cards.filter(x=>x.hasPoster).length,
       german:cards.filter(x=>x.translated).length,
@@ -176,7 +212,10 @@ export async function handleTraktPreview(request,env,getVerifiedFrameSession){
     }
     return respond(payload);
   }catch(err){
-    const status=err?.status===429?429:502;
-    return respond({ok:false,error:status===429?'Trakt-Limit erreicht. Bitte später testen.':'Trakt-Vorschau derzeit nicht abrufbar: '+short(err?.message||'Unbekannter Fehler',130)},status);
+    const status=err?.status===429?429:err?.status===403?403:502;
+    const explanation=status===429?'Trakt-Limit erreicht. Bitte später testen.'
+      :status===403?'Trakt verweigert bereits den öffentlichen Listenabruf (HTTP 403). Bitte in Trakt die Berechtigung deiner Development-App prüfen.'
+      :'Trakt-Vorschau derzeit nicht abrufbar: '+short(err?.message||'Unbekannter Fehler',130);
+    return respond({ok:false,source:'trakt',upstreamStatus:err?.status||null,error:explanation},status);
   }
 }
