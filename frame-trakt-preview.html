@@ -27,6 +27,8 @@ h1{font:600 clamp(42px,7vw,78px)/.98 Georgia,serif;letter-spacing:-.055em;margin
 .refresh:disabled{opacity:.45}
 #status{color:#b5a3b3;font-size:12px;margin:14px 0 25px;min-height:20px}
 #status.error{color:#ffb7b7}
+.warning{margin:-7px 0 24px;padding:13px 15px;border:1px solid rgba(244,186,115,.35);background:rgba(244,186,115,.075);border-radius:12px;color:#f4d6b2;font-size:12px;line-height:1.6}
+.warning[hidden]{display:none}
 .stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:23px}
 .stats[hidden],#grid[hidden],#empty[hidden]{display:none}
 .stat{padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.045);font-size:12px;color:#c8b8c6}
@@ -73,6 +75,7 @@ h2{font:600 clamp(24px,2.8vw,30px)/1.11 Georgia,serif;margin:0 0 12px;letter-spa
  <button class="refresh" id="refresh" type="button">Vorschau laden</button>
 </div>
 <p id="status" role="status">Noch keine Daten abgerufen. Klicke auf „Vorschau laden“.</p>
+<div class="warning" id="previewWarning" role="status" hidden></div>
 <div class="stats" id="stats" hidden></div>
 <div id="grid" class="grid" hidden></div>
 <div class="empty" id="empty">Die Vorschau läuft ausschließlich über dein verifiziertes FRAME-Administratorkonto.</div>
@@ -88,6 +91,7 @@ let current='movies',loading=false;
 const labels={action:'Action',adventure:'Abenteuer',animation:'Animation',comedy:'Komödie',crime:'Krimi',documentary:'Dokumentation',drama:'Drama',family:'Familie',fantasy:'Fantasy',history:'Historie',horror:'Horror',music:'Musik',mystery:'Mystery',romance:'Romantik',science_fiction:'Science Fiction',thriller:'Thriller',war:'Krieg',western:'Western'};
 function section(type){
   current=type;
+  el('previewWarning').hidden=true;
   el('moviesTab').setAttribute('aria-selected',String(type==='movies'));
   el('showsTab').setAttribute('aria-selected',String(type==='shows'));
   el('refresh').textContent=loaded.has(type)?'Neu abrufen':'Vorschau laden';
@@ -155,6 +159,9 @@ function card(item){
 }
 function render(data){
   if(data.section!==current)return;
+  const warning=el('previewWarning');
+  warning.hidden=!(data.warnings?.length);
+  warning.textContent=(data.warnings||[]).join(' ') + (data.access?.details==='restricted'?' Trakt hat erweiterte Detailabfragen nicht freigegeben; wir versuchen nicht, diese Sperre zu umgehen.':'');
   el('grid').replaceChildren();el('stats').replaceChildren();
   el('grid').hidden=false;el('stats').hidden=false;el('empty').hidden=true;
   const coverage=data.coverage||{};
@@ -166,7 +173,7 @@ function render(data){
   for(const item of data.items||[])el('grid').append(card(item));
   if(!data.items?.length){el('grid').hidden=true;el('empty').hidden=false;el('empty').textContent='Trakt hat keine Titel zurückgegeben.';}
   const stamp=new Date(data.checkedAt).toLocaleString('de-DE',{dateStyle:'short',timeStyle:'short'});
-  el('status').textContent=data.count+' '+(current==='movies'?'Filme':'Serien')+' von Trakt geladen · '+stamp+' · '+(coverage.german||0)+' deutsche Beschreibungen';
+  el('status').textContent=data.count+' '+(current==='movies'?'Filme':'Serien')+' von Trakt geladen · '+stamp+' · '+(coverage.german||0)+' deutsche Beschreibungen'+(data.access?.details==='restricted'?' · Nur öffentliche Basisdaten':'');
   el('status').className='';
   el('refresh').textContent='Neu abrufen';
 }
@@ -179,7 +186,7 @@ async function load(){
   try{
     const res=await fetch('/api/trakt/preview?type='+requested,{credentials:'same-origin',cache:'no-store'});
     const data=await res.json();
-    if(!res.ok)throw Error(data.error||'Vorschau nicht verfügbar (HTTP '+res.status+').');
+    if(!res.ok)throw Object.assign(new Error(data.error||'Vorschau nicht verfügbar (HTTP '+res.status+').'),{status:res.status});
     loaded.set(requested,data);
     if(requested===current)render(data);
   }catch(error){
@@ -187,7 +194,10 @@ async function load(){
       el('status').className='error';
       el('status').textContent='Vorschau fehlgeschlagen: '+(error.message||'Unbekannter Fehler');
       el('stats').hidden=true;el('grid').hidden=true;el('empty').hidden=false;
-      el('empty').textContent='Bitte vergewissere dich, dass du auf framingapp.de als FRAME-Administrator angemeldet bist.';
+      el('previewWarning').hidden=true;
+      el('empty').textContent=error.status===401||error.status===403&&!String(error.message).includes('Trakt')
+        ? 'Bitte in FRAME mit dem freigegebenen Administratorkonto anmelden.'
+        : 'Trakt hat eine API-Anfrage abgelehnt oder konnte nicht erreicht werden. Die Details stehen in der Fehlermeldung darüber.';
     }
   }finally{loading=false;el('refresh').disabled=false;}
 }
