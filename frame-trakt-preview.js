@@ -6,22 +6,33 @@ const MEDIA_TYPES = {movies:'movie',shows:'show'};
 const JSON_HEADERS = {'content-type':'application/json; charset=utf-8','cache-control':'private, no-store','x-content-type-options':'nosniff'};
 const respond = (data,status=200)=>new Response(JSON.stringify(data),{status,headers:JSON_HEADERS});
 const short = (v,max=3000)=>typeof v==='string'?v.slice(0,max):'';
-const posterPath = input=>{
-  if(typeof input!=='string'||input.length>400)return null;
+// Trakt moved its image CDN from walter-r2.trakt.tv to media.trakt.tv in 2026.
+// Do NOT hotlink the CDN: only return URLs for our authenticated caching proxy.
+// Hosts and paths are checked against allowlists; user input never picks an
+// arbitrary origin, avoiding an SSRF/open-proxy endpoint.
+const POSTER_HOSTS=new Set(['media.trakt.tv','walter-r2.trakt.tv']);
+function posterSource(input){
+  if(typeof input!=='string'||input.length>500)return null;
   let url;
-  try { url=new URL(input.startsWith('http')?input:'https://'+input.replace(/^\/\//,'')); }
-  catch { return null; }
-  if(url.protocol!=='https:'||url.hostname!=='walter-r2.trakt.tv'||url.port||url.search||url.hash)return null;
+  try{url=new URL(/^https?:\/\//i.test(input)?input:'https://'+input.replace(/^\/\//,''));}
+  catch{return null;}
+  if(url.protocol!=='https:'||!POSTER_HOSTS.has(url.hostname)||url.port||url.username||url.password||url.search||url.hash)return null;
   if(!/^\/images\/(movies|shows)\/[a-zA-Z0-9_.\/-]+\.webp$/.test(url.pathname))return null;
   if(!/\/posters\//.test(url.pathname))return null;
-  return url.pathname;
-};
+  return {host:url.hostname,path:url.pathname};
+}
 function imageFrom(media){
   const images=media?.images;
   if(!images)return null;
-  const v=Array.isArray(images.poster)?images.poster[0]:images.poster;
-  const path=posterPath(v);
-  return path?'/api/trakt/poster?asset='+encodeURIComponent(path):null;
+  const urls=Array.isArray(images.poster)?images.poster:[images.poster];
+  for(const entry of urls){
+    const poster=posterSource(entry);
+    if(poster){
+      const params=new URLSearchParams({host:poster.host,asset:poster.path});
+      return '/api/trakt/poster?'+params.toString();
+    }
+  }
+  return null;
 }
 async function traktGET(path,key){
   const abort=new AbortController();
@@ -49,6 +60,7 @@ async function traktGET(path,key){
   } finally {clearTimeout(timer);}
 }
 function normalize(media,type,translation){
+  const poster=imageFrom(media);
   const useGerman=!!(translation?.overview&&typeof translation.overview==='string');
   const overview=useGerman?translation.overview:short(media?.overview||'',1500);
   return {
@@ -68,8 +80,8 @@ function normalize(media,type,translation){
     rating:Number.isFinite(media?.rating)?Math.round(media.rating*10)/10:null,
     votes:Number.isInteger(media?.votes)?media.votes:null,
     runtime:Number.isInteger(media?.runtime)?media.runtime:null,
-    poster:imageFrom(media),
-    hasPoster:!!imageFrom(media)
+    poster,
+    hasPoster:!!poster
   };
 }
 // Start with the exact public request already proven to work in the connection
@@ -139,8 +151,11 @@ async function previewList(section,key){
   };
 }
 async function cachedPoster(request){
-  const asset=new URL(request.url).searchParams.get('asset')||'';
-  if(!posterPath('walter-r2.trakt.tv'+asset) || !asset.startsWith('/images/'))
+  const requestUrl=new URL(request.url);
+  const host=requestUrl.searchParams.get('host')||'walter-r2.trakt.tv';
+  const asset=requestUrl.searchParams.get('asset')||'';
+  const poster=posterSource('https://'+host+asset);
+  if(!poster || poster.host!==host || poster.path!==asset)
     return respond({ok:false,error:'Ungültiges Bild.'},400);
   const cache=typeof caches!=='undefined'?caches.default:null;
   const cacheReq=new Request(new URL(request.url).toString(),{method:'GET'});
@@ -151,7 +166,7 @@ async function cachedPoster(request){
   const abort=new AbortController();
   const timeout=setTimeout(()=>abort.abort(),8000);
   try{
-    const res=await fetch('https://walter-r2.trakt.tv'+asset,{
+    const res=await fetch('https://'+poster.host+poster.path,{
       method:'GET',redirect:'manual',signal:abort.signal,
       headers:{'accept':'image/webp'}
     });
@@ -194,7 +209,9 @@ export async function handleTraktPreview(request,env,getVerifiedFrameSession){
   // Only public Trakt metadata is cached, and only after admin verification.
   // This prevents repeated detail/translation requests while testing tabs.
   const cache=typeof caches!=='undefined'?caches.default:null;
-  const cacheKey=new Request('https://framingapp.de/api/trakt/preview?type='+section);
+  // Increment the cache version after changing image normalization to avoid
+  // re-serving older '0 poster' payloads for up to 10 minutes.
+  const cacheKey=new Request('https://framingapp.de/api/trakt/preview?v=2&type='+section);
   if(cache){
     const cached=await cache.match(cacheKey).catch(()=>null);
     if(cached){
