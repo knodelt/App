@@ -17,17 +17,20 @@ const day=()=>new Date().toLocaleDateString('sv-SE');
 const text=(v,max=200)=>String(v??'').slice(0,max);
 const canon=s=>text(s,100).toLocaleLowerCase('de-DE').trim();
 const seed=s=>{let n=2166136261;for(const x of s){n^=x.charCodeAt(0);n=Math.imul(n,16777619)}return n>>>0};
-const blank=()=>({day:day(),mood:'any',limit:0,picks:[],excluded:[]});
+const blank=()=>({day:day(),mood:'any',limit:0,picks:[],excluded:[],cards:[]});
 function read(){
   try{
     const x=JSON.parse(localStorage.getItem(KEY)||'null');
     if(x?.day!==day()||!MOODS[x.mood]||!TIMES.has(x.limit))return blank();
     return {day:day(),mood:x.mood,limit:x.limit,
       picks:Array.isArray(x.picks)?x.picks.filter(a=>typeof a==='string').slice(0,3):[],
-      excluded:Array.isArray(x.excluded)?x.excluded.filter(a=>typeof a==='string').slice(0,80):[]};
+      excluded:Array.isArray(x.excluded)?x.excluded.filter(a=>typeof a==='string').slice(0,80):[],
+      // Keep verified movie runtimes across reloads and account cloud sync.
+      cards:Array.isArray(x.cards)?x.cards.slice(0,24).map(normalize).filter(Boolean):[]};
   }catch{return blank()}
 }
-let form=read(),ready=form.picks.length>0,current=[];
+let form=read(),ready=form.picks.length>0,current=[],remoteItems=[...form.cards];
+let remoteHasMore=false,remotePage=1,requestId=0,working=false,lastError='';
 function savePref(){
   try{
     const value=JSON.stringify(form);
@@ -61,7 +64,7 @@ function normalize(item){
     art:text(item.art,180)};
 }
 function pool(){
-  const all=[...(typeof catalog!=='undefined'&&Array.isArray(catalog)?catalog:[])];
+  const all=[...remoteItems,...(typeof catalog!=='undefined'&&Array.isArray(catalog)?catalog:[])];
   all.push(...Object.values(state.savedItems||{}));
   for(const record of Object.values(state.frameLogItems||{}))if(record?.item)all.push(record.item);
   const result=[],seen=new Set(),titles=new Set();
@@ -170,7 +173,7 @@ function node(tag,cls,content){
 }
 function snapshot(item){
   return {id:item.id,type:'movie',tmdbId:item.tmdbId,source:item.source,
-    title:item.title,year:item.year,meta:item.meta,subtitle:item.subtitle,
+    title:item.title,year:item.year,meta:item.meta,runtime:item.minutes,subtitle:item.subtitle,
     blurb:item.blurb,tags:[...item.tags],poster:item.poster,art:item.art};
 }
 function mark(item){
@@ -188,9 +191,21 @@ function mark(item){
   if(typeof showToast==='function')showToast('In FRAMELOG gemerkt');
   renderResults();
 }
-function skip(item){
+async function skip(item){
   if(!form.excluded.includes(item.id))form.excluded.push(item.id);
   form.picks=[];pick(true);savePref();renderResults();
+  if(current.length>=3||!remoteHasMore||working)return;
+  const stamp=++requestId;
+  working=true;
+  try{
+    await fetchVerifiedMovies(Math.min(4,remotePage+1),false);
+    if(stamp!==requestId)return;
+    form.picks=[];pick(true);savePref();renderResults();
+  }catch(error){
+    if(stamp===requestId){
+      console.warn('[FRAME TONIGHT] Weitere Filme nicht verfügbar:',String(error?.message||error).slice(0,100));
+    }
+  }finally{if(stamp===requestId)working=false;}
 }
 function renderResults(){
   const host=qs('frameTonightResults'),summary=qs('frameTonightSummary');
@@ -204,9 +219,11 @@ function renderResults(){
   host.hidden=false;qs('frameTonightEmpty').hidden=true;
   summary.textContent=chosen.length===3?'Drei Filme. Ohne endlose Suche.':
     chosen.length?'Aktuell passen nur '+chosen.length+' Filme zu deinen Vorgaben.':
-    'Kein Treffer – versuch mehr Zeit oder eine andere Stimmung.';
+    lastError?'Filme konnten nicht nachgeladen werden. '+lastError:
+    'Noch kein Treffer – wähle eine andere Stimmung oder mehr Zeit.';
   if(!chosen.length){
-    host.append(node('p','tonight-no-result','Bei festem Zeitlimit werden Titel ohne bekannte Laufzeit nicht angezeigt. Die Auswahl erfindet keine Filmdaten.'));
+    host.append(node('p','tonight-no-result',
+      'FRAME zeigt ausschließlich Filme mit bestätigter Laufzeit. Versuche eine andere Stimmung oder eine längere Zeit.'));
     return;
   }
   for(let i=0;i<chosen.length;i++){
@@ -256,13 +273,54 @@ function renderInputs(){
   qs('frameTonightGo').textContent=ready?'Neu auswählen':'Meine drei Filme finden';
 }
 function resetChoice(){
-  form.picks=[];form.excluded=[];ready=false;
+  requestId++;form.picks=[];form.excluded=[];form.cards=[];remoteItems=[];
+  remotePage=1;remoteHasMore=false;ready=false;lastError='';
   savePref();renderInputs();renderResults();
 }
-function generate(){
-  ready=true;form.picks=[];pick(true);savePref();
-  renderInputs();renderResults();
-  qs('frameTonightSummary').scrollIntoView({block:'nearest',behavior:'smooth'});
+// The standard Discover feed has ratings but no runtime. Ask the Worker for
+// time-filtered movies and verify their actual lengths before recommending.
+async function fetchVerifiedMovies(page=1,replace=true){
+  const r=await fetch('/api/tonight?minutes='+form.limit+'&mood='+encodeURIComponent(form.mood)+'&page='+page,{
+    headers:{accept:'application/json'},cache:'no-store'
+  });
+  const data=await r.json().catch(()=>({}));
+  if(!r.ok||!data.ok||!Array.isArray(data.items)||!data.verifiedRuntimes)
+    throw Error(data.error||'Filmquelle gerade nicht erreichbar.');
+  const incoming=data.items.map(normalize).filter(item=>item&&item.minutes!==null
+    &&(!form.limit||item.minutes<=form.limit));
+  const seen=new Set();
+  remoteItems=(replace?[]:remoteItems).concat(incoming).filter(item=>{
+    if(seen.has(item.id))return false;
+    seen.add(item.id);return true;
+  }).slice(0,24);
+  remoteHasMore=!!data.hasMore;
+  remotePage=page;
+  form.cards=remoteItems;
+}
+async function generate(){
+  const stamp=++requestId;
+  const button=qs('frameTonightGo');
+  working=true;button.disabled=true;button.textContent='Prüfe Filmlängen …';
+  qs('frameTonightSummary').textContent='Suche Filme mit bestätigter Laufzeit.';
+  lastError='';
+  try{
+    await fetchVerifiedMovies(1,true);
+    if(stamp!==requestId)return;
+    // If the first page was sparse, add a second page, but never request
+    // unbounded pages or silently relax the actual runtime limit.
+    if(remoteHasMore&&candidates().length<3)await fetchVerifiedMovies(2,false);
+  }catch(error){
+    if(stamp!==requestId)return;
+    lastError='Bitte erneut versuchen oder anderes Zeitlimit wählen.';
+    console.warn('[FRAME TONIGHT]',String(error?.message||error).slice(0,100));
+  }finally{
+    if(stamp===requestId){
+      working=false;button.disabled=false;
+      ready=true;form.picks=[];pick(true);savePref();
+      renderInputs();renderResults();
+      qs('frameTonightSummary').scrollIntoView({block:'nearest',behavior:'smooth'});
+    }
+  }
 }
 function open(){
   if(typeof switchView==='function')switchView('tonight');
@@ -286,7 +344,7 @@ qs('frameTonightTimes')?.addEventListener('click',event=>{
 });
 document.addEventListener('frame:view-changed',event=>{
   if(event.detail?.target==='tonight'){
-    form=read();ready=!!form.picks.length;renderInputs();renderResults();
+    form=read();remoteItems=[...form.cards];ready=!!form.picks.length;renderInputs();renderResults();
   }
 });
 document.addEventListener('frame:feed-loaded',()=>{
@@ -294,7 +352,7 @@ document.addEventListener('frame:feed-loaded',()=>{
   if(current.length<3)renderResults();
 });
 document.addEventListener('frame:taste-reset',()=>{
-  form=blank();ready=false;try{localStorage.removeItem(KEY)}catch{}
+  requestId++;form=blank();remoteItems=[];ready=false;try{localStorage.removeItem(KEY)}catch{}
   if(qs('tonightView')?.classList.contains('active')){renderInputs();renderResults();}
 });
 window.FrameTonight={open};
