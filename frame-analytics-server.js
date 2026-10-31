@@ -1,7 +1,7 @@
 // FRAME opt-in analytics. Uses the existing account Durable Object class in a separate,
 // dedicated singleton instance. No IP addresses, cookies or movie IDs are recorded here.
 const RETAIN_MS = 90*86400000;
-const TYPES = ['open','swipe','save','daily','personalized','framelog','match','tonight'];
+const TYPES = ['open','swipe','save','personalized','framelog','match','tonight'];
 // This owner email is a public account identifier, NOT an access token.
 // The dashboard still requires a live, server-validated email-login session.
 // Use an explicit default because some Cloudflare dashboard builds omit vars
@@ -83,7 +83,7 @@ export async function handleAnalyticsObject(storage,action,p){
       row.lastSeen=now;
       if(p.email && typeof p.email==='string' && p.email.length<=254)row.email=p.email.toLowerCase();
       const day=dayOf(now);
-      const counts=row.days[day]||{open:0,swipe:0,save:0,daily:0,personalized:0,framelog:0,match:0,tonight:0};
+      const counts=row.days[day]||{open:0,swipe:0,save:0,personalized:0,framelog:0,match:0,tonight:0};
       for(const t of TYPES)counts[t]=(counts[t]||0)+(p.events?.[t]||0);
       row.days[day]=counts;
       await tx.put(key,row);
