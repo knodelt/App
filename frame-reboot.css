@@ -439,14 +439,14 @@ h1 em {
 /* ---------- Secondary screens ---------- */
 #watchlistView,
 #recommendView,
-#dailyFrameView,
+#tonightView,
 #tasteView {
   padding: 12px 16px 24px !important;
 }
 
 #watchlistView .section-head.compact,
 #recommendView .section-head.compact,
-#dailyFrameView .section-head.compact,
+#tonightView .section-head.compact,
 #tasteView .section-head.compact {
   margin: 3px 0 20px !important;
   padding: 0 !important;
@@ -455,7 +455,7 @@ h1 em {
 
 #watchlistView h1,
 #recommendView h1,
-#dailyFrameView h1,
+#tonightView h1,
 #tasteView h1 {
   font-size: clamp(36px, 10vw, 46px) !important;
   line-height: .95 !important;
@@ -1449,7 +1449,7 @@ h1 em {
 }
 
 
-/* FRAME: direct access to a standalone daily ritual and a shared matching space. */
+/* FRAME: primary Tonight tab and shared matching space. */
 .frame-match-header-icon {
   display:grid;
   place-items:center;
@@ -1462,7 +1462,7 @@ h1 em {
   border:1px solid rgba(255,112,136,.25);
   font:700 28px/1 var(--font-ui,system-ui);
 }
-.bottom-nav .nav-item-daily span {
+.bottom-nav .nav-item-tonight span {
   display:grid;
   place-items:center;
   width:35px;
@@ -1473,7 +1473,7 @@ h1 em {
   border:1px solid rgba(255,255,255,.1);
   border-radius:13px;
 }
-.bottom-nav .nav-item-daily.active span {
+.bottom-nav .nav-item-tonight.active span {
   color:#fff !important;
   background:rgba(255,91,113,.18);
   border-color:rgba(255,91,113,.65);
@@ -1906,7 +1906,7 @@ h1 em {
   .bottom-nav .nav-item {gap:3px !important;}
   .bottom-nav .nav-item-framelog .frame-log-nav-symbol {width:30px !important;height:31px !important;}
   .bottom-nav .nav-item-for-you .for-you-nav-symbol,
-  .bottom-nav .nav-item-daily span {width:32px !important;height:32px !important;}
+  .bottom-nav .nav-item-tonight span {width:32px !important;height:32px !important;}
 }
 
 /* Enforce a single horizontal row on iPhone, even after earlier CSS overrides. */
@@ -1925,7 +1925,7 @@ h1 em {
 
 
 /* FRAME NAV V105: one identical icon tile and one label baseline for all six tabs.
-   Specificity intentionally overrides legacy special cases for Für dich, Daily and FRAMELOG. */
+   Specificity intentionally overrides legacy special cases for Für dich, Tonight and FRAMELOG. */
 .app-shell > nav.bottom-nav {
   display:grid !important;
   grid-template-columns:repeat(6,minmax(0,1fr)) !important;
@@ -2041,7 +2041,7 @@ h1 em {
    detail headings, statistics and modal headings remain unchanged. */
 #discoverView .section-head h1,
 #personalizedView .section-head h1,
-#dailyFrameView .section-head h1,
+#tonightView .section-head h1,
 #recommendView .section-head h1,
 #frameLogView .frame-log-header h1,
 #tasteView .section-head h1 {
