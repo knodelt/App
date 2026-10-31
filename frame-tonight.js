@@ -64,12 +64,13 @@ function pool(){
   const all=[...(typeof catalog!=='undefined'&&Array.isArray(catalog)?catalog:[])];
   all.push(...Object.values(state.savedItems||{}));
   for(const record of Object.values(state.frameLogItems||{}))if(record?.item)all.push(record.item);
-  const result=[],seen=new Set();
+  const result=[],seen=new Set(),titles=new Set();
   for(const candidate of all){
     const item=normalize(candidate);if(!item)continue;
     const key=item.tmdbId?'tmdb:'+item.tmdbId:canon(item.title)+'|'+item.year;
-    if(seen.has(key))continue;
-    seen.add(key);result.push(item);
+    const titleKey=canon(item.title)+'|'+item.year;
+    if(seen.has(key)||titles.has(titleKey))continue;
+    seen.add(key);titles.add(titleKey);result.push(item);
   }
   return result;
 }
@@ -195,6 +196,7 @@ function renderResults(){
     if(item.poster){
       const img=document.createElement('img');
       img.loading='lazy';img.decoding='async';img.alt='';
+      img.onerror=()=>{img.remove();picture.append(node('span','tonight-monogram','F'));};
       img.src='https://image.tmdb.org/t/p/w342'+item.poster;
       picture.append(img);
     }else picture.append(node('span','tonight-monogram','F'));
