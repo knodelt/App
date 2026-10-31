@@ -75,7 +75,8 @@ function pool(){
   return result;
 }
 function tags(item){
-  const t=new Set([...item.tags,...item.subtitle.split(/[·,\/]/)].map(canon).filter(Boolean));
+  const rawTags=Array.isArray(item?.tags)?item.tags:[];
+  const t=new Set([...rawTags,...text(item?.subtitle,150).split(/[·,\/]/)].map(canon).filter(Boolean));
   const alias={'science fiction':'sci-fi','science-fiction':'sci-fi','scifi':'sci-fi','komödie':'comedy','krimi':'crime','romantik':'romance'};
   for(const x of [...t])if(alias[x])t.add(alias[x]);
   return [...t];
