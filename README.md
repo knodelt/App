@@ -323,6 +323,40 @@ E-Mail muss der API-Endpunkt 403 liefern. Einwilligung widerrufen und prüfen,
 ob der betreffende Datensatz im Dashboard verschwindet. Offline,
 Mehrfach-Tabs und Konto-Löschung ebenfalls testen.
 
+## Trakt-Karten-Vorschau (31.10.2026)
+
+Für einen geschützten Datenqualitätsvergleich ohne Umstellung des TMDB-Feeds:
+
+1. Bei FRAME mit der verifizierten Admin-E-Mail anmelden.
+2. `/frame-trakt-test.html` öffnen und **Trakt-Filmkarten mit Postern ansehen** wählen,
+   alternativ direkt `/frame-trakt-preview.html`.
+3. Auf **Vorschau laden** tippen; der zweite Tab zeigt Serien.
+
+Die neuen Worker-Routen `/api/trakt/preview?type=movies|shows` sowie
+`/api/trakt/poster?asset=...` erfordern jeweils eine gültige verifizierte
+FRAME-Admin-Session. Trakt-Zugangsdaten werden nicht zum Browser übertragen.
+
+- Für je bis zu sechs Titel je Tab werden Trakt-Listen (mit `extended=full`),
+  Detailinformationen und deutsche Übersetzungen per API abgefragt.
+  Fehlende Übersetzungen werden als Originalsprache gekennzeichnet.
+- Bild-URLs stammen ausschließlich aus Trakt-`images.poster`, werden serverseitig
+  auf den offiziellen Trakt-Bildhost und bekannte Posterpfade begrenzt und
+  **über die Cloudflare Cache API** zwischengespeichert (7 Tage).
+  Browser laden niemals direkt vom Trakt-CDN. Ohne Poster erscheint ein Platzhalter.
+- Qualitätszähler zeigen für die zurückgelieferten Karten die verfügbaren
+  deutschen Beschreibungen, Poster, Genres und allgemeinen Beschreibungen.
+- Es gibt keine Verbindung zu `frame-state`, FRAMELOG oder Konto-Sync;
+  nur Lesen, keine Swipes und kein Datenimport.
+- Entwicklungsversion der Trakt-App nicht als öffentlichen FRAME-Feed verwenden.
+  Production-Freigabe, aktuelle Nutzungsbedingungen und Drittrechte vor
+  einer öffentlichen Umstellung prüfen.
+- Trakt Attribution ist in `about.html` und der Vorschau enthalten.
+
+Handtests nach Deploy: Admin angemeldet → Vorschau lädt, auf Bilder mit
+`/api/trakt/poster` prüfen; Gast/fremdes Konto → 401/403;
+ohne Client-ID → 503; ohne Poster → Platzhalter; fehlende DE-Übersetzung →
+Originalsprache. Bei Problemen Worker-Logs und Trakt-HTTP-Status prüfen.
+
 ## Trakt-Test für FRAME (31.10.2026)
 
 FRAME besitzt eine **rein interne** Trakt-Teststrecke, ohne den TMDB-Feed oder Nutzerhistorien umzustellen.
