@@ -86,22 +86,40 @@ function blocked(item){
 }
 function tasteWeights(items){
   const lookup=new Map(items.map(i=>[i.id,i])),weights=new Map();
+  // FRAME keeps feedback history even when the shuffled discovery feed no
+  // longer contains a swiped title. Include those saved signals as well.
+  let history={},dna={};
+  try{history=JSON.parse(localStorage.getItem('frame-recommendation-history-v1')||'{}')||{};}catch{}
+  try{dna=JSON.parse(localStorage.getItem('frame-taste-dna-v2')||'{}')||{};}catch{}
   const add=(item,n)=>{
-    for(const t of tags(item))weights.set(t,Math.min(10,Math.max(-10,(weights.get(t)||0)+n)));
+    if(!item||n===0)return;
+    for(const t of tags(item)){
+      weights.set(t,Math.min(10,Math.max(-10,(weights.get(t)||0)+n)));
+    }
   };
   for(const [id,action] of Object.entries(state.swipes||{})){
-    const item=lookup.get(id);if(!item)continue;
+    const item=lookup.get(id)||history[id]||state.savedItems?.[id]||state.frameLogItems?.[id]?.item;
     if(action==='like')add(item,3);
     if(action==='save')add(item,1.5);
     if(action==='dislike')add(item,-3);
   }
   for(const [id,record] of Object.entries(state.watched||{})){
-    const item=lookup.get(id);if(!item)continue;
+    const item=lookup.get(id)||record?.item||history[id]||state.savedItems?.[id];
     if(record?.rating==='like')add(item,2);
     if(record?.rating==='dislike')add(item,-2);
   }
+  // Existing Taste DNA contains confidence-weighted features. Reuse only
+  // recognizable genre/trait labels; no LLM or external processing.
+  for(const feature of Array.isArray(dna.featureWeights)?dna.featureWeights:[]){
+    if(!['genre','trait','keyword'].includes(feature?.group))continue;
+    const label=canon(feature.label||feature.key?.split(':').pop()||'');
+    const amount=Number(feature.weight)*Number(feature.confidence??1);
+    if(!label||!Number.isFinite(amount))continue;
+    weights.set(label,Math.min(10,Math.max(-10,(weights.get(label)||0)+Math.max(-4,Math.min(4,amount*.35)))));
+  }
   return weights;
 }
+
 function candidates(){
   const items=pool(),weights=tasteWeights(items);
   const output=[];
