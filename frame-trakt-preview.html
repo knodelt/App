@@ -41,6 +41,7 @@ h1{font:600 clamp(42px,7vw,78px)/.98 Georgia,serif;letter-spacing:-.055em;margin
 .no-poster{height:100%;display:grid;place-content:center;text-align:center;gap:10px}
 .no-poster strong{font:600 clamp(25px,4vw,42px)/1 Georgia,serif;color:#f2d3df;letter-spacing:.2em}
 .no-poster span{color:#b5a4b2;font-size:10px;letter-spacing:.16em;font-weight:750}
+.no-poster .poster-error{display:block;max-width:90%;margin:10px auto 0;padding:0 8px;color:#ffcfcc;font-size:11px;letter-spacing:0;font-weight:600;line-height:1.55;overflow-wrap:anywhere}
 .corner{position:absolute;z-index:1;left:14px;top:14px;background:rgba(18,12,19,.75);border:1px solid rgba(255,255,255,.24);backdrop-filter:blur(9px);font-size:9px;font-weight:800;letter-spacing:.08em;padding:6px 9px;border-radius:9px;max-width:calc(100% - 78px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .corner.german{color:#d9ffc8}
 .rating{position:absolute;z-index:1;right:14px;top:14px;border-radius:9px;background:rgba(15,11,16,.77);padding:6px 9px;font-size:11px;font-weight:800}
@@ -87,7 +88,22 @@ h2{font:600 clamp(24px,2.8vw,30px)/1.11 Georgia,serif;margin:0 0 12px;letter-spa
 'use strict';
 const el=id=>document.getElementById(id);
 const loaded=new Map();
-let current='movies',loading=false;
+let current='movies',loading=false,posterDiagnosticStarted=false;
+let posterProgress={total:0,loaded:0,failed:0};
+function updatePosterProgress(){
+ const n=el('posterProgress');
+ if(n)n.textContent=posterProgress.loaded+' / '+posterProgress.total+' Bilder geladen'+(posterProgress.failed?' · '+posterProgress.failed+' Fehler':'');
+}
+async function diagnosePoster(url,node){
+ try{
+  const probe=new URL(url,location.origin);probe.searchParams.set('diagnose','1');
+  const response=await fetch(probe,{credentials:'same-origin',cache:'no-store'});
+  const data=await response.json();
+  node.textContent=data.ok?'Bildserver antwortet, aber Safari konnte das Format nicht darstellen.':
+    (data.error||'Bildabruf fehlgeschlagen')+' ['+(data.code||'HTTP '+response.status)+']';
+ }catch{node.textContent='Bilddiagnose momentan nicht verfügbar.';}
+}
+
 const labels={action:'Action',adventure:'Abenteuer',animation:'Animation',comedy:'Komödie',crime:'Krimi',documentary:'Dokumentation',drama:'Drama',family:'Familie',fantasy:'Fantasy',history:'Historie',horror:'Horror',music:'Musik',mystery:'Mystery',romance:'Romantik',science_fiction:'Science Fiction',thriller:'Thriller',war:'Krieg',western:'Western'};
 function section(type){
   current=type;
@@ -114,13 +130,24 @@ function card(item){
   const poster=add('div','poster');
   if(item.poster){
     const img=document.createElement('img');
-    img.loading='lazy';img.decoding='async';img.alt='Poster: '+item.title;img.src=item.poster;
+    img.loading='lazy';img.decoding='async';img.alt='Poster: '+item.title;
+    img.onload=()=>{posterProgress.loaded++;updatePosterProgress();};
     img.onerror=()=>{
+      posterProgress.failed++;updatePosterProgress();
       img.remove();
       const fallback=add('div','no-poster');
       fallback.append(add('strong','','FRAME'),add('span','','POSTER NICHT VERFÜGBAR'));
+      // A single owner-only diagnostic reports the actual failure, without
+      // retrying every poster or revealing Trakt credentials in the browser.
+      if(!posterDiagnosticStarted){
+        posterDiagnosticStarted=true;
+        const errorText=add('span','poster-error','Prüfe Bildserver …');
+        fallback.append(errorText);
+        void diagnosePoster(img.src,errorText);
+      }
       poster.prepend(fallback);
     };
+    img.src=item.poster;
     poster.append(img);
   }else{
     const fallback=add('div','no-poster');
@@ -163,13 +190,16 @@ function render(data){
   warning.hidden=!(data.warnings?.length);
   warning.textContent=(data.warnings||[]).join(' ') + (data.access?.details==='restricted'?' Trakt hat erweiterte Detailabfragen nicht freigegeben; wir versuchen nicht, diese Sperre zu umgehen.':'');
   el('grid').replaceChildren();el('stats').replaceChildren();
+  posterDiagnosticStarted=false;
+  posterProgress={total:(data.items||[]).filter(x=>!!x.poster).length,loaded:0,failed:0};
   el('grid').hidden=false;el('stats').hidden=false;el('empty').hidden=true;
   const coverage=data.coverage||{};
-  for(const [label,value] of [['Karten',data.count],['Poster',coverage.posters],['Deutsch',coverage.german],['Beschreibungen',coverage.descriptions],['Genres',coverage.genres]]){
+  for(const [label,value] of [['Karten',data.count],['Poster-Links',coverage.posters],['Deutsch',coverage.german],['Beschreibungen',coverage.descriptions],['Genres',coverage.genres]]){
     const stat=add('div','stat');
     stat.append(add('b','',String(value??0)),document.createTextNode(label));
     el('stats').append(stat);
   }
+  const progress=add('div','stat');progress.id='posterProgress';el('stats').append(progress);updatePosterProgress();
   for(const item of data.items||[])el('grid').append(card(item));
   if(!data.items?.length){el('grid').hidden=true;el('empty').hidden=false;el('empty').textContent='Trakt hat keine Titel zurückgegeben.';}
   const stamp=new Date(data.checkedAt).toLocaleString('de-DE',{dateStyle:'short',timeStyle:'short'});
