@@ -155,9 +155,26 @@ export async function handleTraktPreview(request,env,getVerifiedFrameSession){
     return respond({ok:false,error:'Nur Filme oder Serien möglich.'},400);
   const key=String(env.TRAKT_CLIENT_ID||'').trim();
   if(!key)return respond({ok:false,error:'TRAKT_CLIENT_ID fehlt in Cloudflare.'},503);
+  // Only public Trakt metadata is cached, and only after admin verification.
+  // This prevents repeated detail/translation requests while testing tabs.
+  const cache=typeof caches!=='undefined'?caches.default:null;
+  const cacheKey=new Request('https://framingapp.de/api/trakt/preview?type='+section);
+  if(cache){
+    const cached=await cache.match(cacheKey).catch(()=>null);
+    if(cached){
+      try{return respond({...await cached.json(),cached:true});}catch{}
+    }
+  }
   try{
     const data=await previewList(section,key);
-    return respond({ok:true,source:'Trakt',testOnly:true,section,checkedAt:new Date().toISOString(),...data});
+    const payload={ok:true,source:'Trakt',testOnly:true,section,checkedAt:new Date().toISOString(),...data};
+    if(cache){
+      const toCache=new Response(JSON.stringify(payload),{
+        headers:{'content-type':'application/json','cache-control':'public, max-age=600'}
+      });
+      await cache.put(cacheKey,toCache).catch(()=>{});
+    }
+    return respond(payload);
   }catch(err){
     const status=err?.status===429?429:502;
     return respond({ok:false,error:status===429?'Trakt-Limit erreicht. Bitte später testen.':'Trakt-Vorschau derzeit nicht abrufbar: '+short(err?.message||'Unbekannter Fehler',130)},status);
