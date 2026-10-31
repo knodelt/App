@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="/app-layout.css" />
   <link rel="stylesheet" href="/frame-reboot.css?v=121" />
   <link rel="stylesheet" href="/frame-loop.css" />
-  <link rel="stylesheet" href="/frame-tonight.css?v=3" />
+  <link rel="stylesheet" href="/frame-tonight.css?v=4" />
   <link rel="stylesheet" href="/hidden-match.css" />
   <link rel="stylesheet" href="/trailer-preview.css" />
   <!-- Mobile navigation invariant: all six destinations belong in ONE row.
@@ -79,7 +79,6 @@
           <button class="mood-trigger" id="moodTrigger" type="button" aria-haspopup="dialog">
             <span id="moodTriggerText">Stimmung · Egal</span>
           </button>
-          <button class="tonight-quick" id="frameTonightQuickOpen" type="button">TONIGHT ↗</button>
         </div>
 
         <div class="deck-wrap">
@@ -177,9 +176,6 @@
           </div>
           <span class="for-you-header-icon" aria-hidden="true">✦</span>
         </div>
-        <button id="frameTonightShortcut" type="button" class="tonight-entry" aria-label="FRAME TONIGHT öffnen: heute einen Film finden">
-          <span><small>FRAME TONIGHT · NEU</small><strong>Was schauen wir heute?</strong></span><span class="tonight-arrow" aria-hidden="true">↗</span>
-        </button>
         <div class="recommendation-modal" id="recommendationModal" aria-hidden="true">
           <div class="recommendation-sheet">
             <div class="recommendation-sheet-scroll">
@@ -197,10 +193,10 @@
       <section class="view" id="tonightView" data-view="tonight" aria-label="FRAME TONIGHT: Filme für heute Abend">
         <div class="section-head compact tonight-section-head">
           <div>
-            <p class="eyebrow">DEINE FILMAUSWAHL</p>
-            <h1>Tonight.</h1>
+            <p class="eyebrow">DEIN FILMABEND</p>
+            <h1>Frame Tonight.</h1>
           </div>
-          <button id="frameTonightBack" class="tonight-back" type="button" aria-label="Zurück zu Für dich">← Für dich</button>
+          <span class="tonight-nav-mark" aria-hidden="true">☾</span>
         </div>
         <p class="tonight-intro">Was passt heute zu dir? FRAME sucht drei Filme nach Stimmung, Zeit und deinem Geschmack.</p>
         <div class="tonight-date" id="frameTonightDate">Heute</div>
@@ -243,46 +239,6 @@
           FRAME wählt aus bekannten Filmen, deiner Merkliste und deinem bisherigen Geschmack.
         </div>
         <div id="frameTonightResults" class="tonight-results" hidden></div>
-      </section>
-
-      <section class="view" id="dailyFrameView" data-view="daily" aria-label="Daily Frame">
-        <div class="section-head compact">
-          <div>
-            <p class="eyebrow">DEIN TÄGLICHER DROP</p>
-            <h1>Daily Frame.</h1>
-          </div>
-          <span class="match-orb" id="dropProgress">0/7</span>
-        </div>
-
-        <div class="frame-loop-stack">
-          <section class="loop-panel" id="dailyDropPanel" aria-labelledby="dailyDropHeading">
-            <div class="loop-panel-inner">
-              <div class="loop-kicker-row">
-                <p class="loop-kicker" id="dailyDropHeading">DAILY FRAME · <span id="dropModeLabel">DEINE 7</span></p>
-                <span class="loop-date" id="dropDateLabel">Heute</span>
-              </div>
-              <div class="drop-progress" id="dropProgressBar" aria-label="Fortschritt Daily Drop"></div>
-
-              <div class="drop-stage">
-                <div class="drop-art" id="dropArt">
-                  <span class="drop-card-index" id="dropCardIndex">01</span>
-                </div>
-                <div class="drop-copy">
-                  <small id="dropMeta">DAILY FRAME</small>
-                  <h2 id="dropTitle">Dein Drop wird vorbereitet.</h2>
-                  <p id="dropSub">Sieben Titel. Keine endlose Suche.</p>
-                </div>
-              </div>
-
-              <div class="drop-actions" id="dropActions">
-                <button class="drop-action like" id="dropLikeButton" type="button">← SUPER</button>
-                <button class="drop-action save" id="dropSaveButton" type="button">↑ MERKEN</button>
-                <button class="drop-action dislike" id="dropDislikeButton" type="button">MIST →</button>
-              </div>
-              <p class="drop-done" id="dropDone" hidden>Drop abgeschlossen.</p>
-            </div>
-          </section>
-        </div>
       </section>
 
       <section class="view" id="recommendView" data-view="recommend" aria-label="Frame Match">
@@ -452,27 +408,6 @@
             </div>
           </section>
 
-          <section class="loop-panel pick-panel" id="pickPanel" aria-labelledby="pickHeading" hidden>
-            <div class="loop-panel-head">
-              <div>
-                <p class="loop-kicker">JUST PICK ONE</p>
-                <h2 id="pickHeading">FRAME entscheidet.</h2>
-              </div>
-              <span class="loop-mini">Keine Diskussion</span>
-            </div>
-            <p class="pick-intro">Für deine Solo-Entscheidung nutzt FRAME deine Watchlist und deinen Geschmack. Hidden Match läuft unabhängig davon.</p>
-
-            <div class="pick-result" id="pickResult" hidden>
-              <div class="pick-art" id="pickArt"></div>
-              <div class="pick-result-copy">
-                <span class="pick-source" id="pickSource">FRAME PICK</span>
-                <h3 id="pickTitle">Titel</h3>
-                <p id="pickMeta">Film</p>
-                <span class="pick-score" id="pickScore">0%</span>
-              </div>
-            </div>
-            <button class="pick-button" id="pickButton" type="button">FRAME ENTSCHEIDET</button>
-          </section>
         </div>
 
       </section>
@@ -556,7 +491,7 @@
         <span class="nav-symbol for-you-nav-symbol" aria-hidden="true">✦<i class="for-you-new-indicator" id="forYouNewIndicator" hidden></i></span>
         <small>Für dich</small>
       </button>
-      <button class="nav-item nav-item-daily" data-target="daily" type="button" aria-label="Daily Frame: sieben tägliche Filmvorschläge"><span class="nav-symbol" aria-hidden="true">▣</span><small>Daily Frame</small></button>
+      <button class="nav-item nav-item-tonight" data-target="tonight" type="button" aria-label="FRAME TONIGHT: drei persönliche Filmvorschläge"><span class="nav-symbol" aria-hidden="true">☾</span><small>Tonight</small></button>
       <button class="nav-item" data-target="recommend" type="button" aria-label="Frame Match: gemeinsam Filme finden"><span class="nav-symbol" aria-hidden="true">♡</span><small>Frame Match</small></button>
       <button class="nav-item nav-item-framelog" data-target="framelog" type="button" aria-label="FRAMELOG: dein persönliches Filmtagebuch"><span class="nav-symbol frame-log-nav-symbol" aria-hidden="true">F</span><small>FRAMELOG</small></button>
       <button class="nav-item" data-target="taste" type="button" aria-label="Mein Frame: Geschmacksprofil und Einstellungen"><span class="nav-symbol" aria-hidden="true">◎</span><small>Mein Frame</small></button>
@@ -650,8 +585,7 @@
   <script src="/streaming-availability.js" defer></script>
   <script src="/swipe-guidance.js" defer></script>
   <script src="/onboarding-tutorial.js" defer></script>
-  <script src="/frame-loop.js" defer></script>
-  <script src="/frame-tonight.js?v=4" defer></script>
+  <script src="/frame-tonight.js?v=5" defer></script>
   <script src="/vendor-qrcode.js" defer></script>
   <script src="/hidden-match-client.js" defer></script>
   <script src="/frame-account-client.js?v=119" defer></script>
