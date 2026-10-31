@@ -43,11 +43,11 @@
       panel:'bottom'
     },
     {
-      view:'daily',
-      target:'#dailyDropPanel',
-      title:'Daily Frame: deine täglichen 7.',
-      copy:'Jeden Tag gibt es sieben Vorschläge zum schnellen Bewerten: SUPER, MERKEN oder MIST. Dein Daily Frame ist ein eigener kurzer Film-Check neben Framing.',
-      extra:'daily',
+      view:'tonight',
+      target:'#frameTonightMoods',
+      title:'Frame Tonight: dein Filmabend.',
+      copy:'Wähle eine Stimmung und wie viel Zeit du hast. FRAME zeigt dir bis zu drei Filme mit geprüfter Laufzeit und erklärt, warum sie zu dir passen.',
+      extra:'tonight',
       panel:'top',
       scroll:true
     },
@@ -81,7 +81,7 @@
       view:'discover',
       target:'',
       title:'Dein FRAME ist startklar.',
-      copy:'Unten findest du Framing, Für dich, Daily Frame, Frame Match, FRAMELOG und Mein Frame. Beginne mit ein paar Swipes: FRAME wird mit jeder Entscheidung persönlicher.',
+      copy:'Unten findest du Framing, Für dich, Tonight, Frame Match, FRAMELOG und Mein Frame. Beginne mit ein paar Swipes: FRAME wird mit jeder Entscheidung persönlicher.',
       extra:'start',
       final:true,
       finalPage:true,
@@ -535,7 +535,7 @@
 
         <div class="frame-welcome-points">
           <div class="frame-welcome-point"><span>◉</span>Framing · Swipen und Trailer ansehen</div>
-          <div class="frame-welcome-point"><span>✦</span>Für dich · Daily Frame</div>
+          <div class="frame-welcome-point"><span>✦</span>Für dich · Tonight</div>
           <div class="frame-welcome-point"><span>♡</span>Frame Match · Mein Frame</div>
         </div>
 
@@ -747,10 +747,10 @@
           <div><b>✦</b><span><strong>Für dich:</strong> Film- und Serientipps, die FRAME aus deinem Geschmack ableitet.</span></div>
         </div>`;
     }
-    if (type === 'daily') {
+    if (type === 'tonight') {
       return `
         <div class="frame-tutorial-feature">
-          <div><b>7</b><span><strong>Daily Frame:</strong> sieben neue Entscheidungen pro Tag.</span></div>
+          <div><b>☾</b><span><strong>Frame Tonight:</strong> drei persönliche Filme passend zu Stimmung und Zeit.</span></div>
         </div>`;
     }
     if (type === 'matches') {
@@ -779,7 +779,7 @@
         <div class="frame-tutorial-finish">
           <div class="frame-tutorial-finish-mark">F</div>
           <strong>Framing wartet auf dich.</strong>
-          <span>Für dich · Daily Frame · Frame Match · FRAMELOG · Mein Frame: Alle Bereiche sind unten erreichbar.</span>
+          <span>Für dich · Tonight · Frame Match · FRAMELOG · Mein Frame: Alle Bereiche sind unten erreichbar.</span>
         </div>`;
     }
     return '';
