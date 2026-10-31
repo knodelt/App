@@ -323,6 +323,44 @@ E-Mail muss der API-Endpunkt 403 liefern. Einwilligung widerrufen und prüfen,
 ob der betreffende Datensatz im Dashboard verschwindet. Offline,
 Mehrfach-Tabs und Konto-Löschung ebenfalls testen.
 
+## FRAME TONIGHT · persönliche Filmauswahl (31.10.2026)
+
+Neue Filmabend-Funktion **innerhalb der bestehenden sechs Tabs**, erreichbar über
+den **TONIGHT**-Schnellzugriff im Framing-Feed und den prominenten Einstieg
+unter **Für dich**. Die Sekundäransicht liegt in `index.html`; die getrennten
+Dateien sind `frame-tonight.js` und `frame-tonight.css`.
+
+- Stimmung wählen: Offen, Runterkommen, Spannung, Lachen, Kopfkino, Überraschung.
+- Zeit: Egal, 90 / 120 / 150 / 180 Minuten. Unter einer gewählten Grenze
+  werden nur Filme mit **bekannter Laufzeit** berücksichtigt; unbekannte
+  Laufzeiten werden nicht als passend behauptet.
+- Bis zu drei Vorschläge aus dem **bereits geladenen lokalen FRAME-Katalog**,
+  den gespeicherten Titeln und FRAMELOG-Snapshots. Kein neuer API-Endpunkt,
+  keine LLM-Abfrage, kein Training, keine erfundenen Match-Prozente.
+- Regelbasierte Bewertung nach Genre/Stimmung, bekannten SUPER/MIST-Signalen,
+  bestehender Merkliste, Diversity und stabiler Tagesreihenfolge.
+  Bereits gesehene, abgelehnte und „Nicht heute“ ausgeschlossene Titel fallen weg.
+  Bei weniger als drei Treffern wird die tatsächliche Anzahl angezeigt.
+- Aktionen: **Merken** ergänzt die bestehende FRAMELOG-Merkliste, **Gesehen?**
+  startet den existierenden Bewertungsdialog, **Nicht heute** ersetzt den
+  betreffenden Vorschlag ohne eine dauerhafte Negativbewertung.
+- Tagesauswahl und Präferenzen liegen in `frame-tonight-v1` und sind in
+  Konto-Backup/Cloud-Sync freigeschaltet. Kein Schreiben beim Laden,
+  damit keine neue Cloud-Reload-Schleife entsteht.
+- Mit freiwilliger Analytics-Einwilligung zählt der Control Room
+  Aufrufe der TONIGHT-Ansicht, ohne individuelle Film-IDs aufzuzeichnen.
+- Technisch **datenanbieterneutraler Auswahlalgorithmus**; Bildpfade und
+  bestehende Movie-Snapshots können momentan aber noch TMDB-basiert sein.
+  Vor einem öffentlichen Launch weiterhin die Nutzungs- und Bildrechte
+  und Trakt Production-Zugang klären.
+
+Tests: Auf iPhone, Tablet und Desktop TONIGHT öffnen; sechs Navigationspunkte
+müssen einzeilig bleiben. 90 Minuten dürfen keinen 120-Minuten-Film
+ausgeben. Bereits gesehene/abgelehnte Titel bleiben ausgeschlossen,
+„Nicht heute“ liefert andere Vorschläge (soweit verfügbar), „Merken“
+erscheint in FRAMELOG und in der Cloud. Ohne genug Filmmaterial werden
+keine erfundenen Ergebnisse dargestellt.
+
 ## Trakt-Karten-Vorschau (31.10.2026)
 
 Für einen geschützten Datenqualitätsvergleich ohne Umstellung des TMDB-Feeds:
