@@ -4,7 +4,7 @@ import { handleAnalyticsObject, forgetFrameAccountAnalytics } from './frame-anal
 const DAY=86400000, SESSION_DAYS=30, CODE_EXP_MS=10*60000;
 const ALLOWED_KEYS=new Set([
   'frame-state','frame-taste-dna-v2','frame-online-learning-v1',
-  'frame-recommendation-history-v1','frame-loop-v1','frame-loop-mode-v1',
+  'frame-recommendation-history-v1',
   'frame-mood-v1','frame-recommendation-exclusions-v1','frame-tonight-v1'
 ]);
 const json=(value,status=200,extra={})=>new Response(JSON.stringify(value),{
@@ -206,7 +206,6 @@ function validSyncData(data){
   return keys.every(key=>{
     const value=data[key];
     if(typeof value!=='string'||value.length>650000)return false;
-    if(key==='frame-loop-mode-v1')return value==='user'||value==='partner';
     if(key==='frame-recommendation-exclusions-v1')return true;
     try{
       const decoded=JSON.parse(value);
