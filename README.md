@@ -341,8 +341,9 @@ FRAME-Admin-Session. Trakt-Zugangsdaten werden nicht zum Browser übertragen.
   Detailinformationen und deutsche Übersetzungen per API abgefragt.
   Fehlende Übersetzungen werden als Originalsprache gekennzeichnet.
 - Bild-URLs stammen ausschließlich aus Trakt-`images.poster`, werden serverseitig
-  auf den offiziellen Trakt-Bildhost und bekannte Posterpfade begrenzt und
-  **über die Cloudflare Cache API** zwischengespeichert (7 Tage).
+  auf die Trakt-CDN-Hosts `media.trakt.tv` (aktuell) und `walter-r2.trakt.tv` (Altbestand) sowie bekannte Posterpfade begrenzt und
+  **über die Cloudflare Cache API** zwischengespeichert (7 Tage). Alte Vorschau-Metadaten
+  werden nach Änderungen am Bild-Parser durch einen versionierten Cache-Key nicht wiederverwendet.
   Browser laden niemals direkt vom Trakt-CDN. Ohne Poster erscheint ein Platzhalter.
 - Qualitätszähler zeigen für die zurückgelieferten Karten die verfügbaren
   deutschen Beschreibungen, Poster, Genres und allgemeinen Beschreibungen.
