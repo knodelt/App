@@ -176,7 +176,14 @@ async function cachedPoster(request){
   const cacheReq=new Request(cacheUrl.toString(),{method:'GET'});
   if(cache && !diagnose){
     const saved=await cache.match(cacheReq).catch(()=>null);
-    if(saved)return saved;
+    if(saved)return new Response(saved.body,{
+      status:saved.status,
+      headers:{
+        'content-type':saved.headers.get('content-type')||'image/webp',
+        'cache-control':'private, no-store',
+        'x-content-type-options':'nosniff'
+      }
+    });
   }
   const abort=new AbortController();
   const timeout=setTimeout(()=>abort.abort(),8500);
@@ -191,7 +198,10 @@ async function cachedPoster(request){
     for(let hop=0;hop<2;hop++){
       res=await fetch('https://'+source.host+source.path,{
         method:'GET',redirect:'manual',signal:abort.signal,
-        headers:{'accept':'image/webp,image/avif,image/jpeg,image/png;q=0.8'}
+        headers:{
+          'accept':'image/webp,image/avif,image/jpeg,image/png;q=0.8',
+          'user-agent':'FRAME/1.0 (Trakt image caching proxy)'
+        }
       });
       details.upstreamStatus=res.status;
       details.contentType=String(res.headers.get('content-type')||'').split(';')[0].slice(0,70);
@@ -218,16 +228,27 @@ async function cachedPoster(request){
     const format=imageMime(new Uint8Array(data,0,Math.min(data.byteLength,24)));
     if(!format)return reply('POSTER_NOT_IMAGE','Der Trakt-Bildserver liefert keine erkennbare Bilddatei.');
     if(diagnose)return respond({ok:true,format,bytes:data.byteLength,...details});
-    const out=new Response(data,{
+    // The browser response is private and never bypasses the admin check.
+    // Cache API storage receives a separate cacheable response: Trakt requires
+    // fetched posters to be cached rather than repeatedly requested.
+    if(cache){
+      const entry=new Response(data.slice(0),{
+        status:200,headers:{
+          'content-type':format,
+          'cache-control':'public, max-age=604800',
+          'x-content-type-options':'nosniff'
+        }
+      });
+      await cache.put(cacheReq,entry).catch(()=>{});
+    }
+    return new Response(data,{
       status:200,
       headers:{
         'content-type':format,
-        'cache-control':'private, max-age=604800',
+        'cache-control':'private, no-store',
         'x-content-type-options':'nosniff'
       }
     });
-    if(cache)await cache.put(cacheReq,out.clone()).catch(()=>{});
-    return out;
   }catch(error){
     const aborted=abort.signal.aborted;
     console.warn('[FRAME TRAKT POSTER]',aborted?'timeout':String(error?.name||'FetchError'));
