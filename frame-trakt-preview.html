@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#120e16">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<title>FRAME LAB · Trakt-Filmkarten</title>
+<style>
+:root{color-scheme:dark;--bg:#100d13;--surface:#201923;--muted:#b8aab8;--line:rgba(255,255,255,.14);--pink:#edb2cd;--text:#f9f3f7}
+*{box-sizing:border-box}html{background:var(--bg)}
+body{margin:0;min-height:100dvh;color:var(--text);background:radial-gradient(ellipse at 74% -8%,#3d2035 0,transparent 38%),radial-gradient(ellipse at -10% 60%,#241522 0,transparent 33%),var(--bg);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+a{color:var(--pink);text-decoration:none}a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid #ffbdd9;outline-offset:3px}
+main{width:min(1190px,100%);padding:22px clamp(14px,4vw,40px) 76px;margin:auto}
+header{display:flex;gap:18px;align-items:center;justify-content:space-between;margin-bottom:clamp(40px,6vw,80px)}
+.wordmark{font-size:21px;font-weight:900;letter-spacing:.19em}.wordmark span{color:var(--pink)}.lab{font-size:10px;font-weight:800;letter-spacing:.13em;color:#af9caa;padding-left:5px}
+.back{border:1px solid var(--line);border-radius:12px;padding:9px 13px;color:#e3d7e0;font-size:12px;white-space:nowrap}
+.eyebrow{font-size:11px;letter-spacing:.17em;color:#efb3cf;font-weight:850}
+h1{font:600 clamp(42px,7vw,78px)/.98 Georgia,serif;letter-spacing:-.055em;margin:12px 0 21px}
+.intro{max-width:720px;color:#c0b2bf;font-size:14px;margin:0 0 28px}
+.tools{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:15px}
+.tabs{display:flex;gap:3px;background:#211824;padding:5px;border:1px solid var(--line);border-radius:14px}
+.tab{border:0;background:transparent;color:#bcb0bd;border-radius:10px;min-width:114px;padding:11px 16px;font:800 12px system-ui;cursor:pointer}
+.tab[aria-selected=true]{background:#f0bdd2;color:#241823}
+.refresh{border:1px solid var(--line);border-radius:12px;background:#29212b;color:#f5e7ef;padding:13px 19px;font:750 12px system-ui;cursor:pointer}
+.refresh:disabled{opacity:.45}
+#status{color:#b5a3b3;font-size:12px;margin:14px 0 25px;min-height:20px}
+#status.error{color:#ffb7b7}
+.stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:23px}
+.stats[hidden],#grid[hidden],#empty[hidden]{display:none}
+.stat{padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.045);font-size:12px;color:#c8b8c6}
+.stat b{font-variant-numeric:tabular-nums;font-size:16px;color:#f5e7f0;margin-right:5px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.card{min-width:0;overflow:hidden;border-radius:21px;border:1px solid rgba(255,255,255,.13);background:linear-gradient(160deg,#2a202b,#1a151e 76%);box-shadow:0 9px 26px rgba(0,0,0,.12)}
+.poster{height:clamp(210px,28vw,340px);position:relative;overflow:hidden;background:radial-gradient(ellipse at 50% 35%,#614059,transparent 70%),#211922}
+.poster img{width:100%;height:100%;object-fit:cover;object-position:center 24%;display:block}
+.poster:after{content:"";pointer-events:none;position:absolute;inset:0;background:linear-gradient(0deg,rgba(19,12,19,.85),transparent 40%)}
+.no-poster{height:100%;display:grid;place-content:center;text-align:center;gap:10px}
+.no-poster strong{font:600 clamp(25px,4vw,42px)/1 Georgia,serif;color:#f2d3df;letter-spacing:.2em}
+.no-poster span{color:#b5a4b2;font-size:10px;letter-spacing:.16em;font-weight:750}
+.corner{position:absolute;z-index:1;left:14px;top:14px;background:rgba(18,12,19,.75);border:1px solid rgba(255,255,255,.24);backdrop-filter:blur(9px);font-size:9px;font-weight:800;letter-spacing:.08em;padding:6px 9px;border-radius:9px}
+.corner.german{color:#d9ffc8}
+.rating{position:absolute;z-index:1;right:14px;top:14px;border-radius:9px;background:rgba(15,11,16,.77);padding:6px 9px;font-size:11px;font-weight:800}
+.copy{padding:19px 18px 20px}
+.meta{font-size:11px;color:#c2b4c1;letter-spacing:.07em;margin-bottom:9px}
+h2{font:600 clamp(24px,2.8vw,30px)/1.11 Georgia,serif;margin:0 0 12px;letter-spacing:-.026em;text-wrap:balance;overflow-wrap:anywhere}
+.genres{display:flex;gap:5px;flex-wrap:wrap;min-height:24px;margin:0 0 14px}
+.genre{color:#e6c8d9;border:1px solid rgba(250,191,218,.23);background:rgba(240,173,204,.07);padding:4px 8px;border-radius:6px;font-size:10px;text-transform:capitalize}
+.desc{font-size:12px;line-height:1.68;color:#cfc3cf;min-height:80px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden;margin:0}
+.desc.full{display:block;overflow:visible}
+.more{display:block;margin:10px 0 0;background:none;border:0;color:var(--pink);font:750 12px system-ui;padding:0;cursor:pointer}
+.bottom{border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:20px;padding-top:13px;font-size:11px;color:#a99eaa}
+.bottom a{font-weight:700}
+.empty{border:1px dashed #6a4a63;padding:32px 18px;border-radius:17px;text-align:center;color:#d4c1d0;max-width:760px}
+.note{color:#b2a3b2;border-left:2px solid var(--pink);background:rgba(226,139,190,.065);padding:13px 16px;margin-top:30px;border-radius:5px;font-size:12px;line-height:1.7}
+.note strong{color:#f5d5e5}
+.foot{font-size:11px;color:#9a8a99;margin-top:33px}
+@media(max-width:850px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.poster{height:clamp(215px,40vw,350px)}}
+@media(max-width:480px){header{margin-bottom:46px}.wordmark{font-size:18px}.back{font-size:11px;padding:9px}.lab{font-size:9px}.tabs{width:100%}.tab{flex:1;min-width:0}.refresh{width:100%}.grid{gap:9px}.card{border-radius:14px}.poster{height:clamp(175px,57vw,255px)}.copy{padding:13px 11px 14px}h2{font-size:21px}.genres{margin-bottom:8px}.genre{font-size:9px;padding:3px 5px}.desc{font-size:11px;min-height:90px;-webkit-line-clamp:5}.meta{font-size:10px}.rating{right:8px;top:8px}.corner{left:8px;top:8px;font-size:8px}.bottom{font-size:10px}}
+</style>
+</head>
+<body><main>
+<header><div><div class="wordmark">FRA<span>ME</span><span class="lab">/ TRAKT LAB</span></div></div><a class="back" href="/frame-trakt-test.html">← Verbindungstest</a></header>
+<p class="eyebrow">DATENQUELLEN / VISUELLER QUALITÄTSTEST</p>
+<h1>Filme statt<br>nur Daten.</h1>
+<p class="intro">Echte Filmkarten aus Trakt – mit Titeln, Beschreibungen, Bewertungen und, wenn vorhanden, gecachten Postern. Hier vergleichen wir, ob die Datenqualität für FRAME ausreicht. Keine dieser Karten wird bisher in die eigentliche App übernommen.</p>
+<div class="tools" role="group" aria-label="Filme oder Serien wählen">
+ <div class="tabs" role="tablist">
+  <button type="button" class="tab" id="moviesTab" aria-selected="true" role="tab">Filme</button>
+  <button type="button" class="tab" id="showsTab" aria-selected="false" role="tab">Serien</button>
+ </div>
+ <button class="refresh" id="refresh" type="button">Vorschau laden</button>
+</div>
+<p id="status" role="status">Noch keine Daten abgerufen. Klicke auf „Vorschau laden“.</p>
+<div class="stats" id="stats" hidden></div>
+<div id="grid" class="grid" hidden></div>
+<div class="empty" id="empty">Die Vorschau läuft ausschließlich über dein verifiziertes FRAME-Administratorkonto.</div>
+<p class="note"><strong>Entwicklungsmodus.</strong> Die Trakt-Client-ID bleibt im Cloudflare Worker. Poster werden ausschließlich über den bildzwischenspeichernden FRAME-Endpunkt geladen und nicht direkt vom Trakt-CDN. Ein fehlendes Poster oder eine fehlende Übersetzung wird nicht künstlich ersetzt. Der bestehende TMDB-Feed, deine Swipes und dein FRAMELOG werden nicht verändert.</p>
+<p class="foot">FRAME uses Trakt but is not endorsed or certified by Trakt. · <a href="https://developer.trakt.tv/docs/api-use-policy" target="_blank" rel="noopener noreferrer">Trakt API-Bedingungen</a></p>
+</main>
+<script>
+(()=>{
+'use strict';
+const el=id=>document.getElementById(id);
+const loaded=new Map();
+let current='movies',loading=false;
+const labels={action:'Action',adventure:'Abenteuer',animation:'Animation',comedy:'Komödie',crime:'Krimi',documentary:'Dokumentation',drama:'Drama',family:'Familie',fantasy:'Fantasy',history:'Historie',horror:'Horror',music:'Musik',mystery:'Mystery',romance:'Romantik',science_fiction:'Science Fiction',thriller:'Thriller',war:'Krieg',western:'Western'};
+function section(type){
+  current=type;
+  el('moviesTab').setAttribute('aria-selected',String(type==='movies'));
+  el('showsTab').setAttribute('aria-selected',String(type==='shows'));
+  el('refresh').textContent=loaded.has(type)?'Neu abrufen':'Vorschau laden';
+  if(loaded.has(type))render(loaded.get(type));
+  else {
+    el('stats').hidden=true;el('grid').hidden=true;el('empty').hidden=false;
+    el('empty').textContent='Noch keine '+(type==='movies'?'Filme':'Serien')+' geladen.';
+    el('status').textContent='Klicke auf „Vorschau laden“.';
+    el('status').className='';
+  }
+}
+function add(tag,cls,txt){
+  const node=document.createElement(tag);
+  if(cls)node.className=cls;
+  if(txt!==undefined)node.textContent=txt;
+  return node;
+}
+function card(item){
+  const article=add('article','card');
+  const poster=add('div','poster');
+  if(item.poster){
+    const img=document.createElement('img');
+    img.loading='lazy';img.decoding='async';img.alt='Poster: '+item.title;img.src=item.poster;
+    img.onerror=()=>{
+      img.remove();
+      const fallback=add('div','no-poster');
+      fallback.append(add('strong','','FRAME'),add('span','','POSTER NICHT VERFÜGBAR'));
+      poster.prepend(fallback);
+    };
+    poster.append(img);
+  }else{
+    const fallback=add('div','no-poster');
+    fallback.append(add('strong','','FRAME'),add('span','','KEIN TRAKT-POSTER'));
+    poster.append(fallback);
+  }
+  poster.append(add('div','corner'+(item.translated?' german':''),item.translated?'DEUTSCHE BESCHREIBUNG':'ORIGINALSPRACHE'));
+  if(item.rating!==null && item.rating!==undefined)poster.append(add('div','rating','★ '+Number(item.rating).toFixed(1)+' / 10'));
+  article.append(poster);
+  const body=add('div','copy');
+  body.append(add('div','meta',(item.year||'Jahr unbekannt')+(item.runtime?' · '+item.runtime+' MIN':'')+(item.votes?' · '+item.votes.toLocaleString('de-DE')+' VOTES':'')));
+  body.append(add('h2','',item.title));
+  const genres=add('div','genres');
+  for(const g of item.genres||[])genres.append(add('span','genre',labels[g]||g.replaceAll('-',' ')));
+  body.append(genres);
+  const desc=add('p','desc',item.overview||'Keine Inhaltsbeschreibung in Trakt vorhanden.');
+  body.append(desc);
+  if(item.overview && item.overview.length>170){
+    const more=add('button','more','Ganze Beschreibung');
+    more.type='button';more.addEventListener('click',()=>{
+      const open=desc.classList.toggle('full');
+      more.textContent=open?'Weniger anzeigen':'Ganze Beschreibung';
+    });
+    body.append(more);
+  }
+  const footer=add('div','bottom');
+  footer.append(add('span','',item.ids?.trakt?'Trakt #'+item.ids.trakt:'Trakt'));
+  if(item.ids?.trakt){
+    const link=add('a','','Auf Trakt ansehen ↗');
+    link.href='https://trakt.tv/'+(item.type==='movie'?'movies':'shows')+'/'+encodeURIComponent(item.ids.trakt);
+    link.target='_blank';link.rel='noopener noreferrer';
+    footer.append(link);
+  }
+  body.append(footer);article.append(body);
+  return article;
+}
+function render(data){
+  if(data.section!==current)return;
+  el('grid').replaceChildren();el('stats').replaceChildren();
+  el('grid').hidden=false;el('stats').hidden=false;el('empty').hidden=true;
+  const coverage=data.coverage||{};
+  for(const [label,value] of [['Karten',data.count],['Poster',coverage.posters],['Deutsch',coverage.german],['Beschreibungen',coverage.descriptions],['Genres',coverage.genres]]){
+    const stat=add('div','stat');
+    stat.append(add('b','',String(value??0)),document.createTextNode(label));
+    el('stats').append(stat);
+  }
+  for(const item of data.items||[])el('grid').append(card(item));
+  if(!data.items?.length){el('grid').hidden=true;el('empty').hidden=false;el('empty').textContent='Trakt hat keine Titel zurückgegeben.';}
+  const stamp=new Date(data.checkedAt).toLocaleString('de-DE',{dateStyle:'short',timeStyle:'short'});
+  el('status').textContent=data.count+' '+(current==='movies'?'Filme':'Serien')+' von Trakt geladen · '+stamp+' · '+(coverage.german||0)+' deutsche Beschreibungen';
+  el('status').className='';
+  el('refresh').textContent='Neu abrufen';
+}
+async function load(){
+  if(loading)return;
+  loading=true;const requested=current;
+  el('refresh').disabled=true;
+  el('status').textContent='Lade aktuelle Trakt-Karten und deutsche Beschreibungen …';
+  el('status').className='';
+  try{
+    const res=await fetch('/api/trakt/preview?type='+requested,{credentials:'same-origin',cache:'no-store'});
+    const data=await res.json();
+    if(!res.ok)throw Error(data.error||'Vorschau nicht verfügbar (HTTP '+res.status+').');
+    loaded.set(requested,data);
+    if(requested===current)render(data);
+  }catch(error){
+    if(requested===current){
+      el('status').className='error';
+      el('status').textContent='Vorschau fehlgeschlagen: '+(error.message||'Unbekannter Fehler');
+      el('stats').hidden=true;el('grid').hidden=true;el('empty').hidden=false;
+      el('empty').textContent='Bitte vergewissere dich, dass du auf framingapp.de als FRAME-Administrator angemeldet bist.';
+    }
+  }finally{loading=false;el('refresh').disabled=false;}
+}
+el('moviesTab').addEventListener('click',()=>section('movies'));
+el('showsTab').addEventListener('click',()=>section('shows'));
+el('refresh').addEventListener('click',load);
+section('movies');
+})();
+</script>
+</body>
+</html>
