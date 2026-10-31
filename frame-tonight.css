@@ -250,8 +250,7 @@
   background:rgba(255,255,255,.035);
   font:550 10px/1.6 var(--font-ui,Manrope,system-ui,sans-serif);
 }
-#tonightView button:focus-visible,
-{
+#tonightView button:focus-visible{
   outline:2px solid #e9adc2;outline-offset:3px;
 }
 @media(max-width:365px){
