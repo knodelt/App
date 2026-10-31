@@ -99,7 +99,7 @@ async function diagnosePoster(url,node){
   const probe=new URL(url,location.origin);probe.searchParams.set('diagnose','1');
   const response=await fetch(probe,{credentials:'same-origin',cache:'no-store'});
   const data=await response.json();
-  node.textContent=data.ok?'Bildserver antwortet, aber Safari konnte das Format nicht darstellen.':
+  node.textContent=data.ok?'Beim erneuten Abruf wurde ein Bild geliefert. Der ursprüngliche Ladefehler kann vorübergehend sein.':
     (data.error||'Bildabruf fehlgeschlagen')+' ['+(data.code||'HTTP '+response.status)+']';
  }catch{node.textContent='Bilddiagnose momentan nicht verfügbar.';}
 }
