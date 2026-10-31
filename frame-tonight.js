@@ -331,9 +331,6 @@ function open(){
   if(typeof switchView==='function')switchView('tonight');
   renderInputs();renderResults();
 }
-qs('frameTonightShortcut')?.addEventListener('click',open);
-qs('frameTonightQuickOpen')?.addEventListener('click',open);
-qs('frameTonightBack')?.addEventListener('click',()=>switchView('personalized'));
 qs('frameTonightGo')?.addEventListener('click',generate);
 qs('frameTonightMoods')?.addEventListener('click',event=>{
   const button=event.target.closest('[data-tonight-mood]');
