@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="/app-layout.css" />
   <link rel="stylesheet" href="/frame-reboot.css?v=121" />
   <link rel="stylesheet" href="/frame-loop.css" />
+  <link rel="stylesheet" href="/frame-tonight.css?v=1" />
   <link rel="stylesheet" href="/hidden-match.css" />
   <link rel="stylesheet" href="/trailer-preview.css" />
   <!-- Mobile navigation invariant: all six destinations belong in ONE row.
@@ -78,6 +79,7 @@
           <button class="mood-trigger" id="moodTrigger" type="button" aria-haspopup="dialog">
             <span id="moodTriggerText">Stimmung · Egal</span>
           </button>
+          <button class="tonight-quick" id="frameTonightQuickOpen" type="button">TONIGHT ↗</button>
         </div>
 
         <div class="deck-wrap">
@@ -175,6 +177,9 @@
           </div>
           <span class="for-you-header-icon" aria-hidden="true">✦</span>
         </div>
+        <button id="frameTonightShortcut" type="button" class="tonight-entry" aria-label="FRAME TONIGHT öffnen: heute einen Film finden">
+          <span><small>FRAME TONIGHT · NEU</small><strong>Was schauen wir heute?</strong></span><span class="tonight-arrow" aria-hidden="true">↗</span>
+        </button>
         <div class="recommendation-modal" id="recommendationModal" aria-hidden="true">
           <div class="recommendation-sheet">
             <div class="recommendation-sheet-scroll">
@@ -187,6 +192,46 @@
             </div>
           </div>
         </div>
+      </section>
+
+      <section class="view" id="tonightView" data-view="tonight" aria-label="FRAME TONIGHT: Filme für heute Abend">
+        <div class="tonight-overline">
+          <span>FRAME / TONIGHT</span>
+          <button id="frameTonightBack" class="tonight-back" type="button">← Für dich</button>
+        </div>
+        <header class="tonight-header">
+          <span class="tonight-date" id="frameTonightDate">Heute</span>
+          <h1>Heute wird<br><em>nicht gesucht.</em></h1>
+          <p>Ein Gefühl. Ein Zeitfenster. Drei Filme, die heute Abend eine Chance verdienen.</p>
+        </header>
+        <section class="tonight-input-block" aria-label="Stimmung auswählen">
+          <div class="tonight-label"><strong>Worauf hast du Lust?</strong><small>01 / Stimmung</small></div>
+          <div class="tonight-mood-options" id="frameTonightMoods" role="group" aria-label="Stimmung">
+            <button class="tonight-mood" data-tonight-mood="any" aria-pressed="true" type="button"><span class="symbol">◉</span>Offen für alles</button>
+            <button class="tonight-mood" data-tonight-mood="relax" aria-pressed="false" type="button"><span class="symbol">☾</span>Runterkommen</button>
+            <button class="tonight-mood" data-tonight-mood="tension" aria-pressed="false" type="button"><span class="symbol">⚡</span>Spannung</button>
+            <button class="tonight-mood" data-tonight-mood="laugh" aria-pressed="false" type="button"><span class="symbol">✳</span>Lachen</button>
+            <button class="tonight-mood" data-tonight-mood="think" aria-pressed="false" type="button"><span class="symbol">∞</span>Kopfkino</button>
+            <button class="tonight-mood" data-tonight-mood="surprise" aria-pressed="false" type="button"><span class="symbol">↝</span>Überrasch mich</button>
+          </div>
+        </section>
+        <section class="tonight-input-block" aria-label="Verfügbare Zeit auswählen">
+          <div class="tonight-label"><strong>Wie viel Zeit hast du?</strong><small>02 / Zeit</small></div>
+          <div class="tonight-time-options" id="frameTonightTimes" role="group" aria-label="Filmlänge">
+            <button type="button" data-tonight-minutes="0" aria-pressed="true">Egal</button>
+            <button type="button" data-tonight-minutes="90" aria-pressed="false">90m</button>
+            <button type="button" data-tonight-minutes="120" aria-pressed="false">120m</button>
+            <button type="button" data-tonight-minutes="150" aria-pressed="false">150m</button>
+            <button type="button" data-tonight-minutes="180" aria-pressed="false">180m</button>
+          </div>
+        </section>
+        <button class="tonight-go" id="frameTonightGo" type="button">Meine drei Filme finden <span aria-hidden="true">→</span></button>
+        <p class="tonight-summary" id="frameTonightSummary" role="status">Wähle eine Stimmung und die verfügbare Zeit.</p>
+        <div id="frameTonightEmpty">
+          <div class="tonight-empty-line">Keine Lust auf endloses Suchen?</div>
+          FRAME sortiert die Auswahl für dich – aus bekannten Filmen und deinem bisherigen Geschmack.
+        </div>
+        <div id="frameTonightResults" class="tonight-results" hidden></div>
       </section>
 
       <section class="view" id="dailyFrameView" data-view="daily" aria-label="Daily Frame">
@@ -595,6 +640,7 @@
   <script src="/swipe-guidance.js" defer></script>
   <script src="/onboarding-tutorial.js" defer></script>
   <script src="/frame-loop.js" defer></script>
+  <script src="/frame-tonight.js?v=1" defer></script>
   <script src="/vendor-qrcode.js" defer></script>
   <script src="/hidden-match-client.js" defer></script>
   <script src="/frame-account-client.js?v=118" defer></script>
