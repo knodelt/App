@@ -540,7 +540,10 @@
       };
       return translated[raw.toLowerCase()]||raw.slice(0,60);
     };
+    // Language is an internal recommendation signal, not a genre.
     const strongest=(data.featureWeights||[])
+      .filter(entry=>!['language','original_language'].includes(String(entry.group||'').toLowerCase()))
+      .filter(entry=>!/^(?:EN|FR|DE|ES|IT|JA|JP|KO|ZH|PT|RU|NL|SV|PL)$/i.test(String(entry.label||'').trim()))
       .filter(entry=>Math.abs(entry.weight*entry.confidence)>=.65).slice(0,6);
     chipHost.innerHTML=strongest.length
       ? strongest.map(entry=>`<span class="taste-dna-chip${entry.weight<0?' negative':''}">${entry.weight>0?'✦ ':'− '}${escapeHtml(displayName(entry.label))}</span>`).join('')
