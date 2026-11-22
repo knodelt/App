@@ -313,9 +313,37 @@ function filteredCatalog() {
   return catalog.filter(item => (state.filter === 'all' || item.type === state.filter) && !state.swipes[item.id]);
 }
 
+// Wide-screen editorial panel. Reads the same item as the visible top card;
+// no second feed, recommendation state or extra data request is needed.
+function syncDesktopSpotlight() {
+  const spotlight = document.getElementById('frameDesktopSpotlight');
+  if (!spotlight) return;
+  const item = activeItems[0] || null;
+  const setText = (id, value) => {
+    const element = document.getElementById(id);
+    if (element) element.textContent = value || '';
+  };
+  setText('frameSpotlightType', item ? typeLabel(item.type) + ' · IM FOKUS' : 'DEIN FEED');
+  setText('frameSpotlightHeading', item?.title || 'Heute alles entdeckt.');
+  setText('frameSpotlightMeta', item ? [item.year, item.meta, item.subtitle].filter(Boolean).join(' · ') : '');
+  setText('frameSpotlightDescription', item?.blurb || 'Misch den Feed neu und entdecke den nächsten Film für deinen Geschmack.');
+  const tags = document.getElementById('frameSpotlightTags');
+  if (tags) {
+    tags.replaceChildren();
+    for (const tag of (Array.isArray(item?.tags) ? item.tags : []).slice(0, 4)) {
+      const chip = document.createElement('span');
+      chip.textContent = String(tag);
+      tags.appendChild(chip);
+    }
+  }
+  const trailer = document.getElementById('frameSpotlightTrailer');
+  if (trailer) trailer.hidden = !item || !['movie', 'series'].includes(item.type);
+}
+
 function renderDeck() {
   const deck = $('#cardDeck');
   activeItems = filteredCatalog();
+  syncDesktopSpotlight();
   deck.innerHTML = '';
   $('#emptyState').hidden = activeItems.length > 0;
   deck.hidden = activeItems.length === 0;
@@ -591,6 +619,10 @@ $('#likeButton').addEventListener('click',()=>animateSwipe('like'));
 $('#saveButton').addEventListener('click',()=>animateSwipe('save'));
 $('#dislikeButton').addEventListener('click',()=>animateSwipe('dislike'));
 $('#undoSwipeButton')?.addEventListener('click', undoLastSwipe);
+$('#frameSpotlightTrailer')?.addEventListener('click', () => {
+  const item = activeItems[0];
+  if (item && ['movie', 'series'].includes(item.type)) window.FrameTrailer?.open?.(item);
+});
 $('#reshuffleButton').addEventListener('click',()=>{
   saveLastSwipe(null);
   if (typeof window.frameRandomizeFeed === 'function') window.frameRandomizeFeed({ fresh:true });
