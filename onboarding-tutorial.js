@@ -787,8 +787,43 @@
         const onRight=spaceRight>=panelWidth &&
           (spaceLeft<panelWidth || spaceRight>=spaceLeft);
         const px=onRight?rect.right+gap:rect.left-gap-panelWidth;
-        const py=Math.max(safeTop,Math.min(
-          rect.top+(rect.height-panelHeight)/2,safeBottom-panelHeight));
+        const boundedY=y=>Math.max(safeTop,Math.min(y,safeBottom-panelHeight));
+        let py=boundedY(rect.top+(rect.height-panelHeight)/2);
+
+        // Step 1 highlights the left swipe card. A side tooltip can still
+        // cover the *text* of the right editorial spotlight. Measure that
+        // live text block and find a non-overlapping vertical slot before
+        // accepting the default centered tooltip position.
+        if(current===0 && steps[current]?.target==='.top-card'){
+          const protectedNodes=[
+            document.querySelector('#frameDesktopSpotlight .frame-spotlight-content'),
+            document.querySelector('#frameDesktopSpotlight .frame-spotlight-actions'),
+            document.querySelector('#frameDesktopSpotlight .frame-spotlight-topline'),
+            document.querySelector('.topbar')
+          ].filter(Boolean);
+          const blockers=protectedNodes.map(node=>node.getBoundingClientRect())
+            .filter(box=>box.width>0&&box.height>0);
+          const candidateY=[py,safeTop,safeBottom-panelHeight];
+          for(const box of blockers){
+            candidateY.push(box.top-panelHeight-gap,box.bottom+gap);
+          }
+          const overlap=(candidate,box)=>{
+            const w=Math.max(0,Math.min(candidate.right,box.right)-Math.max(candidate.left,box.left));
+            const h=Math.max(0,Math.min(candidate.bottom,box.bottom)-Math.max(candidate.top,box.top));
+            return w*h;
+          };
+          let best={y:py,score:Infinity};
+          for(const rawY of candidateY){
+            const y=boundedY(rawY);
+            const candidate={left:px,right:px+panelWidth,top:y,bottom:y+panelHeight};
+            // Preserve the spotlight copy first. Distance from the original
+            // anchor is only a tie-breaker among collision-free placements.
+            const score=blockers.reduce((sum,box)=>sum+overlap(candidate,box)*12,0)
+              +Math.abs(y-py)*.1;
+            if(score<best.score)best={y,score};
+          }
+          py=best.y;
+        }
         panel.style.width=`${panelWidth}px`;
         panel.style.left=`${Math.round(Math.max(16,px))}px`;
         panel.style.right='auto';
