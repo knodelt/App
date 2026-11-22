@@ -368,6 +368,52 @@
   .hm-reveal-pulse,.hm-match-card{animation:none !important;}
 }
 
+/* Prominent live-room quick start: above invitations and QR.
+   One actual swipe button, visible only while the host can vote. */
+.hm-swipe-launch {
+  display:grid;
+  gap:12px;
+  padding:17px;
+  margin:0 0 16px;
+  border:1px solid rgba(255,129,157,.38);
+  border-radius:20px;
+  background:
+    radial-gradient(ellipse at 100% 0%,rgba(255,87,117,.22),transparent 65%),
+    linear-gradient(140deg,#2d202c,#1b1820);
+  box-shadow:0 12px 34px rgba(0,0,0,.2);
+}
+.hm-swipe-launch-copy strong {
+  display:block;
+  margin:6px 0 7px;
+  color:#fff;
+  font:650 clamp(22px,5vw,30px)/1.06 var(--font-display);
+  letter-spacing:-.03em;
+}
+.hm-swipe-launch-kicker {
+  display:block;
+  color:#ff99ac;
+  font:800 9px/1.35 var(--font-ui);
+  letter-spacing:.13em;
+}
+.hm-swipe-launch-copy p {
+  margin:0;
+  color:#cdbdc7;
+  font:600 11px/1.5 var(--font-ui);
+}
+.hm-swipe-launch .hm-start-swipe {
+  margin:0;
+  min-height:55px;
+  font-size:13px;
+}
+.hm-start-swipe:focus-visible {outline:3px solid white;outline-offset:3px;}
+@media (min-width:700px) {
+  .hm-swipe-launch {
+    grid-template-columns:minmax(0,1fr) minmax(185px,250px);
+    align-items:center;
+    padding:22px;
+    gap:20px;
+  }
+}
 /* Hidden Match waiting room: the host can start immediately. */
 .hm-start-swipe {
   display:flex;

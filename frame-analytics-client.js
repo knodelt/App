@@ -76,9 +76,12 @@
     style.textContent=`
       #frameAnalyticsPrompt{position:fixed;z-index:1400;bottom:calc(78px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
         width:min(calc(100% - 22px),490px);border:1px solid rgba(255,255,255,.16);border-radius:19px;
-        box-shadow:0 18px 55px rgba(0,0,0,.64);background:#211c27;color:#f5eef2;padding:17px;font:13px/1.5 system-ui,sans-serif;}
-      #frameAnalyticsPrompt h2{font-size:15px;display:block;margin:0 0 5px;font-weight:800}
+        box-shadow:0 18px 55px rgba(0,0,0,.64);background:linear-gradient(145deg,#29202a,#17161b);
+        color:#f5eef2;padding:20px;font:13px/1.5 var(--font-ui,system-ui),sans-serif;}
+      #frameAnalyticsPrompt h2{font-size:17px;display:block;margin:0 0 8px;font-weight:800;line-height:1.35}
       #frameAnalyticsPrompt p{margin:0 0 12px;color:#d2c5d0}
+      #frameAnalyticsPrompt .frame-stat-context{color:#f3e8ed;font-size:13px;line-height:1.55;margin-bottom:8px}
+      #frameAnalyticsPrompt .frame-stat-privacy{color:#b9aab8;font-size:11px;line-height:1.55;margin-bottom:15px}
       #frameAnalyticsPrompt[aria-hidden="true"]{display:none!important}
       #frameAnalyticsPrompt button:focus-visible,
       #frameAnalyticsPrompt a:focus-visible{outline:3px solid #fff;outline-offset:3px}
@@ -93,8 +96,8 @@
     aside.setAttribute('role','dialog');
     aside.setAttribute('aria-modal','false');
     aside.setAttribute('aria-labelledby','frameAnalyticsHeading');
-    aside.setAttribute('aria-describedby','frameAnalyticsCopy');
-    aside.innerHTML='<h2 id="frameAnalyticsHeading">FRAME gemeinsam verbessern?</h2><p id="frameAnalyticsCopy">Mit deiner Erlaubnis zählen wir Besuche, Aktivitäten und zuletzt aktive Geräte für die Beta-Auswertung. Bei angemeldetem Konto ist auch deine E-Mail für den Betreiber sichtbar. Keine IP-Adresse, keine Filmhistorie. <a href="/datenschutz.html">Datenschutz</a></p><div class="frame-stat-buttons"><button type="button" id="frameAnalyticsNo">Nein, danke</button><button type="button" id="frameAnalyticsYes">Ja, erlauben</button></div>';
+    aside.setAttribute('aria-describedby','frameAnalyticsContext frameAnalyticsCopy');
+    aside.innerHTML='<h2 id="frameAnalyticsHeading">Hilfst du uns, FRAME besser zu machen?</h2><p class="frame-stat-context" id="frameAnalyticsContext">FRAME ist noch in der Beta. Damit wir die App dort verbessern, wo es wirklich hakt, möchten wir verstehen, welche Bereiche ihr ausprobiert.</p><p class="frame-stat-privacy" id="frameAnalyticsCopy">Nur wenn du zustimmst, zählen wir Besuche, Aktionen wie Swipes und zuletzt aktive Geräte. Bei einem angemeldeten Konto ist für den Betreiber auch deine E-Mail sichtbar. Wir erfassen keine IP-Adresse und keine Filmhistorie. <a href="/datenschutz.html">Mehr zum Datenschutz</a>.</p><div class="frame-stat-buttons"><button type="button" id="frameAnalyticsNo">Nein, danke</button><button type="button" id="frameAnalyticsYes">Ja, erlauben</button></div>';
     bannerReturnFocus=document.activeElement;
     document.body.appendChild(aside);
     aside.querySelector('#frameAnalyticsYes')?.addEventListener('click',()=>decide(true));

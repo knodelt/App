@@ -1,0 +1,148 @@
+/* FRAME v133 — responsive desktop editorial layout.
+   Mobile, tablet, short/landscape viewports retain the established one-screen
+   swipe interface. Wide monitors get a live two-column discovery layout. */
+.frame-desktop-spotlight { display:none; }
+
+@media (min-width:1000px) and (min-height:680px) {
+  .app-shell {
+    width:min(calc(100% - 64px),1180px) !important;
+    max-width:1180px;
+    background:linear-gradient(125deg,rgba(22,20,24,.94),rgba(11,11,13,.99) 44%) !important;
+    box-shadow:0 0 100px rgba(0,0,0,.48), 0 0 0 1px rgba(255,255,255,.045) !important;
+  }
+  .topbar { padding-inline:38px !important; }
+  .view.active:not(#discoverView) {
+    width:100%;
+    max-width:1030px;
+    margin-inline:auto;
+  }
+  #discoverView.view.active {
+    display:grid !important;
+    grid-template-columns:minmax(310px,420px) minmax(0,1fr);
+    grid-template-rows:auto auto minmax(0,1fr) auto auto auto;
+    column-gap:clamp(24px,3.6vw,50px);
+    row-gap:8px;
+    padding:24px 38px 15px !important;
+    overflow:hidden;
+    align-items:stretch;
+  }
+  #discoverView .section-head {
+    grid-column:1 / -1;
+    grid-row:1;
+    margin:0 0 10px !important;
+    align-items:end !important;
+  }
+  #discoverView h1 { max-width:none !important; font-size:clamp(32px,3.4vw,44px) !important; }
+  #discoverView .filter-row {
+    grid-column:1; grid-row:2;
+    padding:0 0 4px !important;
+    min-width:0;
+  }
+  #discoverView .deck-wrap {
+    grid-column:1; grid-row:3;
+    height:auto; min-height:0; min-width:0;
+  }
+  #discoverView .deck,
+  #discoverView .empty-state {
+    height:100% !important; min-height:0 !important; max-height:none !important;
+  }
+  #discoverView .actions {
+    grid-column:1; grid-row:4;
+    margin-top:0 !important;
+  }
+  #discoverView .undo-row { grid-column:1; grid-row:5; margin-top:0 !important; }
+  #discoverView .gesture-hint {
+    grid-column:1; grid-row:6;
+    margin:0 !important;
+  }
+  #discoverView .frame-desktop-spotlight {
+    grid-column:2; grid-row:2 / 7;
+    display:flex;
+    flex-direction:column;
+    min-width:0; min-height:0;
+    overflow-y:auto;
+    padding:clamp(24px,3vw,40px);
+    border:1px solid rgba(255,255,255,.11);
+    border-radius:25px;
+    background:
+      radial-gradient(ellipse at 95% 5%,rgba(255,77,95,.13),transparent 54%),
+      linear-gradient(145deg,#201c22 0%,#131216 72%);
+    box-shadow:inset 0 1px rgba(255,255,255,.045);
+    scrollbar-width:thin;
+    scrollbar-color:rgba(255,255,255,.2) transparent;
+  }
+  .frame-spotlight-topline {
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    color:#9e949e;
+    font:800 10px/1.4 var(--font-ui);
+    letter-spacing:.12em;
+  }
+  .frame-spotlight-topline span:first-child { color:#ff8799; }
+  .frame-spotlight-content { margin:auto 0; padding:22px 0; }
+  .frame-spotlight-type {
+    margin:0 0 14px;color:#ff8195;
+    font:800 11px/1.4 var(--font-ui);
+    letter-spacing:.14em;
+  }
+  #frameSpotlightHeading {
+    margin:0;
+    max-width:600px;
+    color:#f9f4f2;
+    font:600 clamp(32px,4.1vw,58px)/1.02 var(--font-display);
+    letter-spacing:-.045em;
+    overflow-wrap:break-word;
+  }
+  .frame-spotlight-meta {
+    margin:16px 0 0;color:#b8b0b4;
+    font:700 12px/1.6 var(--font-ui);
+  }
+  .frame-spotlight-rule {
+    width:60px;height:2px;margin:25px 0 22px;
+    background:#ff5a74;
+  }
+  .frame-spotlight-description {
+    margin:0;max-width:620px;color:#ddd3d8;
+    font:550 clamp(13px,1.25vw,16px)/1.68 var(--font-ui);
+  }
+  .frame-spotlight-tags {
+    display:flex;flex-wrap:wrap;gap:8px;margin-top:22px;
+  }
+  .frame-spotlight-tags span {
+    padding:7px 10px;border:1px solid rgba(255,255,255,.13);
+    border-radius:9px;background:rgba(255,255,255,.045);
+    color:#d9cbd2;font:700 11px/1.4 var(--font-ui);
+  }
+  .frame-spotlight-actions { margin-top:auto; }
+  .frame-spotlight-trailer {
+    display:flex;justify-content:space-between;align-items:center;gap:18px;
+    width:100%;min-height:52px;padding:13px 17px;
+    border:0;border-radius:13px;background:#ff526d;color:#fff;
+    font:800 13px/1.2 var(--font-ui);
+    cursor:pointer;
+  }
+  .frame-spotlight-trailer:hover { background:#ff6a81; }
+  .frame-spotlight-trailer:focus-visible { outline:3px solid #fff;outline-offset:3px; }
+  .frame-spotlight-trailer[hidden] { display:none!important; }
+  .frame-spotlight-actions p {
+    margin:15px 0 0;color:#958c96;
+    font:600 11px/1.65 var(--font-ui);
+  }
+
+  /* Other views may use the wider canvas without stretching small inputs. */
+  #recommendView .frame-loop-stack { width:100%;max-width:900px;margin-inline:auto; }
+  #recommendView .hm-panel { padding:25px 30px !important; }
+  #recommendView .hm-setup-host { max-width:530px; }
+  #tasteView .frame-account-card { max-width:800px; }
+  #personalizedView .recommend-list { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  #frameLogView .frame-log-results, #frameLogView .frame-log-grid {
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+}
+
+@media (min-width:1000px) and (min-height:680px) and (max-height:800px) {
+  #discoverView.view.active { padding-top:12px !important; row-gap:5px; }
+  #discoverView .frame-desktop-spotlight { padding:22px 26px; }
+  .frame-spotlight-content { padding:12px 0; }
+  .frame-spotlight-rule { margin:13px 0; }
+  .frame-spotlight-tags { margin-top:12px; }
+}

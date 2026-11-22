@@ -16,8 +16,9 @@
   <link rel="stylesheet" href="/frame-reboot.css?v=132" />
   <link rel="stylesheet" href="/frame-loop.css?v=2" />
   <link rel="stylesheet" href="/frame-tonight.css?v=5" />
-  <link rel="stylesheet" href="/hidden-match.css" />
+  <link rel="stylesheet" href="/hidden-match.css?v=133" />
   <link rel="stylesheet" href="/trailer-preview.css?v=132" />
+  <link rel="stylesheet" href="/frame-desktop.css?v=133" />
   <!-- Mobile navigation invariant: all six destinations belong in ONE row.
        Inlined so an older service-worker CSS cache cannot revert to 5 columns. -->
   <style id="frame-nav-six-columns">
@@ -80,6 +81,22 @@
             <span id="moodTriggerText">Stimmung · Egal</span>
           </button>
         </div>
+
+        <aside class="frame-desktop-spotlight" id="frameDesktopSpotlight" aria-labelledby="frameSpotlightHeading">
+          <div class="frame-spotlight-topline"><span>FRAME / IM FOKUS</span><span>DEIN NÄCHSTER TITEL</span></div>
+          <div class="frame-spotlight-content">
+            <p class="frame-spotlight-type" id="frameSpotlightType">FILM</p>
+            <h2 id="frameSpotlightHeading">Entdecke deinen nächsten Favoriten.</h2>
+            <p class="frame-spotlight-meta" id="frameSpotlightMeta"></p>
+            <div class="frame-spotlight-rule" aria-hidden="true"></div>
+            <p class="frame-spotlight-description" id="frameSpotlightDescription">Dein nächster Titel wartet im Kartenstapel.</p>
+            <div class="frame-spotlight-tags" id="frameSpotlightTags" aria-label="Genres"></div>
+          </div>
+          <div class="frame-spotlight-actions">
+            <button id="frameSpotlightTrailer" class="frame-spotlight-trailer" type="button" hidden>Trailer &amp; Infos ansehen <span aria-hidden="true">↗</span></button>
+            <p>Links Super · Hoch Merken · Rechts Mist<br />Dein Geschmack entscheidet.</p>
+          </div>
+        </aside>
 
         <div class="deck-wrap">
           <div class="deck" id="cardDeck" aria-live="polite"></div>
@@ -293,6 +310,17 @@
                 <span class="hm-connection" id="hmConnection" aria-live="polite">Verbinde …</span>
               </div>
 
+              <div class="hm-swipe-launch" id="hmSwipeLaunch" hidden>
+                <div class="hm-swipe-launch-copy">
+                  <span class="hm-swipe-launch-kicker">DEIN MATCH STARTET JETZT</span>
+                  <strong>Du kannst schon loslegen.</strong>
+                  <p>Dein Gast kann später einsteigen. Deine Entscheidungen bleiben bis zum Reveal geheim.</p>
+                </div>
+                <button class="hm-start-swipe" id="hmStartSwiping" type="button">
+                  <span aria-hidden="true">↔</span> Jetzt schon swipen <span aria-hidden="true">↓</span>
+                </button>
+              </div>
+
               <div class="hm-partner-box" id="hmPartnerBox" hidden>
                 <div class="hm-partner-box-head">
                   <span class="hm-partner-eyebrow">EUER FRAME · ZU ZWEIT</span>
@@ -306,12 +334,6 @@
               <div class="hm-invite-area" id="hmInviteArea" hidden>
                 <h3>Jetzt Partner einladen</h3>
                 <p>Öffnet den Link auf dem zweiten Smartphone oder scannt den QR-Code.</p>
-                <button class="hm-start-swipe" id="hmStartSwiping" type="button">
-                  <span aria-hidden="true">↔</span>
-                  Jetzt schon swipen
-                  <span aria-hidden="true">↓</span>
-                </button>
-                <p class="hm-swipe-early-explain">Du musst nicht auf den Gast warten. Deine Entscheidungen werden sofort im Room gespeichert.</p>
                 <div class="hm-invite-url-row">
                   <input id="hmInviteLink" type="text" aria-label="Room-Einladungslink" readonly />
                   <button id="hmCopyLink" type="button">Kopieren</button>
@@ -573,7 +595,7 @@
 
   <div class="toast" id="toast" role="status"></div>
   <script src="/viewport-lock.js" defer></script>
-  <script src="/app.js?v=132" defer></script>
+  <script src="/app.js?v=133" defer></script>
   <script src="/mood-filter.js" defer></script>
   <script src="/tmdb-feed.js" defer></script>
   <script src="/trailer-preview.js?v=132" defer></script>
@@ -589,8 +611,8 @@
   <script src="/onboarding-tutorial.js?v=132" defer></script>
   <script src="/frame-tonight.js?v=132" defer></script>
   <script src="/vendor-qrcode.js" defer></script>
-  <script src="/hidden-match-client.js" defer></script>
+  <script src="/hidden-match-client.js?v=133" defer></script>
   <script src="/frame-account-client.js?v=120" defer></script>
-  <script src="/frame-analytics-client.js?v=132" defer></script>
+  <script src="/frame-analytics-client.js?v=133" defer></script>
 </body>
 </html>
