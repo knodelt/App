@@ -68,7 +68,7 @@ export async function handleFrameTonight(request,env){
   // All input combinations are strictly allowlisted. The shared response is
   // publicly cacheable; no user preferences or history enter the backend.
   const cache=typeof caches!=='undefined'?caches.default:null;
-  const key=new Request('https://framingapp.de/api/tonight?v=1&mood='+mood+'&minutes='+limit+'&page='+page);
+  const key=new Request('https://framingapp.de/api/tonight?v=2&mood='+mood+'&minutes='+limit+'&page='+page);
   if(cache){
     const found=await cache.match(key).catch(()=>null);
     if(found){try{return reply({...await found.json(),cached:true});}catch{}}
