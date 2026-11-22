@@ -24,7 +24,8 @@
   const text=(id,val)=>{const n=pick(id);if(n)n.textContent=val;};
   let me=null,revision=0,ready=false,inflight=false,paused=false,timer=null,changedDuring=false;
   let lastHash='',config={email:false},initSerial=0;
-  let authGeneration=0,verifying=false;
+  let authGeneration=0,verifying=false,signingOut=false,deleteArmed=false;
+  let cloudDecisionPending=null,choiceReturnFocus=null;
   let providerCheck=null,providerCheckId=0;
   let retryTimer=null,retryDelay=3000;
   const safeGet=key=>{try{return localStorage.getItem(key)}catch{return null}};
@@ -111,6 +112,32 @@
       'Daten dieses Geräts in die Cloud laden');
   };
   const defaultConflictMessage='Deine lokalen Daten und die Cloud unterscheiden sich. Sichere die Daten bei Bedarf und wähle dann bewusst, welche Version erhalten bleibt.';
+  const choiceModal=pick('frameCloudChoiceModal');
+  const closeCloudChoice=()=>{
+    if(!choiceModal)return;
+    choiceModal.hidden=true;
+    cloudDecisionPending=null;
+    if(choiceReturnFocus?.isConnected)try{choiceReturnFocus.focus({preventScroll:true});}catch{}
+    choiceReturnFocus=null;
+  };
+  const openCloudChoice=(message,{emptyDevice=false}={})=>{
+    if(!choiceModal)return;
+    if(choiceModal.hidden)choiceReturnFocus=document.activeElement;
+    cloudDecisionPending=emptyDevice?'cloud-only':'conflict';
+    text('frameCloudChoiceTitle',emptyDevice?'Deine gespeicherten Filme sind bereit.':'Zwei Filmstände. Keine Daten verlieren.');
+    text('frameCloudChoiceDescription',message);
+    text('frameCloudChoiceStatus','');
+    show('frameCloudChoiceLocal',!emptyDevice);
+    text('frameCloudChoiceLocal','Gerätedaten statt Cloud verwenden');
+    text('frameCloudChoiceRemote','Cloud-Daten auf dieses Gerät laden');
+    choiceModal.hidden=false;
+    requestAnimationFrame(()=>pick(emptyDevice?'frameCloudChoiceRemote':'frameCloudChoiceBackup')?.focus({preventScroll:true}));
+  };
+  const surfaceCloudConflict=(message,{emptyDevice=false}={})=>{
+    text('frameAccountConflictMessage',message);
+    show('frameAccountConflict',true);
+    openCloudChoice(message,{emptyDevice});
+  };
   const showPanel=()=>{
     const logged=Boolean(me?.authenticated);
     show('frameAccountGuest',!logged);
@@ -163,6 +190,8 @@
   const toggleModal=value=>{
     modal.hidden=!value;
     if(value){
+      // A toast from the last swipe must not remain visible behind login.
+      document.getElementById('toast')?.classList.remove('show');
       void refreshProviders();
     }
   };
@@ -200,8 +229,10 @@
     if(!validSnapshot(values))throw Object.assign(
       Error('Lokale Daten sind beschädigt. Bitte vor weiteren Schritten ein Geräte-Backup herunterladen.'),
       {status:400});
+    const generation=authGeneration;
     const before=await fingerprint(values);
     const result=await accountFetch('sync',{method:'PUT',body:JSON.stringify({revision:rev,data:values})});
+    if(generation!==authGeneration||!me?.authenticated)return null;
     retainMarks(before,result.revision);
     try{localStorage.removeItem(IMPORT_PENDING)}catch{}
     syncStatus('Synchronisiert · '+new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}));
@@ -296,26 +327,24 @@
         return;
       }
       if(safeGet(IMPORT_PENDING)==='1'){
-        // Imported backup must be reconciled explicitly, including an empty
-        // backup. Otherwise an automatic download might erase the import.
-        syncStatus('Backup wiederhergestellt. Wähle aus, ob es in die Cloud hochgeladen oder durch den Cloud-Stand ersetzt werden soll.',true);
-        text('frameAccountConflictMessage','Dein importiertes Backup und die Cloud unterscheiden sich. Wähle bewusst aus, welche Version bleiben soll.');
-        show('frameAccountConflict',true);
+        // Never overwrite a freshly imported backup without an explicit choice.
+        const message='Dein importiertes Backup und die Cloud unterscheiden sich. Beide Stände bleiben erhalten, bis du ausdrücklich entscheidest.';
+        syncStatus('Backup und Cloud müssen abgeglichen werden.',true);
+        surfaceCloudConflict(message);
         return;
       }
       if(!cloud.data) {
-        // An empty device needs no decision; existing local data must not
-        // upload without permission. Keep the decision in the account panel.
-        if(!hasData(local)){
-          await upload(local,revision);
-          paused=false;ready=true;show('frameAccountConflict',false);
-        }else{
-          syncStatus('Anmeldung erfolgreich. Deine bisherigen Gerätedaten sind noch nicht in FRAME Cloud gesichert.');
-          text('frameAccountConflictMessage',
-            'Deine Filme, Merkliste und Bewertungen liegen bisher nur auf diesem Gerät. Möchtest du sie in deinem FRAME-Konto sichern? Ohne Zustimmung bleibt alles lokal erhalten.');
-          conflictActions(true);
-          show('frameAccountConflict',true);
-        }
+        // First login into a genuinely empty account: copy the current device
+        // snapshot directly. There is no remote data to overwrite, and the
+        // user has chosen to sign into FRAME Cloud.
+        const swipeCount=Object.keys((()=>{try{return JSON.parse(local['frame-state']||'{}').swipes||{}}catch{return {}}})()).length;
+        syncStatus(swipeCount?swipeCount+' lokale Swipes werden sicher ins Konto übernommen …':'Deine Gerätedaten werden in FRAME Cloud gesichert …');
+        const saved=await upload(local,revision);
+        if(serial!==initSerial||saved===null)return;
+        // Do not mark the device clean if a swipe happened during upload.
+        ready=true;paused=false;show('frameAccountConflict',false);
+        closeCloudChoice();
+        if((await fingerprint(snapshot()))!==saved)queue();
         return;
       }
       if(!hasData(local) || (baseline===localHash && sameOwner)) {
@@ -326,10 +355,10 @@
         const stamp=me.email+':'+revision+':'+remoteHash;
         if(!allowAutomaticRestore || sessionGet(RESTORE_GUARD)===stamp){
           paused=true;ready=false;
-          syncStatus('In deinem FRAME-Konto liegen gespeicherte Daten. Du kannst sie bewusst auf dieses Gerät laden.');
-          text('frameAccountConflictMessage',
-            'Dein Konto enthält bereits Film- und Geschmacksdaten. Prüfe, ob du den Cloud-Stand auf dieses Gerät übernehmen möchtest. Vorhandene ungesicherte Gerätedaten könnten dabei ersetzt werden.');
-          show('frameAccountConflict',true);
+          syncStatus('Cloud-Daten gefunden. Gerätedaten werden nicht überschrieben.');
+          surfaceCloudConflict(
+            'Dein Konto enthält bereits Film- und Geschmacksdaten. Du kannst sie bewusst auf dieses Gerät laden. Bis dahin bleibt dein aktueller Stand erhalten.',
+            {emptyDevice:!hasData(local)});
           return;
         }
         restoreLocal(remote);
@@ -350,19 +379,31 @@
         return;
       }
       // Both copies contain changes; never silently discard one.
-      syncStatus('Auf diesem Gerät und in der Cloud liegen unterschiedliche Daten vor.',true);
-      show('frameAccountConflict',true);
+      syncStatus('Deine lokalen Swipes sind noch nicht mit der Cloud zusammengeführt.',true);
+      surfaceCloudConflict('Auf diesem Gerät und in der Cloud gibt es unterschiedliche Filmstände. Lade zuerst ein Geräte-Backup herunter. Du kannst dann entscheiden, welcher Stand übernommen werden soll.');
     }catch(e){
       if(serial!==initSerial)return;
       if(e.status===401){
         me={authenticated:false};
         showPanel();
         status('Die Anmeldung konnte nicht bestätigt werden. Bitte erneut anmelden. Deine Gerätedaten bleiben erhalten.',true);
-      }else syncStatus((e.message||'Cloud nicht erreichbar.')+' Lokale Daten bleiben erhalten.',true);
+      }else{
+        syncStatus((e.message||'Cloud nicht erreichbar.')+' Deine lokalen Swipes bleiben auf diesem Gerät.',true);
+        if(choiceModal&&!choiceModal.hidden)text('frameCloudChoiceStatus',e.message||'Cloud nicht erreichbar.');
+      }
     }
   }
   async function chooseRemote(){
-    if(!confirm('Die Daten dieses Geräts durch deine Cloud-Daten ersetzen? Lade vorher bei Bedarf ein Geräte-Backup herunter; nicht synchronisierte Änderungen gehen verloren.'))return;
+    // A destructive replacement needs two deliberate taps, never a native
+    // confirm dialog that can lock a PWA behind its own overlay.
+    if(hasData(snapshot())&&pick('frameCloudChoiceRemote')?.dataset.armed!=='yes'){
+      const button=pick('frameCloudChoiceRemote');
+      if(button){button.dataset.armed='yes';button.textContent='Wirklich Gerätedaten ersetzen? Erneut tippen';}
+      text('frameCloudChoiceStatus','Achtung: Diese Auswahl ersetzt lokale, noch nicht synchronisierte Swipes. Erstelle vorher ein Geräte-Backup.');
+      return;
+    }
+    const button=pick('frameCloudChoiceRemote');
+    if(button)button.disabled=true;
     try{
       const cloud=await accountFetch('sync');
       if(!cloud.data)throw Error('Noch keine Cloud-Daten vorhanden.');
@@ -375,51 +416,77 @@
       try{localStorage.removeItem(IMPORT_PENDING)}catch{}
       // This reload follows an explicit user choice, never an automatic loop.
       sessionSet(RESTORE_GUARD,me.email+':'+cloud.revision+':'+hash);
+      closeCloudChoice();
       location.reload();
-    }catch(e){syncStatus(e.message,true);}
+    }catch(e){syncStatus(e.message,true);text('frameCloudChoiceStatus',e.message);}
+    finally{if(button){button.disabled=false;button.dataset.armed='';button.textContent='Cloud-Daten auf dieses Gerät laden';}}
   }
   async function chooseLocal(){
+    if(!me?.authenticated)return;
+    const button=pick('frameCloudChoiceLocal');
+    // Existing cloud data can contain different swipes. Require a second tap
+    // before replacing it; the first tap is only an on-screen warning.
     const initial=pick('frameAccountConflict')?.dataset.mode==='initial-upload';
-    // Clicking the clearly labelled first-upload button IS the authorization.
-    // Confirm only a destructive overwrite of an existing cloud version.
-    if(!initial&&!confirm('Die Cloud-Daten mit den Daten dieses Geräts überschreiben? Änderungen von anderen Geräten gehen dabei verloren.'))return;
+    if(!initial && button && button.dataset.armed!=='yes'){
+      button.dataset.armed='yes';
+      button.textContent='Cloud wirklich ersetzen? Erneut tippen';
+      text('frameCloudChoiceStatus','Achtung: Dieser Schritt ersetzt vorhandene Cloud-Daten. Sichere beide Versionen zuerst.');
+      return;
+    }
+    if(button)button.disabled=true;
     try{
-      const cloud=await accountFetch('sync'); // fetch latest version after conflict
-      if(initial && cloud.data)
-        throw Error('Dein Konto hat inzwischen Cloud-Daten. Bitte zuerst die beiden Stände vergleichen.');
-      await upload(snapshot(),cloud.revision);
+      const cloud=await accountFetch('sync');
+      if(initial&&cloud.data)throw Error('Dein Konto enthält inzwischen Cloud-Daten. Bitte erst vergleichen.');
+      const hash=await upload(snapshot(),cloud.revision);
+      if(hash===null)return;
       paused=false;ready=true;
       conflictActions(false);
       show('frameAccountConflict',false);
-    }catch(e){syncStatus(e.message,true);}
+      closeCloudChoice();
+      if(await fingerprint(snapshot())!==hash)queue();
+    }catch(e){syncStatus(e.message,true);text('frameCloudChoiceStatus',e.message);}
+    finally{if(button){button.disabled=false;button.dataset.armed='';button.textContent='Gerätedaten statt Cloud verwenden';}}
   }
   async function logout(deleteAccount=false){
-    const warn=deleteAccount?
-      'Dein FRAME-Konto und seine Cloud-Daten unwiderruflich löschen?':
-      'Von FRAME abmelden? Die Cloud-Daten bleiben gespeichert. Die lokale Kopie auf diesem Gerät wird aus Datenschutzgründen entfernt.';
-    if(!confirm(warn))return;
+    if(signingOut)return;
+    const button=pick(deleteAccount?'frameAccountDelete':'frameAccountLogout');
+    if(deleteAccount&&!deleteArmed){
+      deleteArmed=true;
+      if(button)button.textContent='Konto endgültig löschen? Erneut tippen';
+      syncStatus('Kontolöschung entfernt die Cloud-Daten endgültig. Sichere sie vorher.',true);
+      return;
+    }
+    signingOut=true;
+    const wasReady=ready,wasPaused=paused;
+    if(button){button.disabled=true;button.textContent=deleteAccount?'Konto wird gelöscht …':'Wird abgemeldet …';}
     try{
-      clearTimeout(timer);
-      clearRetry();
-      if(!deleteAccount && ready && !paused){
-        await push();
-        const current=await fingerprint(snapshot());
-        if(current!==lastHash){
-          syncStatus('Noch nicht alle Änderungen gespeichert. Bitte später erneut abmelden.',true);
-          return;
-        }
-      }
-      // Never silently discard an unsynced local watchlist during sign-out.
-      if(!deleteAccount && (paused || !ready)){
-        syncStatus('Abmelden gesperrt: Daten sind noch nicht synchronisiert. Bitte zuerst den Cloud-Abgleich abschließen. Du kannst vorher ein Geräte-Backup sichern.',true);
-        return;
-      }
-      ready=false;
+      // A logout must never be blocked by an unfinished initial upload or a
+      // conflict. Never delete unsynchronised local data on ordinary sign-out.
+      clearTimeout(timer);clearRetry();
+      ready=false;paused=true;
       await accountFetch(deleteAccount?'delete':'logout',{method:'POST',body:'{}'});
-      for(const key of KEYS){try{localStorage.removeItem(key)}catch{}}
+      authGeneration++;initSerial++;
+      me={authenticated:false};
+      inflight=false;changedDuring=false;
       clearCloudMarks();
-      location.reload();
-    }catch(e){syncStatus(e.message,true);}
+      closeCloudChoice();
+      if(deleteAccount){
+        // Deleting a cloud account is explicitly destructive and confirmed
+        // by the second tap; normal sign-out always keeps local films.
+        for(const key of KEYS){try{localStorage.removeItem(key)}catch{}}
+        location.reload();
+      }else{
+        showPanel();
+        status('Abgemeldet. Deine lokalen Filme und Swipes bleiben auf diesem Gerät gespeichert.');
+        syncStatus('Abgemeldet. Keine Cloud-Synchronisierung aktiv.');
+      }
+    }catch(e){
+      ready=wasReady;paused=wasPaused;
+      syncStatus('Abmelden fehlgeschlagen: '+(e.message||'Keine Verbindung')+'. Deine Gerätedaten bleiben erhalten.',true);
+    }finally{
+      signingOut=false;deleteArmed=false;
+      if(button){button.disabled=false;button.textContent=deleteAccount?'Konto und Cloud-Daten löschen':'Abmelden';}
+    }
   }
   async function init(){
     const generation=authGeneration;
@@ -451,7 +518,11 @@
   document.querySelector('#frameAccountModalClose')?.addEventListener('click',()=>toggleModal(false));
   pick('frameAccountRetryProviders')?.addEventListener('click',()=>{void refreshProviders();});
   modal.addEventListener('click',e=>{if(e.target===modal)toggleModal(false);});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!modal.hidden)toggleModal(false);});
+  document.addEventListener('keydown',e=>{
+    if(e.key!=='Escape')return;
+    if(choiceModal&&!choiceModal.hidden)closeCloudChoice();
+    else if(!modal.hidden)toggleModal(false);
+  });
   pick('frameAccountEmailLogin')?.addEventListener('click',()=>{
     show('frameAccountEmailStep',true);show('frameAccountCodeStep',false);
   });
@@ -540,9 +611,20 @@
     }
   });
   pick('frameAccountReload')?.addEventListener('click',()=>location.reload());
-  pick('frameAccountUseCloud')?.addEventListener('click',()=>void chooseRemote());
-  pick('frameAccountUseLocal')?.addEventListener('click',()=>void chooseLocal());
-  pick('frameAccountSyncNow')?.addEventListener('click',()=>{
+  pick('frameAccountUseCloud')?.addEventListener('click',()=>{
+    openCloudChoice('In der Cloud gibt es einen anderen Datenstand. Entscheide, ob du ihn auf dieses Gerät laden möchtest.',{emptyDevice:!hasData(snapshot())});
+  });
+  pick('frameAccountUseLocal')?.addEventListener('click',()=>{
+    openCloudChoice('Deine lokalen Filme können einen älteren Cloud-Stand ersetzen. Bitte sichere sie vorher.');
+  });
+  pick('frameCloudChoiceLocal')?.addEventListener('click',()=>void chooseLocal());
+  pick('frameCloudChoiceRemote')?.addEventListener('click',()=>void chooseRemote());
+  pick('frameCloudChoiceBackup')?.addEventListener('click',downloadLocalBackup);
+  pick('frameCloudChoiceLater')?.addEventListener('click',()=>{
+    closeCloudChoice();
+    syncStatus('Deine Gerätedaten bleiben lokal erhalten. Über „Jetzt synchronisieren“ kannst du später entscheiden.');
+  });
+    pick('frameAccountSyncNow')?.addEventListener('click',()=>{
     // Never bypass a conflict and overwrite another device's data without consent.
     if(paused||!ready){void reconcile({allowAutomaticRestore:false});return;}
     void push();
