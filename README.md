@@ -549,7 +549,7 @@ Veröffentlichungsfreigaben.
 
 ## FRAME v137 · Desktop UI über alle sechs Screens (22.11.2026)
 
-- Gemeinsame breite Desktop-Canvas (bis 1560px) ab 980px Viewportbreite; mobile PWA bleibt unterhalb des Breakpoints unverändert. Inhalte der Sekundäransichten dürfen jetzt bis 1480px breit werden; ihre alten 520-/900-/1030px-Deckel werden gezielt aufgehoben.
+- Gemeinsame breite Desktop-Canvas (bis 2200px) ab 980px Viewportbreite; mobile PWA bleibt unterhalb des Breakpoints unverändert. Inhalte der Sekundäransichten dürfen jetzt bis 2060px breit werden; ihre alten 520-/900-/1030px-Deckel werden gezielt aufgehoben.
 - **Für dich:** Großes Empfehlungsposter links, Erklärungen und weitere Empfehlungen rechts.
 - **Frame Tonight:** Stimmung/Laufzeit-Aktionen links, gewählte Ergebnisse und Erklärung rechts statt einer langen schmalen Spalte.
 - **Frame Match:** Echter zweispaltiger Startbereich mit Story links und gleich breiten Namens- und Startfeldern rechts, keine schmale 530px-Host-Form. Spiel-/Room-Phasen behalten ihren eigenständigen Aufbau.
@@ -559,6 +559,6 @@ Veröffentlichungsfreigaben.
 - Desktop-Navigation: größere, gut lesbare Tab-Labels.
 - Tutorial: auf breiten Bildschirmen wird die Hilfekarte rechts/links neben dem hervorgehobenen Element positioniert, wenn genug Raum existiert; andernfalls weiterhin darüber/darunter.
 - Geschmacks-Chips: Sprachenkürzel (z.B. EN, FR, DE) und gruppierte Sprachmerkmale werden nicht als Genres präsentiert; interne Rechenmodelle und Empfehlungen bleiben unverändert.
-- Versionsparameter `frame-desktop.css?v=137`, `app.js?v=137`, `onboarding-tutorial.js?v=137` und aktualisierter PWA-Service-Worker-Cache.
+- Versionsparameter `frame-desktop.css?v=137`, `app.js?v=137`, `taste-dna.js?v=137`, `onboarding-tutorial.js?v=137` und aktualisierter PWA-Service-Worker-Cache.
 
 **Regression:** CSS- und DOM-Struktur, JavaScript-Parsing, gespeicherte Sprach-Chips, NAV-/Overlay-Verhalten und die vorhandenen Cloud-Datenwege statisch prüfen. Echte visuelle Tests auf Windows/macOS-Browsern stehen noch aus.
