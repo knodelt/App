@@ -586,7 +586,13 @@ function switchView(target) {
 }
 
 function showToast(text) {
-  const toast = $('#toast'); toast.textContent = text; toast.classList.add('show');
+  const toast = $('#toast');
+  // Never let delayed swipe toasts bleed through the full-screen login dialog.
+  if(!document.getElementById('frameAccountModal')?.hidden){
+    toast?.classList.remove('show');
+    return;
+  }
+  toast.textContent = text; toast.classList.add('show');
   clearTimeout(toastTimer); toastTimer = setTimeout(()=>toast.classList.remove('show'), 1500);
 }
 
