@@ -16,6 +16,21 @@ const TIMES=new Set([0,90,120,150,180]);
 const day=()=>new Date().toLocaleDateString('sv-SE');
 const text=(v,max=200)=>String(v??'').slice(0,max);
 const canon=s=>text(s,100).toLocaleLowerCase('de-DE').trim();
+const readableGenre=tag=>{
+  const names={
+    'crime':'Krimis','krimi':'Krimis','action':'Actionfilme',
+    'thriller':'Thriller','mystery':'Mystery-Geschichten',
+    'horror':'Horrorfilme','comedy':'Komödien','komödie':'Komödien',
+    'romance':'Liebesgeschichten','romantik':'Liebesgeschichten',
+    'animation':'Animationsfilme','familie':'Familienfilme','family':'Familienfilme',
+    'science fiction':'Science-Fiction','sci-fi':'Science-Fiction','scifi':'Science-Fiction',
+    'drama':'Dramen','adventure':'Abenteuerfilme','abenteuer':'Abenteuerfilme',
+    'fantasy':'Fantasy-Geschichten','satire':'Satire','biopic':'Biografien',
+    'history':'Historienfilme','feelgood':'Wohlfühlfilme',
+    'slow burn':'ruhig erzählte Geschichten','mindbend':'knifflige Geschichten'
+  };
+  return names[canon(tag)]||null;
+};
 const seed=s=>{let n=2166136261;for(const x of s){n^=x.charCodeAt(0);n=Math.imul(n,16777619)}return n>>>0};
 const blank=()=>({day:day(),mood:'any',limit:0,picks:[],excluded:[],cards:[]});
 function read(){
@@ -41,7 +56,7 @@ function savePref(){
   }catch{}
 }
 function runtime(item){
-  for(const v of [item.runtime,item.runtimeMinutes,item.duration,item.meta]){
+  for(const v of [item.minutes,item.runtime,item.runtimeMinutes,item.duration,item.meta]){
     if(typeof v==='number'&&v>=45&&v<=400)return Math.round(v);
     if(typeof v==='string'){
       const match=v.match(/(?:^|\s)(\d{2,3})\s*min(?:uten)?\.?\b/i);
@@ -129,7 +144,8 @@ function candidates(){
   const output=[];
   for(const item of items){
     if(blocked(item))continue;
-    if(form.limit && (item.minutes===null||item.minutes>form.limit))continue;
+    // Never recommend an unverified runtime, including cached historical cards.
+    if(item.minutes===null||(form.limit&&item.minutes>form.limit))continue;
     const ts=tags(item),moodMatches=ts.filter(t=>MOODS[form.mood].tags.includes(t));
     if(!['any','surprise'].includes(form.mood)&&!moodMatches.length)continue;
     const positive=ts.filter(t=>(weights.get(t)||0)>0).sort((a,b)=>(weights.get(b)||0)-(weights.get(a)||0));
@@ -141,10 +157,12 @@ function candidates(){
     const score=form.mood==='surprise'?rand*18+(saved?5:0)
       :35+Math.min(18,boost*2)+negative*2+Math.min(16,moodMatches.length*6)+(saved?14:0)+(liked?9:0)+rand*2;
     const reason=saved?'Schon auf deiner Merkliste':
-      positive.length?'Weil dir '+positive[0]+' gefällt':
+      positive.length?(readableGenre(positive[0])?
+        'Weil du '+readableGenre(positive[0])+' magst':
+        'Passt zu deinen bisherigen Entscheidungen'):
       moodMatches.length?'Trifft deine Stimmung: '+MOODS[form.mood].label:
       liked?'Hattest du bereits als SUPER markiert':'Eine neue Entdeckung für heute';
-    output.push({...item,score,reason,category:moodMatches[0]||ts[0]||'Film'});
+    output.push({...item,score,reason,category:readableGenre(moodMatches[0]||ts[0])||'Film'});
   }
   return output.sort((a,b)=>b.score-a.score);
 }
@@ -238,7 +256,7 @@ function renderResults(){
     }else picture.append(node('span','tonight-monogram','F'));
     picture.append(node('span','tonight-number',String(i+1).padStart(2,'0')));
     const body=node('div','tonight-card-copy');
-    const meta=[item.year,item.minutes?item.minutes+' MIN':'DAUER UNBEKANNT'].filter(Boolean).join(' · ');
+    const meta=[item.year,item.minutes+' MIN'].filter(Boolean).join(' · ');
     body.append(node('span','tonight-card-meta',meta),node('h3','',item.title));
     body.append(node('p','tonight-why',item.reason));
     if(item.blurb)body.append(node('p','tonight-blurb',item.blurb));
