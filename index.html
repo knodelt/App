@@ -121,9 +121,10 @@
           </header>
         <div class="frame-log-stats" aria-label="Dein Filmüberblick">
           <div><strong id="frameLogSeenCount">0</strong><span>Gesehen</span></div>
-          <div><strong id="frameLogLikedCount">0</strong><span>Gefallen</span></div>
+          <div><strong id="frameLogLikedCount">0</strong><span>Gesehen &amp; gefallen</span></div>
           <div><strong id="frameLogSavedCount">0</strong><span>Merkliste</span></div>
         </div>
+        <p class="frame-log-stats-hint">SUPER bedeutet Interesse. Hier zählen nur Filme, die du als <strong>gesehen und gefallen</strong> bewertet hast.</p>
         <section class="frame-log-week" aria-labelledby="frameLogWeekHeading">
           <div class="frame-log-week-top">
             <span>DEIN WOCHENRÜCKBLICK</span>
@@ -418,7 +419,7 @@
             <p class="eyebrow">DEIN PERSÖNLICHER FILMRAUM</p>
             <h1>Mein Frame.</h1>
           </div>
-          <span class="film-counter"><b id="swipeCount">0</b><small>Swipes</small></span>
+          <span class="film-counter" aria-live="off"><b id="swipeCount">0</b><small id="swipeCountUnit">Swipes</small></span>
         </div>
 
         <div class="taste-section">
