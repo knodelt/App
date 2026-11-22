@@ -521,3 +521,17 @@ Veröffentlichungsfreigaben.
 - PWA-App-Shell und Script-Version: v134.
 
 **Regressionstests mit simulierten Account-Antworten:** Neues Konto mit und ohne lokale Daten, vorhandener Cloud-Stand, expliziter Upload, explizites Restore, ungültiger Code, verspätetes altes `/me`, fehlende Sitzung nach Verifikation. Bei diesen Fällen keine ungefragte Neuladung beobachtet; die manuell bestätigte Cloud-Wiederherstellung darf einmal neu laden, damit alle Datenansichten konsistent aktualisiert werden. Vollständige Live-Tests auf iOS, Android und Desktop stehen noch aus.
+
+
+## Beta-Hotfix · FRAME v135 · Swipes behalten, Anmeldung und Abmeldung stabil (22.11.2026)
+
+- **Login mit lokalen Swipes:** Ist das Konto neu oder liegt in der Cloud noch kein echter Filmverlauf vor, wird der gültige lokale Datensatz beim Anmelden unmittelbar per `PUT /api/account/sync` mit Revisionsprüfung gesichert. Der Bildschirm bleibt bedienbar; bei Fehlern bleiben Gerätedaten erhalten und ein erneuter Sync ist möglich.
+- **Zwei unterschiedliche Datenstände:** Wenn auf Gerät **und** in Cloud Filmverläufe vorliegen, erscheint eine sichtbare Auswahl als Dialog (inklusive Backup und „Später entscheiden“), statt eines versteckten Hinweises am Ende einer scrollbaren Seite. Nichts wird ohne eine bewusste Auswahl überschrieben. Eine destruktive Übernahme braucht zwei Klicks; Vorhaltezeit und bestehende Sessions bleiben unverändert.
+- **Abmelden:** Die Sitzung wird auch dann serverseitig beendet, wenn der initiale Cloud-Upload gescheitert oder ein Abgleich noch offen ist. Lokale Filme/Swipes werden beim normalen Logout **nicht gelöscht**; dadurch gehen unsynchronisierte Daten nicht verloren. Das UI wird sofort aktualisiert, ohne Reload-Schleife. Nur die ausdrücklich bestätigte Kontolöschung ist destruktiv.
+- **Race Guards:** Späte Cloud-Antworten nach dem Logout dürfen die Sitzung oder den Synchronisierungsstatus nicht wiederherstellen.
+- **Toast:** Swipe-Toasts werden beim Öffnen des Login-Dialogs entfernt und währenddessen nicht eingeblendet.
+- **Versionierung:** Frontend-Skripte und Styles für v135; Service-Worker-App-Shell erneuert.
+
+**Wichtig:** Ein Logout mit noch ungesicherten lokalen Swipes meldet den Nutzer korrekt ab, bewahrt aber den lokalen Verlauf auf dem Gerät. Bei einer späteren erneuten Anmeldung wird dieser erneut mit der Cloud abgeglichen. Vor dem bewusst destruktiven Ersetzen einer Datenkopie ein Geräte-Backup herunterladen.
+
+**Tests:** Modellierte Client-/Serverantworten für lokale Swipes auf leerem Konto, bewusst unterschiedlichen Cloud-Stand, fehlgeschlagenen Upload und Logout trotz offener Synchronisierung. Live-End-to-End-Tests auf iOS/PWA sowie die Prüfung, ob zuvor verlorene Gerätedaten noch im Browserspeicher liegen, sind separat erforderlich.
