@@ -28,6 +28,7 @@
   let me=null,revision=0,ready=false,inflight=false,paused=false,timer=null,changedDuring=false;
   let lastHash='',config={email:false},initSerial=0;
   let authGeneration=0,verifying=false,signingOut=false,deleteArmed=false;
+  let sendingCode=false,resendAllowedAt=0,resendTimer=null;
   let cloudDecisionPending=null,choiceReturnFocus=null;
   let providerCheck=null,providerCheckId=0;
   let retryTimer=null,retryDelay=3000;
@@ -557,15 +558,50 @@
   pick('frameAccountEmailLogin')?.addEventListener('click',()=>{
     show('frameAccountEmailStep',true);show('frameAccountCodeStep',false);
   });
-  pick('frameAccountSendCode')?.addEventListener('click',async()=>{
+  // The server allows one new code every 60 seconds (maximum five per hour).
+  // Never resend automatically: it invalidates the previous code immediately.
+  const updateResendButton=()=>{
+    const button=pick('frameAccountResendCode');
+    if(!button)return;
+    if(resendTimer){clearTimeout(resendTimer);resendTimer=null;}
+    const seconds=Math.max(0,Math.ceil((resendAllowedAt-Date.now())/1000));
+    button.disabled=sendingCode||verifying||seconds>0;
+    button.textContent=sendingCode?'Neuer Code wird gesendet …':
+      seconds>0?'Code erneut senden · '+seconds+' s':'Code erneut senden';
+    if(seconds>0)resendTimer=setTimeout(updateResendButton,Math.min(1000,seconds*1000));
+  };
+  const startCode=async(resend=false)=>{
+    if(sendingCode||verifying||(resend&&Date.now()<resendAllowedAt))return;
     const email=pick('frameAccountEmailInput')?.value.trim()||'';
-    text('frameAccountDialogMessage','Anmeldecode wird gesendet …');
+    const firstButton=pick('frameAccountSendCode');
+    if(!email){text('frameAccountDialogMessage','Bitte zuerst deine E-Mail-Adresse eingeben.');return;}
+    sendingCode=true;
+    if(firstButton)firstButton.disabled=true;
+    if(resend)updateResendButton();
+    text('frameAccountDialogMessage',resend?'Neuer Code wird angefordert …':'Anmeldecode wird gesendet …');
     try{
       await accountFetch('email/start',{method:'POST',body:JSON.stringify({email})});
-      show('frameAccountEmailStep',false);show('frameAccountCodeStep',true);
-      text('frameAccountDialogMessage','Gib den sechsstelligen Code aus deiner E-Mail ein.');
-    }catch(e){text('frameAccountDialogMessage',e.message);}
-  });
+      resendAllowedAt=Date.now()+60000;
+      const input=pick('frameAccountCodeInput');
+      // A new code supersedes the old one. Clear only after the server confirms.
+      if(input)input.value='';
+      show('frameAccountEmailStep',false);
+      show('frameAccountCodeStep',true);
+      text('frameAccountDialogMessage',resend
+        ? 'Neuer Code versendet. Der alte Code ist jetzt ungültig. Verwende bitte die neueste E-Mail.'
+        : 'Code versendet. Gib den sechsstelligen Code ein. Nur der zuletzt angeforderte Code ist gültig.');
+      updateResendButton();
+    }catch(e){
+      text('frameAccountDialogMessage',(e.message||'Code konnte nicht gesendet werden.')+
+        (resend?' Dein vorheriger Code bleibt gültig, sofern er noch nicht abgelaufen ist.':''));
+    }finally{
+      sendingCode=false;
+      if(firstButton)firstButton.disabled=false;
+      updateResendButton();
+    }
+  };
+  pick('frameAccountSendCode')?.addEventListener('click',()=>void startCode(false));
+  pick('frameAccountResendCode')?.addEventListener('click',()=>void startCode(true));
   pick('frameAccountVerifyCode')?.addEventListener('click',async()=>{
     if(verifying)return;
     const email=pick('frameAccountEmailInput')?.value.trim()||'';
@@ -573,6 +609,7 @@
     const button=pick('frameAccountVerifyCode');
     verifying=true;
     if(button){button.disabled=true;button.textContent='Anmeldung läuft …';}
+    updateResendButton();
     text('frameAccountDialogMessage','Code wird geprüft …');
     try{
       const verified=await accountFetch('email/verify',{method:'POST',body:JSON.stringify({email,code})});
@@ -598,6 +635,7 @@
     }finally{
       verifying=false;
       if(button){button.disabled=false;button.textContent='Anmelden';}
+      updateResendButton();
     }
   });
   const downloadLocalBackup=()=>{
