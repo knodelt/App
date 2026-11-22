@@ -562,3 +562,14 @@ Veröffentlichungsfreigaben.
 - Versionsparameter `frame-desktop.css?v=137`, `app.js?v=137`, `taste-dna.js?v=137`, `onboarding-tutorial.js?v=137` und aktualisierter PWA-Service-Worker-Cache.
 
 **Regression:** CSS- und DOM-Struktur, JavaScript-Parsing, gespeicherte Sprach-Chips, NAV-/Overlay-Verhalten und die vorhandenen Cloud-Datenwege statisch prüfen. Echte visuelle Tests auf Windows/macOS-Browsern stehen noch aus.
+
+
+## FRAME v138 · UI-Abschluss: Tour, Navigation, mobile Filter, Banner (22.11.2026)
+
+- **Desktop Tour Schritt 1:** Wenn das Tutorial neben der Swipe-Karte gezeigt wird, werden der tatsächlich gerenderte Spotlight-Textblock und die Aktions-/Kopfzeile als geschützte Flächen gemessen. Die Tour sucht zuerst eine vertikale Position mit möglichst wenig Überdeckung, statt stets auf Kartenmitte zu bleiben. Sonstige Tour-Schritte und mobile Fallback-Positionen bleiben erhalten.
+- **Navigation:** Mobile Labels sind deutlich größer (10–11,5 px statt ~7,5–9 px), dürfen für lange Namen zweizeilig werden; Navigationsleiste bekommt die dazu passende Höhe. Desktop-Labels bleiben separat ausgelegt.
+- **Mobile Feed-Filter:** Bei Bildschirmen bis 600 px Breite erscheinen die vier Filmtypen in einer gleichmäßigen ersten Reihe; die „Stimmung“-Auswahl liegt sichtbar darunter über die gesamte Breite und wird nicht mehr seitlich abgeschnitten.
+- **Analytics-Einwilligungsbanner:** Die frühere `bottom:18px`-Desktopregel ist entfernt. Der Abstand wird aus der tatsächlich gemessenen Oberkante der Navigation plus Sicherheitsabstand berechnet; ein Fallback greift vor dem ersten Layout. Bannerhöhe ist begrenzt und intern scrollbar; ResizeObserver/Viewport-Events halten die Position beim Fensterwechsel aktuell. Consent- und Tracking-Regeln selbst bleiben unverändert.
+- **Cache:** Versionierte Frontend-Assets v138 sowie Service-Worker-Cache zur Erneuerung der installierten PWA.
+
+Verifikation: Syntax- und DOM-Prüfungen; Mock-Tests zu Tour-Blockern und dem berechneten Bannerabstand. Ein echter visuell automatisierter Browserlauf auf der live ausgelieferten Cloudflare-Seite ist nicht belegt.
