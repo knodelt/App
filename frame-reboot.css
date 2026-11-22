@@ -948,6 +948,7 @@ h1 em {
   backdrop-filter:blur(12px);
   transition:opacity .18s ease;
 }
+.mood-sheet-overlay[hidden] { display:none !important; }
 .mood-sheet-overlay.open {
   opacity:1;
   pointer-events:auto;
