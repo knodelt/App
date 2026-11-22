@@ -17,6 +17,9 @@
   const RESTORE_GUARD='frame-cloud-restore-reload-v2';
   // An imported backup may differ from cloud; never silently overwrite it.
   const IMPORT_PENDING='frame-cloud-import-pending-v1';
+  // Account marker intentionally survives logout while local film data stays.
+  // Prevents uploads to a different email account without explicit permission.
+  const LAST_LOCAL_OWNER='frame-cloud-last-local-owner-v135';
   const panel=document.querySelector('#frameAccountPanel'),modal=document.querySelector('#frameAccountModal');
   if(!panel||!modal)return;
   const pick=id=>document.getElementById(id);
@@ -202,7 +205,7 @@
     sessionClear(RESTORE_GUARD);
   };
   const retainMarks=(hash,rev)=>{
-    safeSet(OWNER,me.email);safeSet(HASH,hash);safeSet(REV,String(rev));
+    safeSet(OWNER,me.email);safeSet(LAST_LOCAL_OWNER,me.email);safeSet(HASH,hash);safeSet(REV,String(rev));
     lastHash=hash;revision=rev;
   };
   const restoreLocal=(items)=>{
@@ -333,6 +336,15 @@
         const message='Dein importiertes Backup und die Cloud unterscheiden sich. Beide Stände bleiben erhalten, bis du ausdrücklich entscheidest.';
         syncStatus('Backup und Cloud müssen abgeglichen werden.',true);
         surfaceCloudConflict(message);
+        return;
+      }
+      // A previous logout may have intentionally retained unsynced local
+      // films from a DIFFERENT account. Never upload these to the new email
+      // address without an explicit, visible decision.
+      const lastOwner=safeGet(LAST_LOCAL_OWNER);
+      if(lastOwner && lastOwner!==me.email && hasData(local)){
+        syncStatus('Gerätedaten gehören zu einem anderen FRAME-Konto.',true);
+        surfaceCloudConflict('Auf diesem Gerät liegen Filme aus einer anderen Anmeldung. Sie werden nicht automatisch in dieses Konto hochgeladen. Sichere die Gerätedaten und entscheide bewusst, ob sie hier übernommen werden sollen.');
         return;
       }
       if(!cloud.data || !hasData(remote)) {
@@ -473,7 +485,9 @@
       clearTimeout(timer);clearRetry();
       ready=false;paused=true;
       await accountFetch(deleteAccount?'delete':'logout',{method:'POST',body:'{}'});
+      const signedOutEmail=me?.email||safeGet(OWNER);
       authGeneration++;initSerial++;
+      if(signedOutEmail)safeSet(LAST_LOCAL_OWNER,signedOutEmail);
       me={authenticated:false};
       inflight=false;changedDuring=false;
       clearCloudMarks();
