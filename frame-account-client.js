@@ -24,6 +24,7 @@
   const text=(id,val)=>{const n=pick(id);if(n)n.textContent=val;};
   let me=null,revision=0,ready=false,inflight=false,paused=false,timer=null,changedDuring=false;
   let lastHash='',config={email:false},initSerial=0;
+  let authGeneration=0,verifying=false;
   let providerCheck=null,providerCheckId=0;
   let retryTimer=null,retryDelay=3000;
   const safeGet=key=>{try{return localStorage.getItem(key)}catch{return null}};
@@ -98,6 +99,18 @@
     text('frameAccountSyncStatus',value);
     pick('frameAccountSyncStatus')?.classList.toggle('is-error',bad);
   };
+  // Keep cloud decisions in the page instead of opening synchronous native
+  // confirm dialogs immediately after login. These can appear as a frozen PWA.
+  const conflictActions=(firstUpload=false)=>{
+    const block=pick('frameAccountConflict');
+    if(block)block.dataset.mode=firstUpload?'initial-upload':'conflict';
+    show('frameAccountUseCloud',!firstUpload);
+    show('frameAccountReload',!firstUpload);
+    text('frameAccountUseLocal',firstUpload?
+      'Meine Gerätedaten in FRAME Cloud sichern':
+      'Daten dieses Geräts in die Cloud laden');
+  };
+  const defaultConflictMessage='Deine lokalen Daten und die Cloud unterscheiden sich. Sichere die Daten bei Bedarf und wähle dann bewusst, welche Version erhalten bleibt.';
   const showPanel=()=>{
     const logged=Boolean(me?.authenticated);
     show('frameAccountGuest',!logged);
@@ -257,6 +270,8 @@
     clearRetry();
     const serial=++initSerial;
     ready=false;paused=true;
+    conflictActions(false);
+    text('frameAccountConflictMessage',defaultConflictMessage);
     syncStatus('Cloud-Daten werden geprüft …');
     try{
       const cloud=await accountFetch('sync');
@@ -289,23 +304,31 @@
         return;
       }
       if(!cloud.data) {
-        // No preexisting cloud copy; user authorizes the initial upload.
-        if(!hasData(local) || confirm('Deine bisherigen FRAME-Daten jetzt in deinem neuen Cloud-Konto sichern?')){
+        // An empty device needs no decision; existing local data must not
+        // upload without permission. Keep the decision in the account panel.
+        if(!hasData(local)){
           await upload(local,revision);
           paused=false;ready=true;show('frameAccountConflict',false);
         }else{
-          syncStatus('Lokale Daten noch nicht hochgeladen.',true);
+          syncStatus('Anmeldung erfolgreich. Deine bisherigen Gerätedaten sind noch nicht in FRAME Cloud gesichert.');
+          text('frameAccountConflictMessage',
+            'Deine Filme, Merkliste und Bewertungen liegen bisher nur auf diesem Gerät. Möchtest du sie in deinem FRAME-Konto sichern? Ohne Zustimmung bleibt alles lokal erhalten.');
+          conflictActions(true);
           show('frameAccountConflict',true);
         }
         return;
       }
       if(!hasData(local) || (baseline===localHash && sameOwner)) {
+        // A cloud restore must never cause an unsolicited page refresh after
+        // the login flow. Present the explicit restore option instead.
         // Do not reload the site again if it has already restored this exact
         // cloud revision during the current browser tab session.
         const stamp=me.email+':'+revision+':'+remoteHash;
         if(!allowAutomaticRestore || sessionGet(RESTORE_GUARD)===stamp){
           paused=true;ready=false;
-          syncStatus('Cloud-Daten und Gerät unterscheiden sich. Bitte den Stand prüfen.',true);
+          syncStatus('In deinem FRAME-Konto liegen gespeicherte Daten. Du kannst sie bewusst auf dieses Gerät laden.');
+          text('frameAccountConflictMessage',
+            'Dein Konto enthält bereits Film- und Geschmacksdaten. Prüfe, ob du den Cloud-Stand auf dieses Gerät übernehmen möchtest. Vorhandene ungesicherte Gerätedaten könnten dabei ersetzt werden.');
           show('frameAccountConflict',true);
           return;
         }
@@ -330,10 +353,11 @@
       syncStatus('Auf diesem Gerät und in der Cloud liegen unterschiedliche Daten vor.',true);
       show('frameAccountConflict',true);
     }catch(e){
+      if(serial!==initSerial)return;
       if(e.status===401){
         me={authenticated:false};
         showPanel();
-        status('Deine Sitzung ist abgelaufen. Bitte erneut anmelden. Deine Gerätedaten bleiben erhalten.',true);
+        status('Die Anmeldung konnte nicht bestätigt werden. Bitte erneut anmelden. Deine Gerätedaten bleiben erhalten.',true);
       }else syncStatus((e.message||'Cloud nicht erreichbar.')+' Lokale Daten bleiben erhalten.',true);
     }
   }
@@ -355,11 +379,17 @@
     }catch(e){syncStatus(e.message,true);}
   }
   async function chooseLocal(){
-    if(!confirm('Die Cloud-Daten mit den Daten dieses Geräts überschreiben? Änderungen von anderen Geräten gehen dabei verloren.'))return;
+    const initial=pick('frameAccountConflict')?.dataset.mode==='initial-upload';
+    // Clicking the clearly labelled first-upload button IS the authorization.
+    // Confirm only a destructive overwrite of an existing cloud version.
+    if(!initial&&!confirm('Die Cloud-Daten mit den Daten dieses Geräts überschreiben? Änderungen von anderen Geräten gehen dabei verloren.'))return;
     try{
       const cloud=await accountFetch('sync'); // fetch latest version after conflict
+      if(initial && cloud.data)
+        throw Error('Dein Konto hat inzwischen Cloud-Daten. Bitte zuerst die beiden Stände vergleichen.');
       await upload(snapshot(),cloud.revision);
       paused=false;ready=true;
+      conflictActions(false);
       show('frameAccountConflict',false);
     }catch(e){syncStatus(e.message,true);}
   }
@@ -392,14 +422,21 @@
     }catch(e){syncStatus(e.message,true);}
   }
   async function init(){
+    const generation=authGeneration;
     showPanel();
-    // Do not delay account status behind an optional provider availability
-    // check (Cloudflare cold-start / offline can take several seconds).
+    // A slow initial /me request must not overwrite a newly completed login.
     void refreshProviders();
-    try{me=await accountFetch('me');}
-    catch(e){status(e.message||'Anmeldung momentan nicht verfügbar.',true);return;}
+    let current;
+    try{current=await accountFetch('me');}
+    catch(e){
+      if(generation===authGeneration)status(e.message||'Anmeldung momentan nicht verfügbar.',true);
+      return;
+    }
+    if(generation!==authGeneration)return;
+    me=current;
     showPanel();
-    if(me.authenticated)await reconcile();
+    // Avoid an automatic restore/reload cycle on startup as well.
+    if(me.authenticated)await reconcile({allowAutomaticRestore:false});
   }
   pick('frameHeaderLogin')?.addEventListener('click',()=>{
     if(me?.authenticated){
@@ -428,13 +465,38 @@
     }catch(e){text('frameAccountDialogMessage',e.message);}
   });
   pick('frameAccountVerifyCode')?.addEventListener('click',async()=>{
+    if(verifying)return;
     const email=pick('frameAccountEmailInput')?.value.trim()||'';
     const code=pick('frameAccountCodeInput')?.value.trim()||'';
+    const button=pick('frameAccountVerifyCode');
+    verifying=true;
+    if(button){button.disabled=true;button.textContent='Anmeldung läuft …';}
     text('frameAccountDialogMessage','Code wird geprüft …');
     try{
-      await accountFetch('email/verify',{method:'POST',body:JSON.stringify({email,code})});
-      toggleModal(false);location.reload();
-    }catch(e){text('frameAccountDialogMessage',e.message);}
+      const verified=await accountFetch('email/verify',{method:'POST',body:JSON.stringify({email,code})});
+      if(verified.ok!==true||!verified.email)throw Error('Der Login konnte nicht bestätigt werden.');
+      // The server has issued the session cookie. Show the signed-in state
+      // immediately rather than reloading the entire PWA.
+      authGeneration++;
+      initSerial++;
+      clearTimeout(timer);clearRetry();
+      me={authenticated:true,email:verified.email};
+      ready=false;paused=true;
+      toggleModal(false);
+      showPanel();
+      syncStatus('Anmeldung erfolgreich. Cloud-Daten werden geprüft …');
+      try{
+        switchView('taste');
+        requestAnimationFrame(()=>panel.scrollIntoView({behavior:'auto',block:'nearest'}));
+      }catch{}
+      // No automatic restore or refresh: explicit cloud choices protect data.
+      void reconcile({allowAutomaticRestore:false});
+    }catch(e){
+      text('frameAccountDialogMessage',e.message||'Anmeldung derzeit nicht möglich.');
+    }finally{
+      verifying=false;
+      if(button){button.disabled=false;button.textContent='Anmelden';}
+    }
   });
   const downloadLocalBackup=()=>{
     try{
