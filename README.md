@@ -471,3 +471,40 @@ Ohne lokales Worker-Runtime-Setup läuft dabei nur der Seed-Katalog. Für das ko
 ---
 
 `FRAME / CUT 11.22 / 24 FPS`
+
+
+## Beta-Hotfixes · 22. November 2026
+
+- **1 – Mein Frame:** Swipe-Zähler mit Abstand und korrektem Singular („1 Swipe“).
+- **2 – Deutsche Begründungen:** Frame Tonight verwendet natürlichsprachige
+  deutsche Genres (z. B. „Weil du Krimis magst“), auch bei alten gespeicherten
+  Filmtiteln; TMDB-Genrebezeichnungen sind für Anzeigen lokalisiert.
+- **3 – Geprüfte Laufzeit:** Beim Wiederherstellen gespeicherter Tonight-Karten
+  bleibt das Feld `minutes` erhalten. Titel ohne bestätigte Dauer werden auch
+  ohne Zeitlimit nicht empfohlen; mit Filter gilt das gewählte Maximum strikt.
+- **4 – Poster:** **Ausdrücklich ausgenommen**, an Posterauswahl, Artwork-Quellen
+  und manuellen Korrekturen wurde bei diesem Hotfix nichts geändert.
+- **5 – FRAMELOG:** „Gesehen & gefallen“ zählt nur tatsächlich angesehene und
+  positiv bewertete Titel. SUPER bleibt ein davon getrenntes Interessenssignal.
+- **6 – Trailer:** Filmplakat bleibt über dem eingebetteten Player sichtbar,
+  bis YouTube Wiedergabe meldet. Falls Autoplay blockiert ist, erscheint ein
+  manueller „Trailer abspielen“-Button mit Zugriff auf native Videosteuerung.
+- **7 – Zugänglichkeit:** Willkommensfenster und Tutorial erhalten Tastaturfokus,
+  Tab-Fokusbegrenzung, Escape und Fokus-Rückgabe. Die freiwillige Statistik-
+  Einwilligung erscheint beim ersten Besuch erst nach dem Tutorial, kann per
+  Tastatur abgelehnt werden und ist für Screenreader beschriftet.
+
+### Beta-Praxistests nach Deployment
+
+1. Safari auf iOS: Erster Besuch → Tastatur/Switch Control/VoiceOver →
+   Willkommen und Einwilligung ohne Touch bedienen.
+2. FRAMELOG: Nur SUPER vs. tatsächlich „Gesehen & gefallen“ vergleichen.
+3. Frame Tonight: 90/120 Min. auswählen, Ansicht wechseln, Seite neu laden,
+   prüfen, ob alle Vorschläge eine gültige Dauer unterhalb des Limits haben.
+4. Trailer: Wiedergabe bei schnellem und langsamem Netz sowie blockiertem
+   Autoplay prüfen. Der YouTube-Embed kann providerbedingt weiterhin puffern.
+5. Unveränderte Benutzerkonten, Merkliste und Cloud-Synchronisierung prüfen.
+
+Der Code- und Mock-Test ist keine vollständige WCAG-/Screenreader- oder
+Live-Geräteprüfung. Datenschutz- und Bildnutzungsrechte bleiben gesonderte
+Veröffentlichungsfreigaben.
