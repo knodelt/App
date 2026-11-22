@@ -146,3 +146,219 @@
   .frame-spotlight-rule { margin:13px 0; }
   .frame-spotlight-tags { margin-top:12px; }
 }
+
+/* FRAME v137 — DESKTOP CANVAS
+   One coherent editorial grid for all six destinations. Never alter the
+   established iPhone/tablet portrait flows below 980px. */
+@media (min-width:980px) {
+  .app-shell {
+    width:min(calc(100% - 40px),1560px) !important;
+    max-width:1560px !important;
+  }
+  .app-shell > main { min-width:0; }
+  .app-shell > main > .view.active:not(#discoverView) {
+    box-sizing:border-box;
+    width:100% !important;
+    max-width:1480px !important;
+    margin-inline:auto !important;
+    padding:clamp(24px,3vw,44px) clamp(28px,3.5vw,54px) 44px !important;
+    min-height:0;
+    min-width:0;
+    align-content:start;
+  }
+  .app-shell > main > .view.active:not(#discoverView) > * { min-width:0; }
+  .app-shell > nav.bottom-nav {
+    min-height:80px !important;
+    padding:8px 36px 9px !important;
+  }
+  .app-shell > nav.bottom-nav > button.nav-item {
+    grid-template-rows:38px 21px !important;
+    row-gap:4px !important;
+    min-height:64px !important;
+  }
+  .app-shell > nav.bottom-nav > button.nav-item > small {
+    font-size:12px !important;
+    line-height:20px !important;
+    height:20px !important;
+    min-height:20px !important;
+    letter-spacing:0 !important;
+  }
+
+  /* FÜR DICH — a large editorial recommendation beside useful context. */
+  #personalizedView.view.active .for-you-section-head { margin-bottom:22px !important; }
+  #personalizedView .recommendation-modal,
+  #personalizedView .recommendation-sheet { width:100% !important; max-width:none !important; }
+  #personalizedView .recommendation-sheet-scroll {
+    display:grid !important;
+    grid-template-columns:minmax(0,1.05fr) minmax(340px,.95fr);
+    grid-template-rows:auto minmax(0,1fr);
+    align-items:start;
+    gap:18px 26px;
+    width:100% !important;
+  }
+  #personalizedView .recommend-hero {
+    grid-column:1; grid-row:1 / 3;
+    height:min(67dvh,665px) !important;
+    min-height:440px !important;
+    margin:0 !important;
+  }
+  #personalizedView .why-panel {
+    grid-column:2;grid-row:1;
+    padding:22px !important;
+    margin:0 !important;
+    border-radius:21px;
+    border:1px solid rgba(255,255,255,.09);
+    background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.015));
+  }
+  #personalizedView .recommend-list {
+    grid-column:2;grid-row:2;
+    width:100% !important;
+    grid-template-columns:minmax(0,1fr) !important;
+    margin:0 !important;
+  }
+  #personalizedView .rec-row {
+    min-width:0;
+    min-height:124px !important;
+  }
+
+  /* TONIGHT — decisions to the left, live results to the right. */
+  #tonightView.view.active {
+    display:grid !important;
+    grid-template-columns:minmax(0,.94fr) minmax(0,1.06fr);
+    grid-template-rows:auto auto auto auto auto minmax(52px,auto);
+    column-gap:clamp(24px,3.2vw,48px);
+    row-gap:10px;
+    align-content:start;
+    align-items:start;
+  }
+  #tonightView > .tonight-section-head { grid-column:1 / -1;grid-row:1;margin-bottom:10px !important; }
+  #tonightView > .tonight-intro { grid-column:1 / -1;grid-row:2;max-width:80ch; }
+  #tonightView > .tonight-date { grid-column:1 / -1;grid-row:3;margin-bottom:7px; }
+  #tonightView > .tonight-input-block:nth-of-type(1) { grid-column:1;grid-row:4; }
+  #tonightView > .tonight-input-block:nth-of-type(2) { grid-column:1;grid-row:5; }
+  #tonightView > .tonight-go { grid-column:1;grid-row:6;align-self:start;margin:0 !important;min-height:52px; }
+  #tonightView > .tonight-summary { grid-column:2;grid-row:4;margin:0 !important;padding:6px 0 12px; }
+  #tonightView > #frameTonightEmpty,
+  #tonightView > #frameTonightResults { grid-column:2;grid-row:5 / 7;min-width:0; }
+  #tonightView .tonight-mood-options { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  #tonightView .tonight-mood { min-height:52px; }
+  #tonightView .tonight-time-options button { min-height:52px; }
+  #tonightView #frameTonightEmpty { padding:26px; }
+  #tonightView .tonight-results { grid-template-columns:minmax(0,1fr);gap:12px; }
+  #tonightView .tonight-card { grid-template-columns:118px minmax(0,1fr); }
+  #tonightView .tonight-card-copy { min-width:0; }
+
+  /* MATCH — remove legacy narrow 530px setup / 900px stack caps. */
+  #recommendView.view.active > .section-head { margin-bottom:20px !important; }
+  #recommendView .frame-loop-stack {
+    width:100% !important; max-width:none !important; margin:0 !important;
+  }
+  #recommendView #roomPanel.hm-panel {
+    box-sizing:border-box;
+    width:100% !important;
+    max-width:none !important;
+    min-height:min(65dvh,680px);
+    padding:clamp(26px,3.1vw,46px) !important;
+  }
+  #recommendView .hm-setup,
+  #recommendView .hm-setup-host,
+  #recommendView .hm-setup-guest {
+    box-sizing:border-box;
+    width:100% !important;max-width:none !important;
+    min-width:0;justify-self:stretch;
+  }
+  #recommendView .hm-setup-host,
+  #recommendView .hm-setup-guest {
+    grid-template-columns:minmax(0,1fr) !important;
+    justify-items:stretch;
+  }
+  #recommendView .hm-setup input,
+  #recommendView #hmCreate,
+  #recommendView #hmJoin {
+    box-sizing:border-box;width:100% !important;
+    max-width:none !important;justify-self:stretch;
+  }
+  #recommendView .hm-setup-host small { text-align:left; }
+  #recommendView .hm-partners-list { grid-template-columns:repeat(2,minmax(0,1fr)); }
+
+  /* MEIN FRAME — balanced signal groups and a full-width account card. */
+  #tasteView.view.active {
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    column-gap:clamp(18px,2.4vw,32px);
+    row-gap:14px;
+    align-content:start;
+    align-items:start;
+  }
+  #tasteView > .section-head { grid-column:1 / -1; }
+  #tasteView > .taste-section { margin-top:0 !important;align-self:stretch; }
+  #tasteView > .stats-grid { grid-column:1 / -1;margin-top:2px !important; }
+  #tasteView > #frameAccountPanel {
+    grid-column:1 / -1;
+    box-sizing:border-box;
+    display:block;
+    width:100% !important;
+    max-width:none !important;
+    margin:4px 0 10px !important;
+    padding:clamp(22px,2.5vw,34px);
+  }
+  #tasteView > #frameAccountPanel .frame-account-actions {
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+  #tasteView > .frame-beta-entry,
+  #tasteView > .frame-legal-links,
+  #tasteView > .tiny-credit { grid-column:1 / -1; }
+  #tasteView > .dna-card,
+  #tasteView > #tasteDnaInsights,
+  #tasteView > #tasteDnaQuestionCard { grid-column:1 / -1; }
+
+  /* FRAMELOG — proper two-column cards with a matching empty state. */
+  #frameLogView.view.active { display:block !important; }
+  #frameLogView .frame-log-list {
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:16px !important;
+    align-items:stretch;
+  }
+  #frameLogView .frame-log-card {
+    grid-template-columns:102px minmax(0,1fr);
+    min-width:0;min-height:184px;
+    padding:14px;
+    gap:16px;
+  }
+  #frameLogView .frame-log-poster { width:102px; }
+  #frameLogView .frame-log-empty { grid-column:1 / -1; }
+  #frameLogView .frame-log-item-copy > strong { font-size:clamp(20px,1.6vw,27px); }
+  #frameLogView .frame-log-item-action { font-size:12px; }
+
+  /* Expand all secondary-page headings to the available canvas. */
+  #personalizedView .section-head h1,
+  #tonightView .section-head h1,
+  #recommendView .section-head h1,
+  #tasteView .section-head h1,
+  #frameLogView .frame-log-header h1 {
+    font-size:clamp(37px,3.1vw,54px) !important;
+  }
+}
+
+@media (min-width:1000px) and (min-height:680px) {
+  /* Preserve FRAMING's established split, but give it the same wide canvas. */
+  #discoverView.view.active {
+    grid-template-columns:minmax(360px,.43fr) minmax(0,.57fr) !important;
+    column-gap:clamp(24px,3vw,52px) !important;
+  }
+}
+
+/* Still two columns on an ordinary laptop, but avoid crushed content on
+   unusually short displays and when the desktop browser is narrow. */
+@media (min-width:980px) and (max-width:1170px) {
+  #personalizedView .recommendation-sheet-scroll {grid-template-columns:minmax(0,1fr) minmax(300px,.85fr);gap:18px;}
+  #tonightView.view.active {grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:20px;}
+  #recommendView #roomPanel.hm-panel {padding:26px !important;}
+  #frameLogView .frame-log-card {grid-template-columns:84px minmax(0,1fr);gap:11px;padding:11px;}
+  #frameLogView .frame-log-poster {width:84px;}
+}
+@media (min-width:980px) and (max-height:750px) {
+  #personalizedView .recommend-hero { min-height:330px !important;height:min(61dvh,490px) !important; }
+  #recommendView #roomPanel.hm-panel { min-height:0; }
+}
