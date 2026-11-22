@@ -127,7 +127,7 @@
     if(!choiceModal)return;
     if(choiceModal.hidden)choiceReturnFocus=document.activeElement;
     cloudDecisionPending=emptyDevice?'cloud-only':'conflict';
-    text('frameCloudChoiceTitle',emptyDevice?'Deine gespeicherten Filme sind bereit.':'Zwei Filmstände. Keine Daten verlieren.');
+    text('frameCloudChoiceTitle',emptyDevice?'Deine gespeicherten Filme sind bereit.':'Zwei Filmstände. Bitte wählen.');
     text('frameCloudChoiceDescription',message);
     text('frameCloudChoiceStatus','');
     show('frameCloudChoiceLocal',!emptyDevice);
@@ -487,8 +487,13 @@
       // conflict. Never delete unsynchronised local data on ordinary sign-out.
       clearTimeout(timer);clearRetry();
       ready=false;paused=true;
+      // Hashing an owner tag is best effort; it must never make a successful
+      // server-side logout look like a failed logout.
+      let signedOutOwner=null;
+      if(!deleteAccount&&me?.email){
+        try{signedOutOwner=await fingerprint({account:me.email});}catch{}
+      }
       await accountFetch(deleteAccount?'delete':'logout',{method:'POST',body:'{}'});
-      const signedOutOwner=!deleteAccount&&me?.email?await fingerprint({account:me.email}):null;
       authGeneration++;initSerial++;
       if(signedOutOwner)safeSet(LAST_LOCAL_OWNER,signedOutOwner);
       if(deleteAccount)try{localStorage.removeItem(LAST_LOCAL_OWNER)}catch{}
