@@ -176,19 +176,19 @@
   }
   .app-shell > main > .view.active:not(#discoverView) > * { min-width:0; }
   .app-shell > nav.bottom-nav {
-    min-height:80px !important;
+    min-height:86px !important;
     padding:8px 36px 9px !important;
   }
   .app-shell > nav.bottom-nav > button.nav-item {
-    grid-template-rows:38px 21px !important;
+    grid-template-rows:38px 24px !important;
     row-gap:4px !important;
-    min-height:64px !important;
+    min-height:68px !important;
   }
   .app-shell > nav.bottom-nav > button.nav-item > small {
-    font-size:12px !important;
-    line-height:20px !important;
-    height:20px !important;
-    min-height:20px !important;
+    font-size:14px !important;
+    line-height:22px !important;
+    height:22px !important;
+    min-height:22px !important;
     letter-spacing:0 !important;
   }
 
