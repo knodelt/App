@@ -508,3 +508,16 @@ Ohne lokales Worker-Runtime-Setup läuft dabei nur der Seed-Katalog. Für das ko
 Der Code- und Mock-Test ist keine vollständige WCAG-/Screenreader- oder
 Live-Geräteprüfung. Datenschutz- und Bildnutzungsrechte bleiben gesonderte
 Veröffentlichungsfreigaben.
+
+
+## Beta-Hotfix · FRAME v134 · Login ohne PWA-Neuladeschleife (22.11.2026)
+
+- Nach erfolgreicher Verifizierung des sechsstelligen E-Mail-Codes wird die bestehende Sitzung direkt im UI übernommen; kein pauschales `location.reload()` mehr.
+- Während der Code-Prüfung ist der Anmelde-Button gesperrt und zeigt einen aktiven Bearbeitungszustand. Bei Fehlern wird er wieder freigegeben.
+- Eine ältere, verspätet ankommende `/api/account/me`-Antwort kann einen gerade erfolgreich abgeschlossenen Login nicht mehr auf „Gast“ zurücksetzen.
+- Cloud-Abgleich nach Login und beim App-Start löst keine ungefragten vollständigen Neuladungen mehr aus. Für die Übernahme vorhandener Cloud-Daten wird eine bewusste Auswahl in „Mein Frame“ angeboten.
+- Bei neuen Konten mit vorhandenen Gerätedaten erfolgt die Freigabe des erstmaligen Cloud-Uploads über eine Schaltfläche in „Mein Frame“ statt über ein sofortiges natives `confirm()`-Dialogfenster. Ohne Zustimmung bleiben die Daten lokal.
+- Bereits synchronisierte Bestände sowie ein neues Konto ohne lokale Filmdaten erfordern keine zusätzlichen Klicks.
+- PWA-App-Shell und Script-Version: v134.
+
+**Regressionstests mit simulierten Account-Antworten:** Neues Konto mit und ohne lokale Daten, vorhandener Cloud-Stand, expliziter Upload, explizites Restore, ungültiger Code, verspätetes altes `/me`, fehlende Sitzung nach Verifikation. Bei diesen Fällen keine ungefragte Neuladung beobachtet; die manuell bestätigte Cloud-Wiederherstellung darf einmal neu laden, damit alle Datenansichten konsistent aktualisiert werden. Vollständige Live-Tests auf iOS, Android und Desktop stehen noch aus.
