@@ -10,6 +10,9 @@
   const node=id=>document.getElementById(id);
   const player=node('frameTrailerPlayer');
   const status=node('frameTrailerStatus');
+  const playButton=node('frameTrailerPlay');
+  const videoBox=node('frameTrailerVideo');
+  let activeIframe=null,playerTimeout=null,playFallback=null;
   const meta=node('frameTrailerMeta');
   const description=node('frameTrailerDescription');
   let current=null;
@@ -35,10 +38,33 @@
     status.hidden=false;
   }
   function stopPlayer() {
-    // Removing the iframe immediately stops video and audio on iPhones.
+    // Keep poster during loading, stop remote playback on close or next trailer.
+    clearTimeout(playerTimeout);clearTimeout(playFallback);
+    playerTimeout=null;playFallback=null;
+    activeIframe=null;
+    videoBox.classList.remove('is-playing');
     player.replaceChildren();
     player.hidden=true;
+    playButton.hidden=true;
   }
+  function revealPlayer(){
+    if(overlay.hidden||!activeIframe)return;
+    clearTimeout(playerTimeout);clearTimeout(playFallback);
+    videoBox.classList.add('is-playing');
+    playButton.hidden=true;status.hidden=true;
+  }
+  // The iframe can report that it is truly playing via the official YouTube
+  // postMessage player events. Until then the verified movie still stays visible.
+  window.addEventListener('message',event=>{
+    if(!['https://www.youtube-nocookie.com','https://www.youtube.com'].includes(event.origin))return;
+    if(!activeIframe||event.source!==activeIframe.contentWindow||overlay.hidden)return;
+    let data=event.data;
+    try{if(typeof data==='string')data=JSON.parse(data);}catch{return;}
+    if(!data||typeof data!=='object')return;
+    if((data.event==='onStateChange'&&Number(data.info)===1)||
+       (data.event==='infoDelivery'&&Number(data.info?.playerState)===1))
+      revealPlayer();
+  });
   function cleanupRequests() {
     if(previewRequest)previewRequest.abort();
     if(metaRequest)metaRequest.abort();
@@ -196,17 +222,52 @@
     if(!current?.video || overlay.hidden)return;
     const {key}=current.video;
     if(!/^[a-zA-Z0-9_-]{11}$/.test(key))return;
+    clearTimeout(playerTimeout);clearTimeout(playFallback);
+    videoBox.classList.remove('is-playing');
+    showStatus('Trailer wird geladen …');
+    playButton.hidden=true;
     const iframe=document.createElement('iframe');
     iframe.title='Trailer zu '+current.title;
-    iframe.src='https://www.youtube-nocookie.com/embed/'+key
-      +'?autoplay=1&playsinline=1&controls=1&rel=0&mute='+(muted?'1':'0');
+    iframe.id='frameTrailerIframe';
+    iframe.loading='eager';
+    iframe.src='https://www.youtube-nocookie.com/embed/'+key+
+      '?autoplay=1&playsinline=1&controls=1&rel=0&enablejsapi=1'+
+      '&origin='+encodeURIComponent(location.origin)+
+      '&mute='+(muted?'1':'0');
     iframe.allow='accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share';
     iframe.referrerPolicy='strict-origin-when-cross-origin';
     iframe.setAttribute('allowfullscreen','');
+    activeIframe=iframe;
+    iframe.addEventListener('load',()=>{
+      if(activeIframe!==iframe||overlay.hidden||videoBox.classList.contains('is-playing'))return;
+      showStatus('Trailer bereit – bei Bedarf manuell starten.');
+      playButton.hidden=false;
+      // Register for onStateChange; keep the poster above the iframe until
+      // YouTube actually reports that playback has started.
+      try{iframe.contentWindow?.postMessage(JSON.stringify({
+        event:'listening',id:'frameTrailerIframe'
+      }),'https://www.youtube-nocookie.com');}catch{}
+    });
     player.replaceChildren(iframe);
     player.hidden=false;
-    status.hidden=true;
+    playerTimeout=setTimeout(()=>{
+      if(overlay.hidden||activeIframe!==iframe||videoBox.classList.contains('is-playing'))return;
+      showStatus('Trailer starten, wenn die automatische Wiedergabe nicht beginnt.');
+      playButton.hidden=false;
+    },5000);
   }
+  playButton.addEventListener('click',()=>{
+    if(!activeIframe||overlay.hidden)return;
+    try{activeIframe.contentWindow?.postMessage(JSON.stringify({
+      event:'command',func:'playVideo',args:[]
+    }),'https://www.youtube-nocookie.com');}catch{}
+    showStatus('Trailer startet …');
+    playButton.hidden=true;
+    // If the provider sends no playback events, reveal native controls so
+    // the viewer can start playback directly inside YouTube.
+    clearTimeout(playFallback);
+    playFallback=setTimeout(()=>{if(!overlay.hidden)revealPlayer();},1800);
+  });
 
   node('frameTrailerClose').addEventListener('click',()=>close());
   node('frameTrailerBack').addEventListener('click',()=>close());
