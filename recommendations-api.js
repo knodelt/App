@@ -23,6 +23,12 @@ const GENRE_NAMES = new Map();
 Object.entries({...MOVIE_GENRES, ...TV_GENRES}).forEach(([name,id]) => {
   if (!GENRE_NAMES.has(id)) GENRE_NAMES.set(id, name);
 });
+// Display names only: preserve English genre keys used by the learning model.
+for(const [id,name] of [[80,'Krimi'],[10749,'Romantik'],[10759,'Action & Abenteuer'],
+  [10762,'Kinder'],[10763,'Nachrichten'],[10764,'Reality-TV'],
+  [10765,'Science-Fiction & Fantasy'],[10768,'Krieg & Politik']]){
+  GENRE_NAMES.set(id,name);
+}
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
