@@ -195,6 +195,7 @@
   const toggleModal=value=>{
     modal.hidden=!value;
     if(value){
+      window.FrameMoodSheet?.close?.();
       // A toast from the last swipe must not remain visible behind login.
       document.getElementById('toast')?.classList.remove('show');
       void refreshProviders();
