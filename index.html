@@ -13,7 +13,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
   <link rel="stylesheet" href="/app-layout.css" />
-  <link rel="stylesheet" href="/frame-reboot.css?v=132" />
+  <link rel="stylesheet" href="/frame-reboot.css?v=135" />
   <link rel="stylesheet" href="/frame-loop.css?v=2" />
   <link rel="stylesheet" href="/frame-tonight.css?v=5" />
   <link rel="stylesheet" href="/hidden-match.css?v=133" />
@@ -489,6 +489,7 @@
               <button type="button" id="frameAccountLogout">Abmelden</button>
               <button type="button" id="frameAccountDelete" class="frame-account-danger">Konto und Cloud-Daten löschen</button>
             </div>
+            <p class="frame-account-signout-hint">Beim Abmelden bleiben deine Filme auf diesem Gerät erhalten, auch wenn die Cloud noch nicht synchronisiert ist.</p>
           </div>
           <input type="file" accept=".json,application/json" id="frameAccountImportFile" hidden aria-label="FRAME-Backup-Datei auswählen">
         </section>
@@ -521,6 +522,22 @@
     </nav>
   </div>
 
+
+  <div id="frameCloudChoiceModal" class="frame-cloud-choice-overlay" hidden>
+    <section class="frame-cloud-choice-dialog" role="dialog" aria-modal="true" aria-labelledby="frameCloudChoiceTitle" aria-describedby="frameCloudChoiceDescription">
+      <span class="frame-cloud-choice-kicker">FRAME CLOUD · DEINE FILME</span>
+      <h2 id="frameCloudChoiceTitle">Deine Filmgeschichte bleibt erhalten.</h2>
+      <p id="frameCloudChoiceDescription">Auf diesem Gerät und in der Cloud liegen unterschiedliche Daten. Du entscheidest, wie es weitergeht.</p>
+      <p class="frame-cloud-choice-warning">Bis zu deiner Entscheidung wird nichts überschrieben. Wenn du einen Stand ersetzt, sichere vorher deine Daten.</p>
+      <p id="frameCloudChoiceStatus" class="frame-cloud-choice-status" role="status" aria-live="polite"></p>
+      <div class="frame-cloud-choice-actions">
+        <button id="frameCloudChoiceBackup" class="frame-cloud-choice-backup" type="button">Gerätedaten als Backup sichern</button>
+        <button id="frameCloudChoiceLocal" class="frame-cloud-choice-local" type="button">Gerätedaten in die Cloud übernehmen</button>
+        <button id="frameCloudChoiceRemote" class="frame-cloud-choice-remote" type="button">Cloud-Daten auf dieses Gerät laden</button>
+        <button id="frameCloudChoiceLater" class="frame-cloud-choice-later" type="button">Später entscheiden · Gerätedaten behalten</button>
+      </div>
+    </section>
+  </div>
 
   <div id="frameAccountModal" class="frame-account-overlay" hidden>
     <section class="frame-account-dialog" role="dialog" aria-modal="true" aria-labelledby="frameAccountModalTitle">
@@ -595,7 +612,7 @@
 
   <div class="toast" id="toast" role="status"></div>
   <script src="/viewport-lock.js" defer></script>
-  <script src="/app.js?v=133" defer></script>
+  <script src="/app.js?v=135" defer></script>
   <script src="/mood-filter.js" defer></script>
   <script src="/tmdb-feed.js" defer></script>
   <script src="/trailer-preview.js?v=132" defer></script>
@@ -612,7 +629,7 @@
   <script src="/frame-tonight.js?v=132" defer></script>
   <script src="/vendor-qrcode.js" defer></script>
   <script src="/hidden-match-client.js?v=133" defer></script>
-  <script src="/frame-account-client.js?v=134" defer></script>
+  <script src="/frame-account-client.js?v=135" defer></script>
   <script src="/frame-analytics-client.js?v=133" defer></script>
 </body>
 </html>
