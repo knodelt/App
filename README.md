@@ -535,3 +535,13 @@ Veröffentlichungsfreigaben.
 **Wichtig:** Ein Logout mit noch ungesicherten lokalen Swipes meldet den Nutzer korrekt ab, bewahrt aber den lokalen Verlauf auf dem Gerät. Bei einer späteren erneuten Anmeldung wird dieser erneut mit der Cloud abgeglichen. Vor dem bewusst destruktiven Ersetzen einer Datenkopie ein Geräte-Backup herunterladen.
 
 **Tests:** Modellierte Client-/Serverantworten für lokale Swipes auf leerem Konto, bewusst unterschiedlichen Cloud-Stand, fehlgeschlagenen Upload und Logout trotz offener Synchronisierung. Live-End-to-End-Tests auf iOS/PWA sowie die Prüfung, ob zuvor verlorene Gerätedaten noch im Browserspeicher liegen, sind separat erforderlich.
+
+
+## Beta-Hotfix · FRAME v136 · Geschmacksanzeige, Code-Neuversand, Stimmungsdialog (22.11.2026)
+
+- **Geschmacksanzeige nach Cloud-Restore:** „Das magst du“ / „Eher nicht deins“ bezieht die dauerhaft gespeicherten, gewichteten Taste-DNA-Merkmale ein statt nur die Titel im gerade geladenen TMDB-Feed. Bei älteren Backups ohne DNA-Merkmale wird auf FRAMELOG-/Merkliste-/Verlauf-Snapshots zurückgegriffen. Die Signale werden nach einem Taste-DNA-Update neu gerendert; dynamische Zahlen aus einer unvollständigen Teilmenge wurden aus den Chips entfernt.
+- **Code erneut senden:** Auf dem Code-Eingabebildschirm befindet sich ein eigener, gegen Mehrfachanfragen gesperrter Neuversand-Button. Nach erfolgreichem Versand ist er für 60 Sekunden deaktiviert und zählt herunter. Der Nutzer sieht vor und nach dem Neuversand, dass nur der zuletzt versendete Code gültig ist. Das alte Eingabefeld wird **nur** nach bestätigtem Versand geleert. Der Server behält seine bisherigen Rate-Limits und Einmalcode-Regeln bei.
+- **Stimmungsdialog:** Der Framing-Mood-Sheet wird bei einem Ansichtswechsel, Login-Dialog, Onboarding, Escape oder Verlassen der Seite geschlossen und komplett versteckt. Ein Class-Observer fängt Ansichtswechsel ohne `switchView()` ab. Unter `[hidden]` wird die Overlay-Fläche garantiert nicht gezeichnet und blockiert keine Interaktion.
+- **Deployment:** Scripts/Styles v136 und neue Service-Worker-App-Shell zur zuverlässigen Verteilung der korrigierten Dateien.
+
+**Prüfungen:** Syntax, UI-IDs, Zustandssperren sowie simulierte Wiederherstellungs-, Code-Neuversand- und Ansichtswechselabläufe. Live-PWA-Tests auf iOS und Desktop bleiben erforderlich.

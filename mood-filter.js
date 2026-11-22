@@ -35,6 +35,7 @@
   }
 
   let currentMood = loadMood();
+  let returnFocus=null;
 
   function moodLabel(id = currentMood) {
     return MOODS.find(mood => mood.id === id)?.label || 'Egal';
@@ -67,6 +68,7 @@
     overlay = document.createElement('div');
     overlay.id = 'moodSheet';
     overlay.className = 'mood-sheet-overlay';
+    overlay.hidden=true;
     overlay.setAttribute('aria-hidden','true');
     overlay.innerHTML = `
       <section class="mood-sheet" role="dialog" aria-modal="true" aria-labelledby="moodSheetTitle">
@@ -108,17 +110,34 @@
   }
 
   function openSheet() {
+    // This is a Framing-only dialog. Never reopen above another view or
+    // above login/Cloud dialogs when a stale tap arrives during navigation.
+    if(!document.querySelector('#discoverView')?.classList.contains('active') ||
+       document.querySelector('#frameAccountModal')?.hidden===false ||
+       document.querySelector('#frameCloudChoiceModal')?.hidden===false)return;
     const overlay = ensureSheet();
+    if(overlay.classList.contains('open'))return;
+    returnFocus=document.activeElement;
     renderSelection();
+    overlay.hidden=false;
     overlay.classList.add('open');
     overlay.setAttribute('aria-hidden','false');
+    overlay.querySelector('.mood-sheet-close')?.focus({preventScroll:true});
   }
 
   function closeSheet() {
     const overlay = document.querySelector('#moodSheet');
     if (!overlay) return;
+    const wasOpen=!overlay.hidden;
     overlay.classList.remove('open');
+    overlay.hidden=true;
     overlay.setAttribute('aria-hidden','true');
+    // Only restore focus if the originating view is still visible.
+    if(wasOpen && document.querySelector('#discoverView')?.classList.contains('active') &&
+       returnFocus?.isConnected){
+      try{returnFocus.focus({preventScroll:true});}catch{}
+    }
+    returnFocus=null;
   }
 
   function setMood(value) {
@@ -152,6 +171,30 @@
   updateTrigger();
 
   document.querySelector('#moodTrigger')?.addEventListener('click', openSheet);
+  document.addEventListener('frame:view-changed',event=>{
+    if(event.detail?.target!=='discover')closeSheet();
+  });
+  document.addEventListener('frame:onboarding-modal',event=>{
+    if(event.detail?.open)closeSheet();
+  });
+  document.addEventListener('keydown',event=>{
+    if(event.key==='Escape' && !document.querySelector('#moodSheet')?.hidden){
+      event.preventDefault();
+      closeSheet();
+    }
+  });
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden)closeSheet();
+  });
+  // Some subsystems change the active class without calling switchView().
+  // The observer ensures the sheet never survives leaving Framing.
+  const discoverView=document.querySelector('#discoverView');
+  if(discoverView && typeof MutationObserver!=='undefined'){
+    new MutationObserver(()=>{
+      if(!discoverView.classList.contains('active'))closeSheet();
+    }).observe(discoverView,{attributes:true,attributeFilter:['class']});
+  }
+  window.FrameMoodSheet={close:closeSheet};
 
   window.addEventListener('storage', event => {
     if (event.key !== STORAGE_KEY) return;

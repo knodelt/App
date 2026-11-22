@@ -948,6 +948,7 @@ h1 em {
   backdrop-filter:blur(12px);
   transition:opacity .18s ease;
 }
+.mood-sheet-overlay[hidden] { display:none !important; }
 .mood-sheet-overlay.open {
   opacity:1;
   pointer-events:auto;
@@ -2464,3 +2465,20 @@ h1 em {
 .frame-cloud-choice-actions button:disabled {opacity:.5;cursor:wait;}
 .frame-cloud-choice-actions button:focus-visible {outline:3px solid white;outline-offset:3px;}
 .frame-account-signout-hint {font-size:10px !important;color:#b9acb8 !important;}
+
+
+/* FRAME v136: clear, rate-limited resend path inside the email code step. */
+.frame-account-form .frame-account-resend {
+  background:transparent;
+  border:1px solid rgba(255,255,255,.18);
+  color:#f2dce4;
+  min-height:42px;
+}
+.frame-account-form .frame-account-resend:disabled {
+  color:#9e939b;opacity:.8;cursor:default;
+}
+.frame-account-dialog .frame-account-code-hint {
+  margin:0 0 4px;
+  color:#b9a8b5;
+  font:600 11px/1.55 var(--font-ui,Manrope,system-ui);
+}

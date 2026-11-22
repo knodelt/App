@@ -84,6 +84,7 @@ function buildFrameLoginEmail(code){
     code,
     '',
     'Gültig für 10 Minuten. Der Code kann nur einmal verwendet werden.',
+    'Wenn du einen neuen Code anforderst, ersetzt er den vorherigen.',
     '',
     'Falls du diese Anmeldung nicht angefordert hast, kannst du die E-Mail ignorieren.',
     'Gib deinen Anmeldecode niemals an andere Personen weiter.',
@@ -126,6 +127,7 @@ function buildFrameLoginEmail(code){
               <div style="color:#8f5269;font:bold 11px Arial,Helvetica,sans-serif;letter-spacing:1.5px;">DEIN EINMAL-CODE</div>
               <div style="padding:10px 0 8px;color:#1c1820;font:bold 39px/1.2 'Courier New',Courier,monospace;letter-spacing:6px;white-space:nowrap;">${code}</div>
               <div style="color:#94687c;font:13px Arial,Helvetica,sans-serif;line-height:18px;">10 Minuten gültig · einmal verwendbar</div>
+              <p style="margin:12px 0 0;color:#86566a;font:12px/1.5 Arial,Helvetica,sans-serif;">Ein neu angeforderter Code macht den vorherigen ungültig.</p>
             </td></tr>
           </table>
         </td></tr>

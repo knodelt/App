@@ -558,12 +558,63 @@ function renderRecommendations() {
   $('#recommendList').innerHTML = ranked.slice(1,4).map(rec=>`<article class="rec-row"><div class="rec-thumb" style="--art:${rec.art}"></div><div class="rec-row-copy"><strong>${rec.title}</strong><small>${rec.type} · ${rec.year}</small></div><span class="rec-row-score">${scoreRecommendation(rec)}%</span></article>`).join('');
 }
 
+// The feed catalog is transient (TMDB updates it regularly), while Taste DNA
+// and the FRAMELOG snapshots survive cloud sync and relogin. Build the profile
+// chips from persisted evidence instead of only today's catalog entries.
+function getPersistentTasteSignals() {
+  let dnaFeatures = [];
+  try { dnaFeatures = window.getFrameTasteDNA?.()?.featureWeights || []; } catch {}
+  if(Array.isArray(dnaFeatures)){
+    const signals=dnaFeatures
+      .filter(feature=>typeof feature?.label==='string' && feature.label.trim()
+        && Number.isFinite(Number(feature.weight)) && Number.isFinite(Number(feature.confidence)))
+      .map(feature=>({
+        label:feature.label.trim().slice(0,65),
+        score:Number(feature.weight)*Number(feature.confidence)
+      }))
+      .filter(feature=>Math.abs(feature.score)>=0.15);
+    if(signals.length)return signals;
+  }
+
+  // Older FRAME backups may not contain the enriched DNA model. Recover
+  // signals from the saved item snapshots before falling back to live cards.
+  let history={};
+  try { history=JSON.parse(localStorage.getItem('frame-recommendation-history-v1')||'{}')||{}; } catch {}
+  const weights=new Map();
+  for(const [id,action] of Object.entries(state.swipes||{})){
+    const item=state.frameLogItems?.[id]?.item || state.savedItems?.[id] ||
+      state.watched?.[id]?.item || history[id] || catalog.find(x=>x.id===id);
+    if(!Array.isArray(item?.tags))continue;
+    const delta=action==='like'?3:action==='dislike'?-3:action==='save'?1:0;
+    if(!delta)continue;
+    for(const rawTag of item.tags.slice(0,12)){
+      const tag=String(rawTag||'').trim().slice(0,65);
+      if(tag)weights.set(tag,(weights.get(tag)||0)+delta);
+    }
+  }
+  return [...weights].map(([label,score])=>({label,score}));
+}
 function renderTaste() {
-  const entries = Object.entries(getTasteWeights()).sort((a,b)=>b[1]-a[1]);
-  const positives = entries.filter(([,v])=>v>0).slice(0,8);
-  const negatives = entries.filter(([,v])=>v<0).sort((a,b)=>a[1]-b[1]).slice(0,6);
-  $('#positiveTags').innerHTML = positives.length ? positives.map(([t,v])=>`<span>${t} +${v}</span>`).join('') : '<span>Noch keine Signale</span>';
-  $('#negativeTags').innerHTML = negatives.length ? negatives.map(([t,v])=>`<span>${t} ${v}</span>`).join('') : '<span>Noch keine Cuts</span>';
+  const entries=getPersistentTasteSignals();
+  const positives=entries.filter(x=>x.score>0).sort((a,b)=>b.score-a.score).slice(0,8);
+  const negatives=entries.filter(x=>x.score<0).sort((a,b)=>a.score-b.score).slice(0,6);
+  const renderChips=(selector,items,emptyText)=>{
+    const root=$(selector);
+    if(!root)return;
+    root.replaceChildren();
+    for(const item of items){
+      const chip=document.createElement('span');
+      chip.textContent=item.label;
+      root.appendChild(chip);
+    }
+    if(!items.length){
+      const empty=document.createElement('span');
+      empty.textContent=emptyText;
+      root.appendChild(empty);
+    }
+  };
+  renderChips('#positiveTags',positives,'Noch keine Signale');
+  renderChips('#negativeTags',negatives,'Noch keine Cuts');
 
   const actions = Object.values(state.swipes);
   $('#swipeCount').textContent = actions.length;
@@ -575,6 +626,9 @@ function renderTaste() {
 }
 
 function updateUI() { renderWatchlist(); renderRecommendations(); renderTaste(); }
+// Enrichment can finish after a swipe or after a cloud restore. Refresh only
+// the profile chips (never resave the model or start another recommendation run).
+document.addEventListener('frame:taste-dna-changed',()=>renderTaste());
 
 function switchView(target) {
   $$('.view').forEach(v=>v.classList.toggle('active', v.dataset.view===target));
