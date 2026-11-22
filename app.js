@@ -558,6 +558,15 @@ function renderRecommendations() {
   $('#recommendList').innerHTML = ranked.slice(1,4).map(rec=>`<article class="rec-row"><div class="rec-thumb" style="--art:${rec.art}"></div><div class="rec-row-copy"><strong>${rec.title}</strong><small>${rec.type} · ${rec.year}</small></div><span class="rec-row-score">${scoreRecommendation(rec)}%</span></article>`).join('');
 }
 
+// A language can be useful to the recommendation model, but codes such as
+// EN/FR/DE are not film genres and do not belong in preference chips.
+function isLanguageTasteFeature(label,group='') {
+  const name=String(label||'').trim();
+  const category=String(group||'').trim().toLowerCase();
+  return category==='language' || category==='original_language' ||
+    /^(?:EN|FR|DE|ES|IT|JA|JP|KO|ZH|PT|HI|RU|TR|NL|SV|DA|NO|FI|PL|AR|TH|CS|HU|UK)(?:\\s*[+-]\\d+)?$/i.test(name) ||
+    /^(?:sprache|language|originalsprache)\\s*[:：]/i.test(name);
+}
 // The feed catalog is transient (TMDB updates it regularly), while Taste DNA
 // and the FRAMELOG snapshots survive cloud sync and relogin. Build the profile
 // chips from persisted evidence instead of only today's catalog entries.
@@ -567,6 +576,7 @@ function getPersistentTasteSignals() {
   if(Array.isArray(dnaFeatures)){
     const signals=dnaFeatures
       .filter(feature=>typeof feature?.label==='string' && feature.label.trim()
+        && !isLanguageTasteFeature(feature.label,feature.group)
         && Number.isFinite(Number(feature.weight)) && Number.isFinite(Number(feature.confidence)))
       .map(feature=>({
         label:feature.label.trim().slice(0,65),
@@ -589,7 +599,7 @@ function getPersistentTasteSignals() {
     if(!delta)continue;
     for(const rawTag of item.tags.slice(0,12)){
       const tag=String(rawTag||'').trim().slice(0,65);
-      if(tag)weights.set(tag,(weights.get(tag)||0)+delta);
+      if(tag && !isLanguageTasteFeature(tag))weights.set(tag,(weights.get(tag)||0)+delta);
     }
   }
   return [...weights].map(([label,score])=>({label,score}));
