@@ -564,8 +564,8 @@ function isLanguageTasteFeature(label,group='') {
   const name=String(label||'').trim();
   const category=String(group||'').trim().toLowerCase();
   return category==='language' || category==='original_language' ||
-    /^(?:EN|FR|DE|ES|IT|JA|JP|KO|ZH|PT|HI|RU|TR|NL|SV|DA|NO|FI|PL|AR|TH|CS|HU|UK)(?:\\s*[+-]\\d+)?$/i.test(name) ||
-    /^(?:sprache|language|originalsprache)\\s*[:：]/i.test(name);
+    /^(?:EN|FR|DE|ES|IT|JA|JP|KO|ZH|PT|HI|RU|TR|NL|SV|DA|NO|FI|PL|AR|TH|CS|HU|UK)(?:\s*[+-]\d+)?$/i.test(name) ||
+    /^(?:sprache|language|originalsprache)\s*[:：]/i.test(name);
 }
 // The feed catalog is transient (TMDB updates it regularly), while Taste DNA
 // and the FRAMELOG snapshots survive cloud sync and relogin. Build the profile
