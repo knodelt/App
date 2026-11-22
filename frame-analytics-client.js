@@ -8,6 +8,7 @@
   const put=(k,v)=>{try{localStorage.setItem(k,v);return true;}catch{return false;}};
   const valid=id=>/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id||'');
   let id=null,active=false,pending={},timer=null,transmitting=false,lastInteraction=Date.now();
+  let consentWaiting=false,bannerReturnFocus=null;
   function visitor(){
     let v=read(VISITOR);
     if(!valid(v)){v=crypto.randomUUID();if(!put(VISITOR,v))return null;}
@@ -36,7 +37,16 @@
   }
   function decide(yes){
     if(!put(CONSENT,yes?'yes':'no'))return;
-    document.getElementById('frameAnalyticsPrompt')?.remove();
+    const prompt=document.getElementById('frameAnalyticsPrompt');
+    const restore=Boolean(prompt?.contains(document.activeElement));
+    prompt?.remove();
+    if(restore){
+      try{
+        const target=bannerReturnFocus?.isConnected?bannerReturnFocus:document.getElementById('brandButton');
+        target?.focus({preventScroll:true});
+      }catch{}
+    }
+    bannerReturnFocus=null;
     if(yes){begin();return;}
     // Revoking consent immediately stops this tab and removes its server record.
     active=false;pending={};clearTimeout(timer);timer=null;
@@ -50,13 +60,28 @@
   function consentUI(){
     if(read(CONSENT)==='yes'){begin();return;}
     if(read(CONSENT)==='no')return;
+    // On a first visit, the welcome tutorial is a modal dialog; do not
+    // put an analytics consent banner on top or behind an inaccessible modal.
+    if(window.FrameOnboardingPending){
+      if(!consentWaiting){
+        consentWaiting=true;
+        document.addEventListener('frame:onboarding-finished',()=>{
+          consentWaiting=false;consentUI();
+        },{once:true});
+      }
+      return;
+    }
+    if(document.getElementById('frameAnalyticsPrompt'))return;
     const style=document.createElement('style');
     style.textContent=`
       #frameAnalyticsPrompt{position:fixed;z-index:1400;bottom:calc(78px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
         width:min(calc(100% - 22px),490px);border:1px solid rgba(255,255,255,.16);border-radius:19px;
         box-shadow:0 18px 55px rgba(0,0,0,.64);background:#211c27;color:#f5eef2;padding:17px;font:13px/1.5 system-ui,sans-serif;}
-      #frameAnalyticsPrompt strong{font-size:15px;display:block;margin-bottom:5px}
+      #frameAnalyticsPrompt h2{font-size:15px;display:block;margin:0 0 5px;font-weight:800}
       #frameAnalyticsPrompt p{margin:0 0 12px;color:#d2c5d0}
+      #frameAnalyticsPrompt[aria-hidden="true"]{display:none!important}
+      #frameAnalyticsPrompt button:focus-visible,
+      #frameAnalyticsPrompt a:focus-visible{outline:3px solid #fff;outline-offset:3px}
       #frameAnalyticsPrompt a{color:#ffd1df}
       #frameAnalyticsPrompt .frame-stat-buttons{display:flex;gap:8px;flex-wrap:wrap}
       #frameAnalyticsPrompt button{flex:1;border-radius:11px;padding:11px 12px;font:700 12px/1.2 system-ui;min-width:116px;cursor:pointer}
@@ -65,12 +90,36 @@
       @media(min-width:850px){#frameAnalyticsPrompt{bottom:18px}}
     `;document.head.appendChild(style);
     const aside=document.createElement('aside');aside.id='frameAnalyticsPrompt';
-    aside.setAttribute('aria-label','Optionale FRAME-Nutzungsstatistik');
-    aside.innerHTML='<strong>FRAME gemeinsam verbessern?</strong><p>Mit deiner Erlaubnis zählen wir Besuche, Aktivitäten und zuletzt aktive Geräte für die Beta-Auswertung. Bei angemeldetem Konto ist auch deine E-Mail für den Betreiber sichtbar. Keine IP-Adresse, keine Filmhistorie. <a href="/datenschutz.html">Datenschutz</a></p><div class="frame-stat-buttons"><button type="button" id="frameAnalyticsNo">Nein, danke</button><button type="button" id="frameAnalyticsYes">Ja, erlauben</button></div>';
+    aside.setAttribute('role','dialog');
+    aside.setAttribute('aria-modal','false');
+    aside.setAttribute('aria-labelledby','frameAnalyticsHeading');
+    aside.setAttribute('aria-describedby','frameAnalyticsCopy');
+    aside.innerHTML='<h2 id="frameAnalyticsHeading">FRAME gemeinsam verbessern?</h2><p id="frameAnalyticsCopy">Mit deiner Erlaubnis zählen wir Besuche, Aktivitäten und zuletzt aktive Geräte für die Beta-Auswertung. Bei angemeldetem Konto ist auch deine E-Mail für den Betreiber sichtbar. Keine IP-Adresse, keine Filmhistorie. <a href="/datenschutz.html">Datenschutz</a></p><div class="frame-stat-buttons"><button type="button" id="frameAnalyticsNo">Nein, danke</button><button type="button" id="frameAnalyticsYes">Ja, erlauben</button></div>';
+    bannerReturnFocus=document.activeElement;
     document.body.appendChild(aside);
     aside.querySelector('#frameAnalyticsYes')?.addEventListener('click',()=>decide(true));
     aside.querySelector('#frameAnalyticsNo')?.addEventListener('click',()=>decide(false));
+    aside.addEventListener('keydown',event=>{
+      if(event.key==='Escape'){
+        event.preventDefault();
+        decide(false);
+      }
+    });
+    if(window.FrameOnboardingActive){
+      aside.inert=true;aside.setAttribute('aria-hidden','true');
+    }else{
+      requestAnimationFrame(()=>aside.querySelector('#frameAnalyticsNo')?.focus({preventScroll:true}));
+    }
   }
+  // Replay of the tutorial temporarily hides/inerts the optional prompt.
+  document.addEventListener('frame:onboarding-modal',event=>{
+    const banner=document.getElementById('frameAnalyticsPrompt');
+    if(!banner)return;
+    const covered=event.detail?.open===true;
+    banner.inert=covered;
+    if(covered)banner.setAttribute('aria-hidden','true');
+    else banner.removeAttribute('aria-hidden');
+  });
   ['pointerdown','keydown'].forEach(name=>document.addEventListener(name,()=>{lastInteraction=Date.now();},{passive:true}));
   document.addEventListener('frame:swipe-recorded',ev=>{
     event('swipe');if(ev.detail?.action==='save')event('save');
