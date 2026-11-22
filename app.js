@@ -539,6 +539,8 @@ function renderTaste() {
 
   const actions = Object.values(state.swipes);
   $('#swipeCount').textContent = actions.length;
+  const countUnit=$('#swipeCountUnit');
+  if(countUnit)countUnit.textContent=actions.length===1?'Swipe':'Swipes';
   $('#likedStat').textContent = actions.filter(a=>a==='like').length;
   $('#savedStat').textContent = (state.saved || []).length;
   $('#dislikedStat').textContent = actions.filter(a=>a==='dislike').length;
