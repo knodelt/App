@@ -243,7 +243,13 @@
   #tonightView .tonight-mood-options { grid-template-columns:repeat(3,minmax(0,1fr)); }
   #tonightView .tonight-mood { min-height:52px; }
   #tonightView .tonight-time-options button { min-height:52px; }
-  #tonightView #frameTonightEmpty { padding:26px; }
+  #tonightView #frameTonightEmpty {
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    min-height:clamp(240px,35dvh,440px);
+    padding:clamp(24px,3vw,40px);
+  }
   #tonightView .tonight-results { grid-template-columns:minmax(0,1fr);gap:12px; }
   #tonightView .tonight-card { grid-template-columns:118px minmax(0,1fr); }
   #tonightView .tonight-card-copy { min-width:0; }
@@ -284,6 +290,8 @@
   #recommendView #roomPanel.hm-panel:has(#hmSetup:not([hidden])) {
     display:grid !important;
     grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);
+    min-height:clamp(365px,57dvh,600px);
+    align-content:center;
     align-items:start;
     column-gap:clamp(24px,3vw,54px);
     row-gap:12px;
@@ -389,4 +397,9 @@
 @media (min-width:980px) and (max-height:750px) {
   #personalizedView .recommend-hero { min-height:330px !important;height:min(61dvh,490px) !important; }
   #recommendView #roomPanel.hm-panel { min-height:0; }
+}
+
+@media (min-width:980px) and (max-height:740px) {
+  #recommendView #roomPanel.hm-panel:has(#hmSetup:not([hidden])) {min-height:0;align-content:start;}
+  #tonightView #frameTonightEmpty {min-height:220px;}
 }
