@@ -123,7 +123,7 @@
     if(choiceReturnFocus?.isConnected)try{choiceReturnFocus.focus({preventScroll:true});}catch{}
     choiceReturnFocus=null;
   };
-  const openCloudChoice=(message,{emptyDevice=false}={})=>{
+  const openCloudChoice=(message,{emptyDevice=false,localOnly=false}={})=>{
     if(!choiceModal)return;
     if(choiceModal.hidden)choiceReturnFocus=document.activeElement;
     cloudDecisionPending=emptyDevice?'cloud-only':'conflict';
@@ -131,15 +131,16 @@
     text('frameCloudChoiceDescription',message);
     text('frameCloudChoiceStatus','');
     show('frameCloudChoiceLocal',!emptyDevice);
-    text('frameCloudChoiceLocal','Gerätedaten statt Cloud verwenden');
+    show('frameCloudChoiceRemote',!localOnly);
+    text('frameCloudChoiceLocal',localOnly?'Gerätedaten in dieses Konto übernehmen':'Gerätedaten statt Cloud verwenden');
     text('frameCloudChoiceRemote','Cloud-Daten auf dieses Gerät laden');
     choiceModal.hidden=false;
     requestAnimationFrame(()=>pick(emptyDevice?'frameCloudChoiceRemote':'frameCloudChoiceBackup')?.focus({preventScroll:true}));
   };
-  const surfaceCloudConflict=(message,{emptyDevice=false}={})=>{
+  const surfaceCloudConflict=(message,{emptyDevice=false,localOnly=false}={})=>{
     text('frameAccountConflictMessage',message);
     show('frameAccountConflict',true);
-    openCloudChoice(message,{emptyDevice});
+    openCloudChoice(message,{emptyDevice,localOnly});
   };
   const showPanel=()=>{
     const logged=Boolean(me?.authenticated);
@@ -205,7 +206,7 @@
     sessionClear(RESTORE_GUARD);
   };
   const retainMarks=(hash,rev)=>{
-    safeSet(OWNER,me.email);safeSet(LAST_LOCAL_OWNER,me.email);safeSet(HASH,hash);safeSet(REV,String(rev));
+    safeSet(OWNER,me.email);safeSet(HASH,hash);safeSet(REV,String(rev));
     lastHash=hash;revision=rev;
   };
   const restoreLocal=(items)=>{
@@ -342,9 +343,11 @@
       // films from a DIFFERENT account. Never upload these to the new email
       // address without an explicit, visible decision.
       const lastOwner=safeGet(LAST_LOCAL_OWNER);
-      if(lastOwner && lastOwner!==me.email && hasData(local)){
+      const currentOwnerTag=lastOwner?await fingerprint({account:me.email}):null;
+      if(serial!==initSerial)return;
+      if(lastOwner && lastOwner!==currentOwnerTag && hasData(local)){
         syncStatus('Gerätedaten gehören zu einem anderen FRAME-Konto.',true);
-        surfaceCloudConflict('Auf diesem Gerät liegen Filme aus einer anderen Anmeldung. Sie werden nicht automatisch in dieses Konto hochgeladen. Sichere die Gerätedaten und entscheide bewusst, ob sie hier übernommen werden sollen.');
+        surfaceCloudConflict('Auf diesem Gerät liegen Filme aus einer anderen Anmeldung. Sie werden nicht automatisch in dieses Konto hochgeladen. Sichere die Gerätedaten und entscheide bewusst, ob sie hier übernommen werden sollen.',{localOnly:!cloud.data||!hasData(remote)});
         return;
       }
       if(!cloud.data || !hasData(remote)) {
@@ -485,9 +488,10 @@
       clearTimeout(timer);clearRetry();
       ready=false;paused=true;
       await accountFetch(deleteAccount?'delete':'logout',{method:'POST',body:'{}'});
-      const signedOutEmail=me?.email||safeGet(OWNER);
+      const signedOutOwner=!deleteAccount&&me?.email?await fingerprint({account:me.email}):null;
       authGeneration++;initSerial++;
-      if(signedOutEmail)safeSet(LAST_LOCAL_OWNER,signedOutEmail);
+      if(signedOutOwner)safeSet(LAST_LOCAL_OWNER,signedOutOwner);
+      if(deleteAccount)try{localStorage.removeItem(LAST_LOCAL_OWNER)}catch{}
       me={authenticated:false};
       inflight=false;changedDuring=false;
       clearCloudMarks();
