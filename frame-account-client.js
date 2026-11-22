@@ -317,8 +317,10 @@
       if(remoteHash===localHash){
         // Drop unused Daily Frame cloud fields once the remaining FRAME data
         // are identical. This is a metadata-only migration, not a film-history reset.
-        if(obsoleteCloudFields){await upload(local,revision);}
-        else retainMarks(remoteHash,revision);
+        if(obsoleteCloudFields){
+          await upload(local,revision);
+          if(serial!==initSerial||!me?.authenticated)return;
+        }else retainMarks(remoteHash,revision);
         try{localStorage.removeItem(IMPORT_PENDING)}catch{}
         sessionClear(RESTORE_GUARD);
         paused=false;ready=true;
@@ -333,7 +335,9 @@
         surfaceCloudConflict(message);
         return;
       }
-      if(!cloud.data) {
+      if(!cloud.data || !hasData(remote)) {
+        // Empty account OR account with no actual film history:
+        // an earlier empty login may already have written harmless preferences.
         // First login into a genuinely empty account: copy the current device
         // snapshot directly. There is no remote data to overwrite, and the
         // user has chosen to sign into FRAME Cloud.
@@ -375,6 +379,7 @@
       }
       if(baseline===remoteHash && sameOwner) {
         await upload(local,revision);
+        if(serial!==initSerial||!me?.authenticated)return;
         ready=true;paused=false;show('frameAccountConflict',false);
         return;
       }
@@ -405,10 +410,13 @@
     const button=pick('frameCloudChoiceRemote');
     if(button)button.disabled=true;
     try{
+      const generation=authGeneration;
       const cloud=await accountFetch('sync');
+      if(generation!==authGeneration||!me?.authenticated)return;
       if(!cloud.data)throw Error('Noch keine Cloud-Daten vorhanden.');
       const current=activeSnapshot(cloud.data);
       const hash=await fingerprint(current);
+      if(generation!==authGeneration||!me?.authenticated)return;
       restoreLocal(current);
       if(await fingerprint(snapshot())!==hash)
         throw Error('Cloud-Daten konnten nicht vollständig übernommen werden.');
@@ -436,7 +444,7 @@
     if(button)button.disabled=true;
     try{
       const cloud=await accountFetch('sync');
-      if(initial&&cloud.data)throw Error('Dein Konto enthält inzwischen Cloud-Daten. Bitte erst vergleichen.');
+      if(initial&&cloud.data && hasData(activeSnapshot(cloud.data)))throw Error('Dein Konto enthält inzwischen Cloud-Daten. Bitte erst vergleichen.');
       const hash=await upload(snapshot(),cloud.revision);
       if(hash===null)return;
       paused=false;ready=true;
@@ -619,7 +627,10 @@
   });
   pick('frameCloudChoiceLocal')?.addEventListener('click',()=>void chooseLocal());
   pick('frameCloudChoiceRemote')?.addEventListener('click',()=>void chooseRemote());
-  pick('frameCloudChoiceBackup')?.addEventListener('click',downloadLocalBackup);
+  pick('frameCloudChoiceBackup')?.addEventListener('click',()=>{
+    downloadLocalBackup();
+    text('frameCloudChoiceStatus','Das Geräte-Backup wurde angefordert. Bewahre die Datei sicher auf, bevor du Daten ersetzt.');
+  });
   pick('frameCloudChoiceLater')?.addEventListener('click',()=>{
     closeCloudChoice();
     syncStatus('Deine Gerätedaten bleiben lokal erhalten. Über „Jetzt synchronisieren“ kannst du später entscheiden.');
