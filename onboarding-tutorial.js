@@ -95,6 +95,52 @@
   let open = false;
   let transitioning = false;
   let transitionTimer = null;
+  let modalReturnFocus = null;
+  // The consent banner is intentionally deferred until first-use onboarding is done.
+  window.FrameOnboardingPending = !seen() && !new URL(location.href).searchParams.has('hm');
+  window.FrameOnboardingActive = false;
+
+  function lockBackground(active) {
+    window.FrameOnboardingActive=active;
+    const app=document.querySelector('.app-shell');
+    if(app){
+      app.inert=active;
+      if(active)app.setAttribute('aria-hidden','true');
+      else app.removeAttribute('aria-hidden');
+    }
+    document.dispatchEvent(new CustomEvent('frame:onboarding-modal',{detail:{open:active}}));
+  }
+  function rememberModalFocus(){
+    if(!modalReturnFocus && document.activeElement?.isConnected)
+      modalReturnFocus=document.activeElement;
+  }
+  function restoreModalFocus(){
+    const target=modalReturnFocus;
+    modalReturnFocus=null;
+    try{
+      if(target?.isConnected && typeof target.focus==='function')
+        target.focus({preventScroll:true});
+      else document.querySelector('#brandButton')?.focus({preventScroll:true});
+    }catch{}
+  }
+  function finishFirstUse(){
+    window.FrameOnboardingPending=false;
+    document.dispatchEvent(new Event('frame:onboarding-finished'));
+  }
+  function trapKeyboard(event,wrapper){
+    const buttons=[...wrapper.querySelectorAll('button:not([disabled]):not([hidden])')]
+      .filter(button=>button.getClientRects().length>0);
+    if(!buttons.length)return;
+    const first=buttons[0],last=buttons[buttons.length-1],active=document.activeElement;
+    if(!wrapper.contains(active)){
+      event.preventDefault();first.focus();return;
+    }
+    if(event.shiftKey&&active===first){
+      event.preventDefault();last.focus();
+    }else if(!event.shiftKey&&active===last){
+      event.preventDefault();first.focus();
+    }
+  }
 
   function seen() {
     try { return localStorage.getItem(STORAGE_KEY) === 'done'; }
@@ -556,7 +602,7 @@
         <div class="frame-tutorial-top">
           <div>
             <span class="frame-tutorial-kicker"></span>
-            <h2 class="frame-tutorial-title" id="frameTutorialTitle"></h2>
+            <h2 class="frame-tutorial-title" id="frameTutorialTitle" tabindex="-1"></h2>
           </div>
           <button class="frame-tutorial-skip" type="button">Überspringen</button>
         </div>
@@ -573,12 +619,12 @@
     focus = root.querySelector('.frame-tutorial-focus');
 
     welcome.querySelector('.frame-welcome-start').addEventListener('click', () => {
-      closeWelcome();
       startTour();
     });
     welcome.querySelector('.frame-welcome-skip').addEventListener('click', () => {
       closeWelcome();
       markSeen();
+      finishFirstUse();
     });
 
     root.querySelector('.frame-tutorial-skip').addEventListener('click', () => closeTutorial(true));
@@ -593,6 +639,19 @@
       } else {
         changeStep(current + 1);
       }
+    });
+
+    // Both first-use overlays are keyboard operable. Keep Tab focus inside,
+    // support Escape and announce each tutorial step through its heading.
+    document.addEventListener('keydown',event=>{
+      const active=!root.hidden?root:!welcome.hidden?welcome:null;
+      if(!active)return;
+      if(event.key==='Tab'){trapKeyboard(event,active);return;}
+      if(event.key!=='Escape')return;
+      event.preventDefault();
+      if(active===welcome){
+        closeWelcome();markSeen();finishFirstUse();
+      }else closeTutorial(true);
     });
 
     const reposition = () => { if (open) requestAnimationFrame(positionFocus); };
@@ -615,12 +674,20 @@
 
   function showWelcome() {
     ensureUi();
-    welcomeNode().hidden = false;
+    rememberModalFocus();
+    const node=welcomeNode();
+    node.hidden=false;
+    node.querySelector('.frame-welcome-start')?.focus({preventScroll:true});
+    lockBackground(true);
   }
 
-  function closeWelcome() {
-    const node = welcomeNode();
-    if (node) node.hidden = true;
+  function closeWelcome({switching=false}={}) {
+    const node=welcomeNode();
+    if(node)node.hidden=true;
+    if(!switching){
+      lockBackground(false);
+      restoreModalFocus();
+    }
   }
 
   function setStepView(step) {
@@ -882,6 +949,8 @@
     root.querySelector('.frame-tutorial-dots').innerHTML = steps
       .map((_,index) => `<span class="frame-tutorial-dot${index===current?' active':''}"></span>`)
       .join('');
+    if(open&&root.hidden===false)
+      root.querySelector('.frame-tutorial-title')?.focus({preventScroll:true});
 
     if (position) {
       requestAnimationFrame(() => {
@@ -893,7 +962,9 @@
 
   function startTour() {
     ensureUi();
-    closeWelcome();
+    if(welcomeNode() && !welcomeNode().hidden)
+      closeWelcome({switching:true});
+    else rememberModalFocus();
     current = 0;
     open = true;
     transitioning = false;
@@ -903,7 +974,9 @@
     }
     root.classList.remove('is-changing','is-sliding');
     root.hidden = false;
+    lockBackground(true);
     renderStep();
+    root.querySelector('.frame-tutorial-next')?.focus({preventScroll:true});
   }
 
   function showFirstUse() {
@@ -922,10 +995,13 @@
     }
     root.classList.remove('is-changing','is-sliding','final-step');
     root.hidden = true;
-    if (remember) markSeen();
+    if(remember)markSeen();
     try {
       if (typeof switchView === 'function') switchView('discover');
     } catch {}
+    lockBackground(false);
+    restoreModalFocus();
+    finishFirstUse();
   }
 
   window.frameStartTutorial = () => startTour();
