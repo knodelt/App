@@ -8,7 +8,7 @@
   const put=(k,v)=>{try{localStorage.setItem(k,v);return true;}catch{return false;}};
   const valid=id=>/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id||'');
   let id=null,active=false,pending={},timer=null,transmitting=false,lastInteraction=Date.now();
-  let consentWaiting=false,bannerReturnFocus=null;
+  let consentWaiting=false,bannerReturnFocus=null,bannerPositionCleanup=null;
   function visitor(){
     let v=read(VISITOR);
     if(!valid(v)){v=crypto.randomUUID();if(!put(VISITOR,v))return null;}
@@ -39,6 +39,8 @@
     if(!put(CONSENT,yes?'yes':'no'))return;
     const prompt=document.getElementById('frameAnalyticsPrompt');
     const restore=Boolean(prompt?.contains(document.activeElement));
+    bannerPositionCleanup?.();
+    bannerPositionCleanup=null;
     prompt?.remove();
     if(restore){
       try{
@@ -74,8 +76,9 @@
     if(document.getElementById('frameAnalyticsPrompt'))return;
     const style=document.createElement('style');
     style.textContent=`
-      #frameAnalyticsPrompt{position:fixed;z-index:1400;bottom:calc(78px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
-        width:min(calc(100% - 22px),490px);border:1px solid rgba(255,255,255,.16);border-radius:19px;
+      #frameAnalyticsPrompt{position:fixed;z-index:1400;bottom:calc(98px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
+        width:min(calc(100% - 22px),490px);max-height:calc(100dvh - 120px - env(safe-area-inset-bottom));overflow-y:auto;
+        border:1px solid rgba(255,255,255,.16);border-radius:19px;
         box-shadow:0 18px 55px rgba(0,0,0,.64);background:linear-gradient(145deg,#29202a,#17161b);
         color:#f5eef2;padding:20px;font:13px/1.5 var(--font-ui,system-ui),sans-serif;}
       #frameAnalyticsPrompt h2{font-size:17px;display:block;margin:0 0 8px;font-weight:800;line-height:1.35}
@@ -90,7 +93,6 @@
       #frameAnalyticsPrompt button{flex:1;border-radius:11px;padding:11px 12px;font:700 12px/1.2 system-ui;min-width:116px;cursor:pointer}
       #frameAnalyticsYes{background:#f4bed1;color:#231823;border:0}
       #frameAnalyticsNo{color:#fff;background:#38303e;border:1px solid rgba(255,255,255,.15)}
-      @media(min-width:850px){#frameAnalyticsPrompt{bottom:18px}}
     `;document.head.appendChild(style);
     const aside=document.createElement('aside');aside.id='frameAnalyticsPrompt';
     aside.setAttribute('role','dialog');
@@ -100,6 +102,36 @@
     aside.innerHTML='<h2 id="frameAnalyticsHeading">Hilfst du uns, FRAME besser zu machen?</h2><p class="frame-stat-context" id="frameAnalyticsContext">FRAME ist noch in der Beta. Damit wir die App dort verbessern, wo es wirklich hakt, möchten wir verstehen, welche Bereiche ihr ausprobiert.</p><p class="frame-stat-privacy" id="frameAnalyticsCopy">Nur wenn du zustimmst, zählen wir Besuche, Aktionen wie Swipes und zuletzt aktive Geräte. Bei einem angemeldeten Konto ist für den Betreiber auch deine E-Mail sichtbar. Wir erfassen keine IP-Adresse und keine Filmhistorie. <a href="/datenschutz.html">Mehr zum Datenschutz</a>.</p><div class="frame-stat-buttons"><button type="button" id="frameAnalyticsNo">Nein, danke</button><button type="button" id="frameAnalyticsYes">Ja, erlauben</button></div>';
     bannerReturnFocus=document.activeElement;
     document.body.appendChild(aside);
+    // The bottom navigation can grow when labels wrap, and iOS safe areas
+    // change its actual height. Measure its top edge rather than guessing
+    // from viewport width; reserve a clear gap at every screen size.
+    const alignBanner=()=>{
+      if(!aside.isConnected)return;
+      const nav=document.querySelector('.app-shell > nav.bottom-nav');
+      if(!nav)return;
+      const navTop=nav.getBoundingClientRect().top;
+      const viewportHeight=window.innerHeight;
+      if(!Number.isFinite(navTop))return;
+      const reserve=Math.max(70,Math.ceil(viewportHeight-navTop+12));
+      aside.style.bottom=reserve+'px';
+      aside.style.maxHeight=Math.max(120,Math.floor(navTop-24))+'px';
+    };
+    alignBanner();
+    window.addEventListener('resize',alignBanner,{passive:true});
+    window.visualViewport?.addEventListener('resize',alignBanner,{passive:true});
+    let navObserver=null;
+    if(typeof ResizeObserver!=='undefined'){
+      const nav=document.querySelector('.app-shell > nav.bottom-nav');
+      if(nav){
+        navObserver=new ResizeObserver(alignBanner);
+        navObserver.observe(nav);
+      }
+    }
+    bannerPositionCleanup=()=>{
+      window.removeEventListener('resize',alignBanner);
+      window.visualViewport?.removeEventListener('resize',alignBanner);
+      navObserver?.disconnect();
+    };
     aside.querySelector('#frameAnalyticsYes')?.addEventListener('click',()=>decide(true));
     aside.querySelector('#frameAnalyticsNo')?.addEventListener('click',()=>decide(false));
     aside.addEventListener('keydown',event=>{
