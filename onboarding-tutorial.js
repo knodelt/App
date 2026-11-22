@@ -723,6 +723,10 @@
       panel.style.height = '';
       panel.style.maxHeight = '';
       panel.style.overflowY = '';
+      panel.style.left = '';
+      panel.style.right = '';
+      panel.style.width = '';
+      panel.style.margin = '';
       return;
     }
 
@@ -730,6 +734,10 @@
     panel.style.overflowY = '';
     panel.style.height = '';
     panel.style.transform = '';
+    panel.style.left = '';
+    panel.style.right = '';
+    panel.style.width = '';
+    panel.style.margin = '';
 
     if (!target) {
       focus.className = 'frame-tutorial-focus no-target';
@@ -766,6 +774,29 @@
     const panelHeight = panel.offsetHeight;
     const spaceAbove = Math.max(0,rect.top-gap-safeTop);
     const spaceBelow = Math.max(0,safeBottom-rect.bottom-gap);
+
+    // On desktop the tutorial belongs BESIDE the focus, not on top of
+    // descriptions or inputs. Prefer the freer horizontal side and keep the
+    // entire tutorial panel inside the visible browser viewport.
+    const desktop = window.innerWidth >= 1000 && viewportHeight >= 600;
+    if(desktop){
+      const panelWidth=Math.min(430,window.innerWidth-48);
+      const spaceRight=window.innerWidth-rect.right-gap-18;
+      const spaceLeft=rect.left-gap-18;
+      if(Math.max(spaceRight,spaceLeft)>=panelWidth){
+        const onRight=spaceRight>=panelWidth &&
+          (spaceLeft<panelWidth || spaceRight>=spaceLeft);
+        const px=onRight?rect.right+gap:rect.left-gap-panelWidth;
+        const py=Math.max(safeTop,Math.min(
+          rect.top+(rect.height-panelHeight)/2,safeBottom-panelHeight));
+        panel.style.width=`${panelWidth}px`;
+        panel.style.left=`${Math.round(Math.max(16,px))}px`;
+        panel.style.right='auto';
+        panel.style.margin='0';
+        panel.style.top=`${Math.round(py)}px`;
+        return;
+      }
+    }
 
     let side = steps[current]?.panel || (spaceAbove >= spaceBelow ? 'top' : 'bottom');
     if (side === 'top' && spaceAbove < panelHeight && spaceBelow >= panelHeight) side = 'bottom';
