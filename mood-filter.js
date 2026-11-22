@@ -113,8 +113,8 @@
     // This is a Framing-only dialog. Never reopen above another view or
     // above login/Cloud dialogs when a stale tap arrives during navigation.
     if(!document.querySelector('#discoverView')?.classList.contains('active') ||
-       !document.querySelector('#frameAccountModal')?.hidden ||
-       !document.querySelector('#frameCloudChoiceModal')?.hidden)return;
+       document.querySelector('#frameAccountModal')?.hidden===false ||
+       document.querySelector('#frameCloudChoiceModal')?.hidden===false)return;
     const overlay = ensureSheet();
     if(overlay.classList.contains('open'))return;
     returnFocus=document.activeElement;
