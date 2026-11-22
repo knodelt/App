@@ -562,6 +562,8 @@
         <label for="frameAccountCodeInput">Sechsstelliger Anmeldecode</label>
         <input id="frameAccountCodeInput" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="123456" />
         <button type="button" id="frameAccountVerifyCode">Anmelden</button>
+        <button type="button" class="frame-account-resend" id="frameAccountResendCode" disabled>Code erneut senden · 60 s</button>
+        <p class="frame-account-code-hint">Nur der zuletzt angeforderte Code ist gültig. Ein neuer Code ersetzt den vorherigen.</p>
       </div>
       <p id="frameAccountDialogMessage" class="frame-account-note" role="status" aria-live="polite"></p>
       <p class="frame-account-privacy">Private Cloud-Speicherung. Kein Passwort nötig. Du entscheidest selbst über vorhandene Gerätedaten.</p>
