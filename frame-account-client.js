@@ -594,7 +594,7 @@
       updateResendButton();
     }catch(e){
       text('frameAccountDialogMessage',(e.message||'Code konnte nicht gesendet werden.')+
-        (resend?' Dein vorheriger Code bleibt gültig, sofern er noch nicht abgelaufen ist.':''));
+        (resend?' Prüfe die neueste E-Mail: Falls der Server bereits einen neuen Code erzeugt hat, kann der bisherige ungültig sein.':''));
     }finally{
       sendingCode=false;
       if(firstButton)firstButton.disabled=false;
