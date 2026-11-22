@@ -194,3 +194,26 @@ body.frame-trailer-open { overflow:hidden !important; }
 @media(prefers-reduced-motion:reduce) {
   .frame-trailer-overlay,.frame-trailer-dialog {animation:none !important;}
 }
+
+
+/* Keep the poster above the embedded YouTube black loading screen. */
+.frame-trailer-player{z-index:1;}
+.frame-trailer-poster{
+  z-index:2;pointer-events:none;
+  transition:opacity .34s ease-out;
+}
+.frame-trailer-status{z-index:3;pointer-events:none;}
+.frame-trailer-video.is-playing .frame-trailer-poster{
+  opacity:0;
+}
+.frame-trailer-start{
+  position:absolute;z-index:4;left:50%;top:65%;
+  transform:translate(-50%,-50%);width:max-content;max-width:calc(100% - 28px);
+  min-height:43px;padding:10px 17px;
+  border-radius:999px;border:1px solid rgba(255,255,255,.34);
+  background:#f2d4e0;color:#231b24;
+  box-shadow:0 7px 28px rgba(0,0,0,.38);
+  font:800 12px/1.35 Manrope,system-ui,sans-serif;
+}
+.frame-trailer-start[hidden]{display:none!important;}
+.frame-trailer-start:focus-visible{outline:3px solid #fff;outline-offset:3px;}
